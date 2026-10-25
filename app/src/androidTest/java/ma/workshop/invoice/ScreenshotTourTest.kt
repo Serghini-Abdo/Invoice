@@ -52,9 +52,7 @@ class ScreenshotTourTest {
         scenario?.close()
     }
 
-    private fun waitForText(text: String, substring: Boolean = false) {
-        rule.waitUntil(15_000) { rule.onAllNodesWithText(text, substring = substring).fetchSemanticsNodes().isNotEmpty() }
-    }
+    private fun waitForText(text: String, substring: Boolean = false) = rule.waitForTextOrExplain(text, substring)
 
     private fun click(text: String) {
         waitForText(text)

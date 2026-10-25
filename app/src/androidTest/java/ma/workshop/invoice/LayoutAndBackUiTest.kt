@@ -53,9 +53,7 @@ class LayoutAndBackUiTest {
         scenario?.close()
     }
 
-    private fun waitForText(text: String) {
-        rule.waitUntil(15_000) { rule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
-    }
+    private fun waitForText(text: String) = rule.waitForTextOrExplain(text)
 
     private fun systemBack() {
         scenario!!.onActivity { it.onBackPressedDispatcher.onBackPressed() }
@@ -100,12 +98,16 @@ class LayoutAndBackUiTest {
 
         val speakers = rule.onAllNodesWithContentDescription(Strings.SPEAK_NAME)
         val count = speakers.fetchSemanticsNodes().size
-        assertTrue("every visible card has its own speaker (found $count)", count >= 4)
+        var placed = 0
         for (index in 0 until count) {
             val bounds = speakers[index].getBoundsInRoot()
+            // The lazy grid composes a few cards ahead of the screen without placing them (empty bounds).
+            if (bounds.width.value == 0f && bounds.height.value == 0f) continue
+            placed++
             assertTrue("speaker #$index is at least 48dp wide, was ${bounds.width} at $bounds", bounds.width >= 48.dp)
             assertTrue("speaker #$index is at least 48dp tall, was ${bounds.height} at $bounds", bounds.height >= 48.dp)
         }
+        assertTrue("every visible card has its own speaker (placed $placed of $count)", placed >= 4)
     }
 
     @Test

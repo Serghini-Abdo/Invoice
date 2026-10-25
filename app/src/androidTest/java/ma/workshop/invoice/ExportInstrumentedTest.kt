@@ -126,10 +126,10 @@ class ExportInstrumentedTest {
         assertTrue(pdf.length() > 2_000)
 
         val pages = renderPdfPages(pdf)
-        assertEquals(1, pages.size)
+        pages.forEachIndexed { index, page -> Shots.savePng("sample-invoice-pdf-page${index + 1}", page) }
+        assertEquals("a four-item invoice fits one A4 page", 1, pages.size)
         assertEquals(595, pages[0].width)
         assertEquals(842, pages[0].height)
-        Shots.savePng("sample-invoice-pdf-page1", pages[0])
         assertTrue("PDF page has content", pages[0].fractionNotWhite() > 0.01)
         assertTrue("PDF shows the thumbnails", pages[0].hasPixelNear(doorSteel))
         assertNotNull(files.preview)
