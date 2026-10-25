@@ -35,6 +35,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -310,7 +314,7 @@ fun CatalogPickerScreen(
     onBack: () -> Unit,
 ) {
     val categories = products.mapNotNull { it.category?.trim()?.takeIf(String::isNotEmpty) }.distinct()
-    var selectedCategory by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf<String?>(null) }
+    var selectedCategory by rememberSaveable { mutableStateOf<String?>(null) }
     val shown = if (selectedCategory == null) products else products.filter { it.category?.trim() == selectedCategory }
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
