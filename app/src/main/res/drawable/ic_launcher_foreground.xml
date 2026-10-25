@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- steel door -->
+    <path android:fillColor="#FFFFFF" android:pathData="M34,24h40v62h-40z" />
+    <path android:fillColor="#37474F" android:pathData="M38,28h32v54h-32z" />
+    <path android:fillColor="#90A4AE" android:pathData="M42,32h11v20h-11z" />
+    <path android:fillColor="#90A4AE" android:pathData="M55,32h11v20h-11z" />
+    <path android:fillColor="#90A4AE" android:pathData="M42,55h11v22h-11z" />
+    <path android:fillColor="#90A4AE" android:pathData="M55,55h11v22h-11z" />
+    <path android:fillColor="#FFB300" android:pathData="M63,52a2.5,2.5 0 1,1 0.01,0z" />
+</vector>
