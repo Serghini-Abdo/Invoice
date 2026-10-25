@@ -103,8 +103,8 @@ class LayoutAndBackUiTest {
         assertTrue("every visible card has its own speaker (found $count)", count >= 4)
         for (index in 0 until count) {
             val bounds = speakers[index].getBoundsInRoot()
-            assertTrue("speaker is at least 48dp wide", bounds.width >= 48.dp)
-            assertTrue("speaker is at least 48dp tall", bounds.height >= 48.dp)
+            assertTrue("speaker #$index is at least 48dp wide, was ${bounds.width} at $bounds", bounds.width >= 48.dp)
+            assertTrue("speaker #$index is at least 48dp tall, was ${bounds.height} at $bounds", bounds.height >= 48.dp)
         }
     }
 
