@@ -27,6 +27,7 @@ import ma.workshop.invoice.domain.layout.HAlign
 import ma.workshop.invoice.domain.layout.InvoiceLayout
 import ma.workshop.invoice.domain.layout.InvoiceLayoutEngine
 import ma.workshop.invoice.domain.layout.LayoutSpec
+import ma.workshop.invoice.domain.layout.PngLimits
 import ma.workshop.invoice.domain.layout.TextMeasurer
 import ma.workshop.invoice.domain.layout.TextStyle
 import java.io.File
@@ -104,18 +105,12 @@ class InvoiceRenderer(context: Context) {
 
     // ---- layouts ----
 
-    fun layoutForPng(doc: InvoiceDocument): InvoiceLayout {
-        val single = engine.layout(doc, LayoutSpec(width = PNG_WIDTH_UNITS))
-        // Very long invoices become several images instead of one gigantic bitmap.
-        return if (single.pages[0].height * PNG_SCALE <= PNG_MAX_PIXELS) {
-            single
-        } else {
-            engine.layout(doc, LayoutSpec(width = PNG_WIDTH_UNITS, pageHeight = PNG_MAX_PIXELS / PNG_SCALE))
-        }
-    }
+    /** One tall page, always. Whether it is too tall for one image is [PngLimits.isTooLong]. */
+    fun layoutForPng(doc: InvoiceDocument): InvoiceLayout =
+        engine.layout(doc, LayoutSpec(width = PngLimits.WIDTH_UNITS))
 
     fun layoutForPdf(doc: InvoiceDocument): InvoiceLayout =
-        engine.layout(doc, LayoutSpec(width = PDF_WIDTH_UNITS, pageHeight = PDF_PAGE_HEIGHT / PDF_SCALE))
+        engine.layout(doc, LayoutSpec(width = PDF_WIDTH_UNITS, pageHeight = PDF_PAGE_HEIGHT / PDF_SCALE, margin = PDF_MARGIN))
 
     // ---- outputs ----
 
@@ -135,26 +130,22 @@ class InvoiceRenderer(context: Context) {
             bitmap
         }
 
-    /** Writes PNG file(s) and returns them in page order. Usually exactly one file. */
-    fun writePng(doc: InvoiceDocument, directory: File, baseName: String): List<File> {
-        val layout = layoutForPng(doc)
-        val bitmaps = try {
-            renderBitmaps(layout, PNG_SCALE)
+    /** Writes the one PNG of an invoice whose [layout] fits one image (see [PngLimits.isTooLong]). */
+    fun writePng(layout: InvoiceLayout, directory: File, baseName: String): File {
+        val bitmap = try {
+            renderBitmaps(layout, PngLimits.SCALE).single()
         } catch (e: OutOfMemoryError) {
             // Report as a normal failure: the invoice is already saved, only this export is lost.
             throw IllegalStateException("not enough memory to draw the invoice image", e)
         }
         try {
-            return bitmaps.mapIndexed { index, bitmap ->
-                val name = if (bitmaps.size == 1) "$baseName.png" else "$baseName-${index + 1}.png"
-                val file = File(directory, name)
-                file.outputStream().buffered().use { out ->
-                    check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)) { "PNG encoding failed" }
-                }
-                file
+            val file = File(directory, "$baseName.png")
+            file.outputStream().buffered().use { out ->
+                check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)) { "PNG encoding failed" }
             }
+            return file
         } finally {
-            bitmaps.forEach { it.recycle() }
+            bitmap.recycle()
         }
     }
 
@@ -253,15 +244,14 @@ class InvoiceRenderer(context: Context) {
     }
 
     companion object {
-        /** 360 units at 3 px per unit is a 1080 px wide image, ideal for WhatsApp. */
-        const val PNG_WIDTH_UNITS = 360f
-        const val PNG_SCALE = 3f
-        const val PNG_MAX_PIXELS = 8_000f
-
-        /** A4 in PostScript points. The invoice is laid out 520 units wide and scaled to fit. */
+        /**
+         * A4 in PostScript points. A 34-unit thumbnail must print 26 pt (about 9 mm), so one layout unit is
+         * 26/34 pt and the page is about 778 units wide; 12-unit text then prints at about 9 pt.
+         */
         const val PDF_PAGE_WIDTH = 595f
         const val PDF_PAGE_HEIGHT = 842f
-        const val PDF_WIDTH_UNITS = 520f
-        const val PDF_SCALE = PDF_PAGE_WIDTH / PDF_WIDTH_UNITS
+        const val PDF_SCALE = 26f / LayoutSpec.THUMBNAIL
+        const val PDF_WIDTH_UNITS = PDF_PAGE_WIDTH / PDF_SCALE
+        const val PDF_MARGIN = 28f
     }
 }

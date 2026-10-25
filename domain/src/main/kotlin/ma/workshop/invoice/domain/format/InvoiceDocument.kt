@@ -1,6 +1,7 @@
 package ma.workshop.invoice.domain.format
 
 import ma.workshop.invoice.domain.invoice.Invoice
+import ma.workshop.invoice.domain.invoice.InvoiceItem
 import ma.workshop.invoice.domain.settings.AppSettings
 import java.time.ZoneId
 
@@ -17,7 +18,11 @@ data class DocumentRow(
     val rate: String,
     /** "2,52 م² × 500 DH × 2" */
     val calculation: String,
+    /** The calculation cell of the table: unit price inside, quantity left out ("2,52 م² × 500 DH"). */
+    val formula: String,
     val total: String,
+    /** [total] without the currency: the table writes "DH" once, in its column title. */
+    val totalNumber: String,
 )
 
 /**
@@ -46,19 +51,7 @@ data class InvoiceDocument(
 object InvoiceDocumentBuilder {
 
     fun build(invoice: Invoice, settings: AppSettings, zone: ZoneId): InvoiceDocument {
-        val rows = invoice.items.mapIndexed { index, item ->
-            val pricing = item.pricing
-            DocumentRow(
-                position = index + 1,
-                illustration = item.illustration,
-                name = item.productName,
-                measures = ItemDescriber.measures(pricing),
-                quantity = pricing.quantity,
-                rate = ItemDescriber.rate(pricing),
-                calculation = ItemDescriber.calculation(pricing),
-                total = ArabicFormat.amount(pricing.total),
-            )
-        }
+        val rows = invoice.items.mapIndexed { index, item -> row(index + 1, item) }
         val payment = invoice.payment
         return InvoiceDocument(
             title = ArabicTerms.INVOICE,
@@ -75,6 +68,23 @@ object InvoiceDocumentBuilder {
             remaining = ArabicFormat.amount(payment.remaining),
             isFullyPaid = payment.isFullyPaid,
             thankYou = settings.thankYouMessage.trim().ifEmpty { null },
+        )
+    }
+
+    /** One table row. The paper and the on-screen table (item list, review, detail) both draw this. */
+    fun row(position: Int, item: InvoiceItem): DocumentRow {
+        val pricing = item.pricing
+        return DocumentRow(
+            position = position,
+            illustration = item.illustration,
+            name = item.productName,
+            measures = ItemDescriber.measures(pricing),
+            quantity = pricing.quantity,
+            rate = ItemDescriber.rate(pricing),
+            calculation = ItemDescriber.calculation(pricing),
+            formula = ItemDescriber.formula(pricing),
+            total = ArabicFormat.amount(pricing.total),
+            totalNumber = ArabicFormat.amountNumber(pricing.total),
         )
     }
 

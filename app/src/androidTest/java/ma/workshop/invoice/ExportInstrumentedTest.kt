@@ -17,7 +17,9 @@ import ma.workshop.invoice.domain.settings.AppSettings
 import ma.workshop.invoice.domain.settings.ExportFormat
 import ma.workshop.invoice.platform.export.ExportFiles
 import ma.workshop.invoice.platform.export.InvoiceExporter
+import ma.workshop.invoice.domain.palette.Palette
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -126,8 +128,7 @@ class ExportInstrumentedTest {
     fun pngHasTheRightSizeNameThumbnailsAndPaymentSummary() {
         val files = export(invoice(4), ExportFormat.PNG)
         assertNull(files.pdf)
-        assertEquals(1, files.png.size)
-        val file = files.png.single()
+        val file = files.png!!
         assertEquals("invoice-0007-2026-10-25.png", file.name)
 
         val bitmap = BitmapFactory.decodeFile(file.path)
@@ -148,7 +149,7 @@ class ExportInstrumentedTest {
     @Test
     fun pdfOpensAndIsA4WithContent() {
         val files = export(invoice(4), ExportFormat.PDF)
-        assertEquals(0, files.png.size)
+        assertNull(files.png)
         val pdf = files.pdf!!
         assertEquals("invoice-0007-2026-10-25.pdf", pdf.name)
         assertTrue(pdf.length() > 2_000)
@@ -166,28 +167,21 @@ class ExportInstrumentedTest {
     @Test
     fun bothFormatsAreGeneratedTogether() {
         val files = export(invoice(2), ExportFormat.BOTH)
-        assertEquals(1, files.png.size)
+        assertNotNull(files.png)
         assertNotNull(files.pdf)
     }
 
     // Scenario 17
     @Test
-    fun aVeryLongInvoiceIsNotClippedInEitherFormat() {
-        val long = invoice(60)
-        val files = export(long, ExportFormat.BOTH)
+    fun aLongInvoiceIsOneTallPngAndSeveralPdfPagesWithTheSummaryOnTheLastOnly() {
+        val files = export(invoice(45), ExportFormat.BOTH)
 
-        // PNG: tall image(s) of fixed width; the last one ends with the payment summary
-        assertTrue(files.png.isNotEmpty())
-        for (file in files.png) {
-            val bmp = BitmapFactory.decodeFile(file.path)
-            assertEquals(1080, bmp.width)
-            assertTrue("PNG height ${bmp.height} stays decodable", bmp.height in 1..8_100)
-            bmp.recycle()
-        }
-        val lastPng = BitmapFactory.decodeFile(files.png.last().path)
-        assertTrue("the summary is on the last PNG", lastPng.hasPaymentSummary())
+        assertFalse(files.pngTooLong)
+        val png = BitmapFactory.decodeFile(files.png!!.path)
+        assertEquals(1080, png.width)
+        assertTrue("PNG height ${png.height} stays under 8,000 px", png.height in 1..8_000)
+        assertTrue("the summary is on the one PNG", png.hasPaymentSummary())
 
-        // PDF: several A4 pages, content on every page, and the summary on the final one
         val pages = renderPdfPages(files.pdf!!)
         assertTrue("expected several pages, got ${pages.size}", pages.size >= 3)
         pages.forEachIndexed { index, page ->
@@ -199,12 +193,27 @@ class ExportInstrumentedTest {
         Shots.savePng("sample-long-pdf-last-page", pages.last())
         assertTrue("payment summary on the last page", pages.last().hasPaymentSummary())
         assertTrue("no payment summary on the first page", !pages.first().hasPaymentSummary())
+        // the yellow balance band is on the last page only
+        assertTrue(pages.last().hasPixelNear(Palette.SECONDARY.toInt(), tolerance = 2))
+        assertTrue(!pages.first().hasPixelNear(Palette.SECONDARY.toInt(), tolerance = 2))
+    }
+
+    @Test
+    fun aTooLongInvoiceHasNoPngAndFallsBackToThePdfEvenWhenImageIsChosen() {
+        val files = export(invoice(90), ExportFormat.PNG)
+        assertTrue(files.pngTooLong)
+        assertNull(files.png)
+        val pdf = files.pdf!!
+        assertTrue(renderPdfPages(pdf).size >= 4)
+        assertNotNull(files.preview)
+        val exports = File(context.cacheDir, "exports").listFiles { f -> f.name.startsWith("invoice-0007") }.orEmpty()
+        assertTrue("no PNG file is written", exports.none { it.name.endsWith(".png") })
     }
 
     @Test
     fun filesAreSharedThroughContentUrisNeverRawPaths() {
         val files = export(invoice(2), ExportFormat.PNG)
-        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", files.png.single())
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", files.png!!)
         assertEquals("content", uri.scheme)
         assertTrue(!uri.toString().contains(context.cacheDir.path))
         context.contentResolver.openInputStream(uri).use { stream ->
@@ -226,6 +235,6 @@ class ExportInstrumentedTest {
         val again = export(edited, ExportFormat.PNG)
         val exports = File(context.cacheDir, "exports").listFiles { f -> f.name.startsWith("invoice-0007") }.orEmpty()
         assertEquals(1, exports.size)
-        assertEquals(again.png.single().name, exports.single().name)
+        assertEquals(again.png!!.name, exports.single().name)
     }
 }

@@ -60,6 +60,15 @@ object ItemDescriber {
         }
     }
 
+    /**
+     * The calculation cell of the invoice table: the unit price sits inside it and the quantity does not
+     * (it has its own column). "2,52 م² × 500 DH" or, for a per-piece product, "35 DH / قطعة".
+     */
+    fun formula(pricing: ItemPricing): String = when (pricing.formula) {
+        PricingFormula.PER_ITEM -> rate(pricing)
+        else -> "${baseAmount(pricing)} × ${ArabicFormat.amount(pricing.unitRate)}"
+    }
+
     /** The full step-by-step calculation for the confirmation screen. */
     fun breakdown(pricing: ItemPricing): List<BreakdownLine> {
         val lines = mutableListOf<BreakdownLine>()

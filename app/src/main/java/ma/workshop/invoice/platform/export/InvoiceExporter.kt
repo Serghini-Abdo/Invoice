@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ma.workshop.invoice.domain.format.InvoiceDocumentBuilder
 import ma.workshop.invoice.domain.invoice.Invoice
+import ma.workshop.invoice.domain.layout.PngLimits
 import ma.workshop.invoice.domain.settings.AppSettings
 import ma.workshop.invoice.domain.settings.ExportFormat
 import java.io.File
@@ -21,9 +22,11 @@ import java.time.ZoneId
 
 /** The generated files of one export and a preview of the first page. */
 class ExportFiles(
-    val png: List<File>,
+    val png: File?,
     val pdf: File?,
     val preview: Bitmap?,
+    /** The invoice is too tall for one image: there is no PNG and the PDF is made even if only an image was chosen. */
+    val pngTooLong: Boolean = false,
 )
 
 /**
@@ -50,18 +53,21 @@ class InvoiceExporter(private val context: Context) {
         deleteStale(base)
 
         val wantPng = settings.exportFormat != ExportFormat.PDF
-        val wantPdf = settings.exportFormat != ExportFormat.PNG
+        val pngLayout = if (wantPng) renderer.layoutForPng(doc) else null
+        val tooLong = pngLayout != null && PngLimits.isTooLong(pngLayout.pages[0].height)
+        // A very long invoice is never split into several images: it is shared as a PDF instead.
+        val wantPdf = settings.exportFormat != ExportFormat.PNG || tooLong
 
-        val png = if (wantPng) renderer.writePng(doc, directory, base) else emptyList()
+        val png = if (pngLayout != null && !tooLong) renderer.writePng(pngLayout, directory, base) else null
         val pdf = if (wantPdf) File(directory, "$base.pdf").also { renderer.writePdf(doc, it) } else null
 
         // The preview is the first page of the file that will actually be shared.
         val preview = when {
-            png.isNotEmpty() -> decodePreview(png.first())
+            png != null -> decodePreview(png)
             pdf != null -> renderPdfFirstPage(pdf)
             else -> null
         }
-        ExportFiles(png, pdf, preview)
+        ExportFiles(png, pdf, preview, pngTooLong = tooLong)
     }
 
     /** Removes older exports of this invoice (an edited invoice reuses the same name). */

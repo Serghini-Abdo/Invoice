@@ -14,7 +14,7 @@ on the screens after the layout sprint.
 | 3 (speech core) | TTS wrapper, voice check and prompt, Darija speech, speech rate, speech recognizer core | Done, see below |
 | 3 (add-on) | Spoken-language setting: Darija (default) or standard Arabic | Done, see below |
 | 4 (foundations) | Theme tokens, forced LTR, Arabic text and field components, top bar, speaker tile, Add button | Done, see below |
-| 5 (invoice output) | Table option A on paper and on screen, PDF headers and footer, totals colours, one PNG or point to PDF, paid badge, stacked Saved buttons | Not started (moved before units) |
+| 5 (invoice output) | Table option A on paper and on screen, PDF headers and footer, totals colours, one PNG or point to PDF, paid badge, stacked Saved buttons | Done, see below |
 | 6 (units, fields, photos) | cm/m and unit-label settings, invoice unit, field icons, photo import, backup with images | Not started |
 | 7 (placement) | Speakers on every row/card/field/CTA; mic on customer name and product name; dictation status line | Not started (needs 4 to 6) |
 
@@ -255,6 +255,79 @@ every existing flow, export, backup, migration and speech test.
   (`SectionCard` already does) and put the right-hand element last in a `Row`.
 * The empty item list card is still a button (it opens the catalogue); the mock-up makes it a message with
   its own speaker: change it with the speaker placement in sprint 7.
+
+## Sprint 5: invoice output
+
+Branch `day2/sprint-5` (from `day2/sprint-4`). Not pushed.
+
+### Delivered
+
+* **Table option A** (`InvoiceLayoutEngine`): columns left to right Price | Measurement / Formula | Quantity |
+  Name with its picture. The unit price is inside the formula cell ("2,52 م² × 500 DH", per piece
+  "35 DH / قطعة"); the quantity has its own centred column with 8-unit margins; "DH" is written once, in the
+  column title "المبلغ (DH)"; no divider lines in the table. New `DocumentRow.formula` / `totalNumber`,
+  `ItemDescriber.formula`, `InvoiceDocumentBuilder.row` (shared with the screens).
+* **Thumbnails 34 units** (26 pt, about 9 mm on A4). To get 26 pt the PDF is laid out about 778 units wide
+  (`PDF_SCALE = 26/34`), margin 28; table text prints at about 9 pt. The PNG is still 360 units = 1080 px.
+* **PDF:** full header on page 1 only; pages 2+ start with one slim line (workshop · invoice · date) above the
+  column titles; footer "صفحة 2 / 3" on every page; total, deposit and balance on the last page only, with at
+  least the last row. Deposit green and smaller (18 vs 20); balance in a yellow band, dark text, total's size.
+  The "خالص" badge on the paper stays when fully paid.
+* **One PNG** (`PngLimits`, 8,000 px): the multi-PNG split is gone. A too-tall invoice gets no PNG, the PDF is
+  made even if the format is "image", and the Saved screen / invoice detail show "هذه الفاتورة طويلة على صورة
+  واحدة. شاركها كملف PDF" with the PDF share and print buttons (`ExportFiles.pngTooLong`, `ExportUi.pngTooLong`).
+  `ExportFiles.png` is now a single `File?`.
+* **Same compact table on screen** (`ui/components/InvoiceTable.kt`): item list (36 dp pictures, one title
+  strip, each row a card with | حذف | تعديل | below), review (32 dp), invoice detail (32 dp). No dividers; a long
+  calculation wraps inside its cell. The old `ReadOnlyItem` and per-item cards are gone.
+* **Paid state on review:** "0 DH" in green with the `PaidBadge` (check icon + "خالص") on the balance line;
+  the banner is gone. An open balance stays bold ink. (Invoice detail keeps its banner: not in the list.)
+* **Saved screen:** "فاتورة جديدة" and "الرئيسية" stacked, full width.
+
+### Tests
+
+| Test | Where | Result |
+|---|---|---|
+| Column order, quantity column/margins, currency once, long formula wraps, no dividers, 34-unit thumbnails (32–40) | `InvoiceLayoutTest` | Pass (JVM) |
+| Deposit green and smaller, balance in a yellow band; paid badge | `InvoiceLayoutTest` | Pass (JVM) |
+| PNG limit (8,000 px, about 55 items); rows per page; slim line, full header on page 1 only; footer on every page; totals on the last page only | `InvoiceLayoutTest` | Pass (JVM) |
+| Row formula / bare total | `FormatAndDocumentTest` | Pass (JVM) |
+| All domain tests | `./gradlew -p domain test` | **198 pass** |
+| Build, lint | `assembleDebug`, `assembleDebugAndroidTest`, `lintDebug` | Pass (no errors) |
+| One PNG of 45 items + several PDF pages, yellow band and summary on the last page only | `ExportInstrumentedTest` | Pass (phone) |
+| 90 items: no PNG, PDF made although "image" is chosen | `ExportInstrumentedTest` | Pass (phone) |
+| Table order amount < formula < quantity < name on item list, review, detail; actions delete-left / edit-right | `InvoiceTableUiTest` (new) | Pass (phone) |
+| Paid badge only when deposit = total | `InvoiceTableUiTest` | Pass (phone) |
+| Saved buttons stacked, same left edge and width | `InvoiceTableUiTest` | Pass (phone) |
+| All instrumented tests | Samsung SM-S931B, Android 16 | **OK (57 tests)** |
+
+Test changes: the old 60-item "BOTH formats" test (split PNG) was replaced; `ExportFiles.png` is a single file.
+Test fixes during the run were test bugs only (a wait satisfied by the empty list, a yellow match too loose
+against illustration colours, a deposit typed twice).
+
+### Verified on a device vs. must be checked by hand
+
+Run on the owner's Samsung SM-S931B (test data only, with the owner's approval), targeted with `adb -s`,
+after building and stopping Gradle.
+
+**Verified automatically:** column order and sizes of the table on three screens, paid badge logic, stacked
+Saved buttons, PNG height under 8,000 px for 45 items, PDF page size and pagination, yellow band only on the last
+page, PDF fallback for a too-long invoice, every earlier test.
+
+**Check by eye on the phone (not covered):**
+
+* The PNG and PDF of a real invoice (open them from Saved → share): table spacing, 9 mm pictures, formula wrapping,
+  the yellow balance band, green deposit, footer "صفحة 1 / 1". Also print preview on paper if possible.
+* The compact table on the item list, review and detail at real size: 13 sp text, column titles fit, long names
+  and long formulas wrap without overlap; the picture sits right of the name.
+* The review paid line: badge left of "0 DH", reads correctly in Arabic.
+* The long-invoice message on Saved with 56+ items and format "image" (only the PDF buttons show).
+* Bidi order of "2,52 م² × 500 DH" and "صفحة 2 / 3" in the PDF.
+
+### Notes for the next sprints
+
+* Latin unit labels and photos will reach the table through `DocumentRow` / `IllustrationImage` (sprint 6).
+* Speaker tiles on the item-list actions and a speaker per table row come in sprint 7.
 
 ## Next sprints, step by step
 

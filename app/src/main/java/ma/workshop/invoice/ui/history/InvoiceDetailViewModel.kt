@@ -83,7 +83,7 @@ class InvoiceDetailViewModel(private val container: AppContainer, private val in
             _export.value = try {
                 val generated = container.exporter.export(ready.invoice, container.settings.get())
                 files = generated
-                ExportUi(ExportStatus.READY, preview = generated.preview?.asImageBitmap())
+                ExportUi(ExportStatus.READY, preview = generated.preview?.asImageBitmap(), pngTooLong = generated.pngTooLong)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -95,9 +95,9 @@ class InvoiceDetailViewModel(private val container: AppContainer, private val in
     fun share(context: Context, choice: ShareChoice) {
         val generated = files ?: return
         val list = when (choice) {
-            ShareChoice.PNG -> generated.png
+            ShareChoice.PNG -> listOfNotNull(generated.png)
             ShareChoice.PDF -> listOfNotNull(generated.pdf)
-            ShareChoice.BOTH -> generated.png + listOfNotNull(generated.pdf)
+            ShareChoice.BOTH -> listOfNotNull(generated.png, generated.pdf)
         }
         val opened = ShareHelper.share(context, list)
         _export.value = _export.value?.copy(message = if (opened) null else Strings.SHARE_UNAVAILABLE)
