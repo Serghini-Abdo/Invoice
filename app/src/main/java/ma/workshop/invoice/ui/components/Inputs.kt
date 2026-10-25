@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -55,12 +56,14 @@ fun displayNumber(text: String): String = text.replace('.', ',')
 @Composable
 private fun KeyCap(
     modifier: Modifier,
+    tag: String,
     onClick: () -> Unit,
     contentDescription: String,
     content: @Composable () -> Unit,
 ) {
     Surface(
         modifier = modifier
+            .testTag(tag)
             .height(54.dp)
             .clickable(role = Role.Button, onClickLabel = contentDescription, onClick = onClick),
         shape = RoundedCornerShape(14.dp),
@@ -89,7 +92,7 @@ fun NumericKeypad(
             for (row in rows) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     for (digit in row) {
-                        KeyCap(Modifier.weight(1f), { onKey(KeypadKey.Digit(digit)) }, digit.toString()) {
+                        KeyCap(Modifier.weight(1f), "key-$digit", { onKey(KeypadKey.Digit(digit)) }, digit.toString()) {
                             Text(digit.toString(), style = MaterialTheme.typography.headlineMedium)
                         }
                     }
@@ -97,27 +100,28 @@ fun NumericKeypad(
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (allowDecimal) {
-                    KeyCap(Modifier.weight(1f), { onKey(KeypadKey.Decimal) }, ",") {
+                    KeyCap(Modifier.weight(1f), "key-decimal", { onKey(KeypadKey.Decimal) }, ",") {
                         Text(",", style = MaterialTheme.typography.headlineMedium)
                     }
                 } else {
                     Spacer(Modifier.weight(1f))
                 }
-                KeyCap(Modifier.weight(1f), { onKey(KeypadKey.Digit(0)) }, "0") {
+                KeyCap(Modifier.weight(1f), "key-0", { onKey(KeypadKey.Digit(0)) }, "0") {
                     Text("0", style = MaterialTheme.typography.headlineMedium)
                 }
-                KeyCap(Modifier.weight(1f), { onKey(KeypadKey.Backspace) }, Strings.CLEAR) {
+                KeyCap(Modifier.weight(1f), "key-backspace", { onKey(KeypadKey.Backspace) }, Strings.CLEAR) {
                     Icon(Icons.AutoMirrored.Filled.Backspace, contentDescription = null, modifier = Modifier.size(30.dp))
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                KeyCap(Modifier.weight(1f), { onKey(KeypadKey.Clear) }, Strings.CLEAR) {
+                KeyCap(Modifier.weight(1f), "key-clear", { onKey(KeypadKey.Clear) }, Strings.CLEAR) {
                     Text(Strings.CLEAR, style = MaterialTheme.typography.titleMedium)
                 }
                 if (onNext != null) {
                     Surface(
                         modifier = Modifier
                             .weight(1f)
+                            .testTag("key-next")
                             .height(54.dp)
                             .clickable(role = Role.Button, onClickLabel = nextLabel, onClick = onNext),
                         shape = RoundedCornerShape(14.dp),
@@ -144,9 +148,10 @@ fun FieldBox(
     modifier: Modifier = Modifier,
     placeholder: String = "0",
     error: String? = null,
+    tag: String? = null,
     trailing: @Composable (() -> Unit)? = null,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(modifier = if (tag != null) modifier.testTag(tag) else modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Surface(
             modifier = Modifier
