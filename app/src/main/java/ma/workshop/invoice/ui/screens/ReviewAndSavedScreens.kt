@@ -296,8 +296,9 @@ fun SavedScreen(
         }
         Surface(shadowElevation = 12.dp, color = MaterialTheme.colorScheme.surface) {
             Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                BigButton(Strings.HOME, Icons.Filled.Home, onHome, Modifier.weight(1f), kind = ButtonKind.Secondary)
-                BigButton(Strings.NEW_INVOICE, Icons.Filled.Add, onNewInvoice, Modifier.weight(1f))
+                // "New invoice" is the longer label, so it gets the larger share and stays on one line.
+                BigButton(Strings.HOME, Icons.Filled.Home, onHome, Modifier.weight(0.85f), kind = ButtonKind.Secondary)
+                BigButton(Strings.NEW_INVOICE, Icons.Filled.Add, onNewInvoice, Modifier.weight(1.15f))
             }
         }
     }
