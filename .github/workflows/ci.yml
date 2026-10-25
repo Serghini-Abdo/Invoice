@@ -42,7 +42,7 @@ jobs:
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
       - name: Build, test, lint
         run: |
-          ./gradlew :domain:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --console=plain 2>&1 | tee build.log
+          ./gradlew :domain:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease --console=plain 2>&1 | tee build.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -20,9 +20,24 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Release signing comes from the environment only, so no key or password is ever in the repository.
+    // Without INVOICE_KEYSTORE_PATH the release APK is produced unsigned (sign it yourself with apksigner).
+    signingConfigs {
+        val keystorePath = providers.environmentVariable("INVOICE_KEYSTORE_PATH").orNull
+        if (keystorePath != null) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = providers.environmentVariable("INVOICE_KEYSTORE_PASSWORD").orNull
+                keyAlias = providers.environmentVariable("INVOICE_KEY_ALIAS").orNull
+                keyPassword = providers.environmentVariable("INVOICE_KEY_PASSWORD").orNull
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfigs.findByName("release")?.let { signingConfig = it }
         }
     }
 
