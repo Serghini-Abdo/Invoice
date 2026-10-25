@@ -32,9 +32,12 @@ value class Money(val centimes: Long) : Comparable<Money> {
     companion object {
         val ZERO = Money(0L)
 
-        /** Rounds an exact dirham amount to whole centimes (HALF_UP). */
+        /**
+         * Rounds an exact dirham amount to whole centimes (HALF_UP). Goes through BigDecimal.longValueExact
+         * because BigInteger.longValueExact is missing on Android before API 31.
+         */
         fun fromExact(dirhams: BigDecimal): Money =
-            Money(dirhams.setScale(2, RoundingMode.HALF_UP).unscaledValue().longValueExact())
+            Money(dirhams.setScale(2, RoundingMode.HALF_UP).movePointRight(2).longValueExact())
 
         fun sum(values: Iterable<Money>): Money = values.fold(ZERO) { acc, m -> acc + m }
     }
