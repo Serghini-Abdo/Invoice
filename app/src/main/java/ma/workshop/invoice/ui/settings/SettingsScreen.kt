@@ -28,6 +28,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import ma.workshop.invoice.domain.pricing.LengthUnit
+import ma.workshop.invoice.domain.settings.UnitLabelScript
+import ma.workshop.invoice.domain.format.ArabicTerms
+import androidx.compose.ui.platform.testTag
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -219,6 +223,32 @@ fun SettingsScreen(
                 }
                 FormatOption(Strings.FORMAT_BOTH, Strings.FORMAT_BOTH_HINT, settings.exportFormat == ExportFormat.BOTH) {
                     onUpdate { it.copy(exportFormat = ExportFormat.BOTH) }
+                }
+            }
+
+            SectionCard {
+                ArabicText(Strings.UNITS, style = MaterialTheme.typography.titleLarge)
+                ArabicText(Strings.LENGTH_UNIT, style = MaterialTheme.typography.titleMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    for ((unit, label) in listOf(
+                        LengthUnit.METER to ArabicTerms.METER,
+                        LengthUnit.CENTIMETER to ArabicTerms.CENTIMETER,
+                    ).reversed()) {
+                        ChoiceOption(label, selected = settings.lengthUnit == unit, enabled = true, modifier = Modifier.weight(1f).testTag("unit-${unit.id}")) {
+                            onUpdate { it.copy(lengthUnit = unit) }
+                        }
+                    }
+                }
+                ArabicText(Strings.UNIT_LABELS, style = MaterialTheme.typography.titleMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    for ((script, label) in listOf(
+                        UnitLabelScript.ARABIC to Strings.UNIT_LABELS_ARABIC,
+                        UnitLabelScript.LATIN to Strings.UNIT_LABELS_LATIN,
+                    ).reversed()) {
+                        ChoiceOption(label, selected = settings.unitLabelScript == script, enabled = true, modifier = Modifier.weight(1f).testTag("script-${script.id}")) {
+                            onUpdate { it.copy(unitLabelScript = script) }
+                        }
+                    }
                 }
             }
 

@@ -4,6 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.border
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -332,4 +334,35 @@ fun AddProductButton(onClick: () -> Unit, onSpeak: () -> Unit, speechAvailable: 
         speechAvailable = speechAvailable,
         buttonModifier = Modifier.testTag("add-product"),
     )
+}
+
+/** A small picture beside a field, in the same soft green box for every field (width, height, price, quantity, customer). */
+@Composable
+fun PictureBox(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Box(
+        modifier
+            .size(width = 46.dp, height = 58.dp)
+            .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)),
+        contentAlignment = Alignment.Center,
+    ) { content() }
+}
+
+@Composable
+fun IconPicture(icon: ImageVector, modifier: Modifier = Modifier) {
+    PictureBox(modifier) { Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(30.dp)) }
+}
+
+/** The dirham coin: a ring with "DH" in it (never a dollar sign). */
+@Composable
+fun CoinPicture(modifier: Modifier = Modifier) {
+    PictureBox(modifier) {
+        Box(
+            Modifier
+                .size(34.dp)
+                .border(BorderStroke(2.5.dp, MaterialTheme.colorScheme.primary), androidx.compose.foundation.shape.CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("DH", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+        }
+    }
 }

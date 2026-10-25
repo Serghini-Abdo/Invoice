@@ -120,7 +120,7 @@ class LayoutAndBackUiTest {
         // Both typed values are right-aligned in their box: the text ends near the right edge.
         for (typed in listOf("أحمد", "0612345678")) {
             val box = rule.onNodeWithText(typed).getBoundsInRoot()
-            assertTrue("\"$typed\" is a field filling the width, was $box of $width", box.right > width - 48.dp && box.left < width / 2)
+            assertTrue("\"$typed\" is a field filling the width, was $box of $width", box.right > width - 110.dp && box.left < width / 2)
         }
     }
 

@@ -20,6 +20,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,7 +57,9 @@ import ma.workshop.invoice.ui.components.AppTopBar
 import ma.workshop.invoice.ui.components.ArabicText
 import ma.workshop.invoice.ui.components.SpeakerButton
 import ma.workshop.invoice.ui.components.StatusBanner
-import ma.workshop.invoice.ui.components.UnitToggle
+import ma.workshop.invoice.ui.components.CoinPicture
+import ma.workshop.invoice.ui.components.IconPicture
+import ma.workshop.invoice.ui.components.LocalUnitScript
 import ma.workshop.invoice.ui.rateLabel
 import ma.workshop.invoice.ui.rateUnit
 
@@ -76,6 +81,7 @@ fun ItemEntryScreen(
 ) {
     val form = pending.form
     val formula = form.formula
+    val script = LocalUnitScript.current
     val needsDimensions = formula.needsDimensions
     val order = if (needsDimensions) {
         listOf(ActiveField.WIDTH, ActiveField.HEIGHT, ActiveField.RATE, ActiveField.QUANTITY)
@@ -152,7 +158,7 @@ fun ItemEntryScreen(
                         evaluation.pricing?.let { ArabicFormat.amount(it.total) } ?: "-",
                         style = MaterialTheme.typography.headlineMedium,
                     )
-                    evaluation.pricing?.let { ItemDescriber.baseAmount(it) }?.let {
+                    evaluation.pricing?.let { ItemDescriber.baseAmount(it, script) }?.let {
                         ArabicText(it, style = MaterialTheme.typography.bodySmall)
                     }
                 }
@@ -176,7 +182,8 @@ fun ItemEntryScreen(
                     selected = active == ActiveField.WIDTH,
                     onClick = { select(ActiveField.WIDTH) },
                     error = errorFor(Field.WIDTH),
-                    trailing = { UnitToggle(form.widthUnit, { onFormChange(form.copy(widthUnit = it)) }) },
+                    trailing = { UnitLabel(form.widthUnit) },
+                    picture = { IconPicture(Icons.Filled.SwapHoriz) },
                 )
                 FieldBox(
                     label = Strings.HEIGHT,
@@ -185,7 +192,8 @@ fun ItemEntryScreen(
                     selected = active == ActiveField.HEIGHT,
                     onClick = { select(ActiveField.HEIGHT) },
                     error = errorFor(Field.HEIGHT),
-                    trailing = { UnitToggle(form.heightUnit, { onFormChange(form.copy(heightUnit = it)) }) },
+                    trailing = { UnitLabel(form.heightUnit) },
+                    picture = { IconPicture(Icons.Filled.SwapVert) },
                 )
             }
             FieldBox(
@@ -195,8 +203,9 @@ fun ItemEntryScreen(
                 selected = active == ActiveField.RATE,
                 onClick = { select(ActiveField.RATE) },
                 error = errorFor(Field.RATE),
+                picture = { CoinPicture() },
                 trailing = {
-                    ArabicText(formula.rateUnit(), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ArabicText(formula.rateUnit(script), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 },
             )
             QuantityStepper(
@@ -216,6 +225,7 @@ fun ItemEntryScreen(
                 onSelect = { select(ActiveField.QUANTITY) },
                 maxQuantity = PricingLimits.MAX_QUANTITY,
                 error = errorFor(Field.QUANTITY),
+                picture = { IconPicture(Icons.Filled.Inventory2) },
             )
         }
 
@@ -298,7 +308,7 @@ fun ItemConfirmScreen(
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp), horizontalAlignment = Alignment.End) {
                     ArabicText(Strings.CALCULATION, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    for (line in ItemDescriber.breakdown(pricing)) {
+                    for (line in ItemDescriber.breakdown(pricing, LocalUnitScript.current)) {
                         Column(horizontalAlignment = Alignment.End) {
                             ArabicText(line.label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             ArabicText(line.value, style = MaterialTheme.typography.titleMedium)
@@ -315,4 +325,15 @@ fun ItemConfirmScreen(
             }
         }
     }
+}
+
+/** The unit written beside a dimension, where the m / cm switch used to be. It follows Settings. */
+@Composable
+private fun UnitLabel(unit: ma.workshop.invoice.domain.pricing.LengthUnit) {
+    ArabicText(
+        ArabicFormat.unit(unit, LocalUnitScript.current),
+        style = MaterialTheme.typography.titleMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 6.dp),
+    )
 }

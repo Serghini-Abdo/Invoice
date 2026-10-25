@@ -27,6 +27,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -66,6 +67,8 @@ import ma.workshop.invoice.ui.components.ConfirmDialog
 import ma.workshop.invoice.ui.components.IllustrationImage
 import ma.workshop.invoice.ui.components.InvoiceTableHeader
 import ma.workshop.invoice.ui.components.LocalSpeakers
+import ma.workshop.invoice.ui.components.LocalUnitScript
+import ma.workshop.invoice.ui.components.IconPicture
 import ma.workshop.invoice.ui.components.InvoiceTableRow
 import ma.workshop.invoice.ui.components.TablePicture
 import ma.workshop.invoice.ui.components.ProductCard
@@ -114,6 +117,7 @@ fun CustomerScreen(
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
                 tag = "customer-name",
+                illustration = Icons.Filled.Person,
             )
             AppTextField(
                 value = customer.phone,
@@ -123,6 +127,7 @@ fun CustomerScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
                 tag = "customer-phone",
+                illustration = Icons.Filled.Phone,
             )
         }
         Surface(shadowElevation = 8.dp, color = MaterialTheme.colorScheme.surface) {
@@ -154,7 +159,7 @@ fun ItemCard(item: InvoiceItem, onEdit: () -> Unit, onRemove: () -> Unit, modifi
     ) {
         Column(Modifier.padding(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             InvoiceTableRow(
-                InvoiceDocumentBuilder.row(position, item),
+                InvoiceDocumentBuilder.row(position, item, LocalUnitScript.current),
                 TablePicture.ItemList,
                 speakText = if (speakers.show) speakers.texts.itemLine(item.productName, item.pricing) else null,
             )

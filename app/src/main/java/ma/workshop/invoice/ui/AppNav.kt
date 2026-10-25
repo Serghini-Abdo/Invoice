@@ -24,6 +24,7 @@ import ma.workshop.invoice.ui.components.LocalSpeakers
 import ma.workshop.invoice.ui.components.SpeakerUi
 import ma.workshop.invoice.ui.components.VoiceMissingDialog
 import ma.workshop.invoice.ui.Strings
+import ma.workshop.invoice.ui.components.LocalUnitScript
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -122,7 +123,7 @@ fun AppNav(container: AppContainer) {
         )
     }
 
-    CompositionLocalProvider(LocalSpeakers provides shownUi) {
+    CompositionLocalProvider(LocalSpeakers provides shownUi, LocalUnitScript provides appSettings.unitLabelScript) {
     Box(
         Modifier
             .fillMaxSize()

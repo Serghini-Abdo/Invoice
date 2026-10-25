@@ -140,6 +140,11 @@ data class SettingsEntity(
     /** Added in schema version 4 (Day 2). */
     @ColumnInfo(defaultValue = "0")
     val showSpeakers: Boolean = false,
+    /** Added in schema version 5 (Day 2). */
+    @ColumnInfo(defaultValue = "m")
+    val lengthUnit: String = "m",
+    @ColumnInfo(defaultValue = "arabic")
+    val unitLabelScript: String = "arabic",
 ) {
     companion object {
         const val SINGLETON_ID = 1
