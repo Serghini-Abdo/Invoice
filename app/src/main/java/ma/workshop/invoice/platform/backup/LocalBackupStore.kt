@@ -153,7 +153,10 @@ class AppFolderBackupStore(private val context: Context, private val zone: () ->
     private fun writeFile(directory: File, name: String, bytes: ByteArray): File {
         try {
             if (!directory.isDirectory && !directory.mkdirs() && !directory.isDirectory) {
-                throw LocalBackupException(BackupFailure.LOCAL_WRITE_FAILED, "cannot create folder")
+                throw LocalBackupException(
+                    BackupFailure.LOCAL_WRITE_FAILED,
+                    "cannot create folder (parent exists=${directory.parentFile?.isDirectory}, parent writable=${directory.parentFile?.canWrite()}, storage=${Environment.getExternalStorageState()})",
+                )
             }
             val temp = File(directory, "$name.tmp")
             val target = File(directory, name)
