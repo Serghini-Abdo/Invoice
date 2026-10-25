@@ -1,7 +1,7 @@
 package ma.workshop.invoice.ui.history
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,13 +28,10 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -52,6 +49,9 @@ import ma.workshop.invoice.domain.invoice.HistoryQuery
 import ma.workshop.invoice.domain.invoice.InvoiceSummary
 import ma.workshop.invoice.ui.Strings
 import ma.workshop.invoice.ui.components.ScreenHeader
+import ma.workshop.invoice.ui.components.StrictButton
+import ma.workshop.invoice.ui.components.StrictIconButton
+import ma.workshop.invoice.ui.components.strictClickable
 import ma.workshop.invoice.ui.theme.AppColors
 import java.time.Instant
 import java.time.LocalDate
@@ -83,7 +83,11 @@ fun HistoryScreen(
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                 trailingIcon = {
                     if (query.text.isNotEmpty()) {
-                        IconButton(onClick = { onQueryChange(query.copy(text = "")) }) {
+                        StrictIconButton(
+                            onClick = { onQueryChange(query.copy(text = "")) },
+                            contentDescription = Strings.CLEAR_FILTERS,
+                            modifier = Modifier.size(48.dp),
+                        ) {
                             Icon(Icons.Filled.Clear, contentDescription = Strings.CLEAR_FILTERS)
                         }
                     }
@@ -97,7 +101,11 @@ fun HistoryScreen(
                 DateButton(Strings.DATE_FROM, query.fromDate, Modifier.weight(1f)) { pickingFrom = true }
                 DateButton(Strings.DATE_TO, query.toDate, Modifier.weight(1f)) { pickingTo = true }
                 if (!query.isEmpty) {
-                    IconButton(onClick = { onQueryChange(HistoryQuery()) }, modifier = Modifier.size(56.dp)) {
+                    StrictIconButton(
+                        onClick = { onQueryChange(HistoryQuery()) },
+                        contentDescription = Strings.CLEAR_FILTERS,
+                        modifier = Modifier.size(56.dp),
+                    ) {
                         Icon(Icons.Filled.Clear, contentDescription = Strings.CLEAR_FILTERS, modifier = Modifier.size(28.dp))
                     }
                 }
@@ -135,10 +143,13 @@ fun HistoryScreen(
 
 @Composable
 private fun DateButton(label: String, date: LocalDate?, modifier: Modifier, onClick: () -> Unit) {
-    OutlinedButton(
+    StrictButton(
         onClick = onClick,
         modifier = modifier.heightIn(min = 56.dp),
         shape = RoundedCornerShape(14.dp),
+        contentColor = MaterialTheme.colorScheme.primary,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
     ) {
         Icon(Icons.Filled.CalendarMonth, contentDescription = null, modifier = Modifier.size(22.dp))
         Spacer(Modifier.width(6.dp))
@@ -160,14 +171,19 @@ private fun DateDialog(initial: LocalDate?, onPick: (LocalDate?) -> Unit, onDism
     DatePickerDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(onClick = {
-                // The picker works in UTC midnight; convert back to a plain calendar date.
-                onPick(state.selectedDateMillis?.let { Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate() })
-                onDismiss()
-            }) { Text(Strings.CONFIRM, style = MaterialTheme.typography.titleMedium) }
+            StrictButton(
+                onClick = {
+                    // The picker works in UTC midnight; convert back to a plain calendar date.
+                    onPick(state.selectedDateMillis?.let { Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate() })
+                    onDismiss()
+                },
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+            ) { Text(Strings.CONFIRM, style = MaterialTheme.typography.titleMedium) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(Strings.CANCEL, style = MaterialTheme.typography.titleMedium) }
+            StrictButton(onClick = onDismiss, contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)) {
+                Text(Strings.CANCEL, style = MaterialTheme.typography.titleMedium)
+            }
         },
     ) {
         DatePicker(state = state)
@@ -179,7 +195,7 @@ fun InvoiceSummaryCard(invoice: InvoiceSummary, zone: ZoneId, onClick: () -> Uni
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(role = Role.Button, onClickLabel = Strings.INVOICE_DETAILS, onClick = onClick),
+            .strictClickable(role = Role.Button, onClickLabel = Strings.INVOICE_DETAILS, onClick = onClick),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),

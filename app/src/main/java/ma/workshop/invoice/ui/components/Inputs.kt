@@ -2,7 +2,6 @@ package ma.workshop.invoice.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,7 +29,6 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -83,7 +81,7 @@ private fun KeyCap(
     Surface(
         modifier = modifier
             .testTag(tag)
-            .clickable(role = Role.Button, onClickLabel = contentDescription, onClick = onClick),
+            .strictClickable(role = Role.Button, onClickLabel = contentDescription, onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.secondaryContainer,
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -148,7 +146,7 @@ fun NumericKeypad(
                             .fillMaxWidth()
                             .height(KeyHeight * 3 + KeyGap * 2)
                             .testTag("key-next")
-                            .clickable(role = Role.Button, onClickLabel = nextLabel, onClick = onNext),
+                            .strictClickable(role = Role.Button, onClickLabel = nextLabel, onClick = onNext),
                         shape = RoundedCornerShape(12.dp),
                         color = MaterialTheme.colorScheme.primary,
                         contentColor = androidx.compose.ui.graphics.Color.White,
@@ -185,7 +183,7 @@ fun FieldBox(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 58.dp)
-                .clickable(role = Role.Button, onClickLabel = label, onClick = onClick),
+                .strictClickable(role = Role.Button, onClickLabel = label, onClick = onClick),
             shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.surface,
             border = BorderStroke(
@@ -244,7 +242,7 @@ fun UnitToggle(selected: LengthUnit, onSelect: (LengthUnit) -> Unit, modifier: M
             Surface(
                 modifier = Modifier
                     .height(48.dp)
-                    .clickable(role = Role.RadioButton, onClickLabel = label) { onSelect(unit) },
+                    .strictClickable(role = Role.RadioButton, onClickLabel = label) { onSelect(unit) },
                 shape = RoundedCornerShape(12.dp),
                 color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = if (isSelected) androidx.compose.ui.graphics.Color.White else MaterialTheme.colorScheme.onSecondaryContainer,
@@ -266,7 +264,7 @@ private fun RoundAction(icon: ImageVector, description: String, enabled: Boolean
     Surface(
         modifier = Modifier
             .size(50.dp)
-            .clickable(enabled = enabled, role = Role.Button, onClickLabel = description, onClick = onClick),
+            .strictClickable(enabled = enabled, role = Role.Button, onClickLabel = description, onClick = onClick),
         shape = CircleShape,
         color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
         contentColor = androidx.compose.ui.graphics.Color.White,
@@ -301,7 +299,7 @@ fun QuantityStepper(
                 modifier = Modifier
                     .weight(1f)
                     .heightIn(min = 52.dp)
-                    .clickable(role = Role.Button, onClickLabel = Strings.QUANTITY, onClick = onSelect),
+                    .strictClickable(role = Role.Button, onClickLabel = Strings.QUANTITY, onClick = onSelect),
                 shape = RoundedCornerShape(16.dp),
                 color = MaterialTheme.colorScheme.surface,
                 border = BorderStroke(
@@ -336,7 +334,7 @@ fun QuantityStepper(
 /** Speaker target. Separate from the card's selection target so a tap here never selects the product. */
 @Composable
 fun SpeakerButton(onClick: () -> Unit, available: Boolean, modifier: Modifier = Modifier, description: String = Strings.SPEAK_NAME) {
-    IconButton(onClick = onClick, modifier = modifier.size(TouchTarget)) {
+    StrictIconButton(onClick = onClick, contentDescription = description, modifier = modifier.size(TouchTarget)) {
         Icon(
             imageVector = if (available) Icons.Filled.VolumeUp else Icons.Filled.VolumeOff,
             contentDescription = description,
@@ -369,7 +367,7 @@ fun ProductCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(role = Role.Button, onClickLabel = name, onClick = onSelect)
+                    .strictClickable(role = Role.Button, onClickLabel = name, onClick = onSelect)
                     .padding(start = 8.dp, end = 8.dp, top = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -399,7 +397,7 @@ fun AudioToggle(enabled: Boolean, onToggle: () -> Unit, modifier: Modifier = Mod
         modifier = modifier
             .heightIn(min = 48.dp)
             .testTag("audio-toggle")
-            .clickable(role = Role.Switch, onClickLabel = if (enabled) Strings.MUTE else Strings.AUDIO_ENABLED, onClick = onToggle),
+            .strictClickable(role = Role.Switch, onClickLabel = if (enabled) Strings.MUTE else Strings.AUDIO_ENABLED, onClick = onToggle),
         shape = RoundedCornerShape(12.dp),
         color = if (enabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
     ) {

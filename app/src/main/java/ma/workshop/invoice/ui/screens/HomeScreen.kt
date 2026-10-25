@@ -1,7 +1,6 @@
 package ma.workshop.invoice.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import ma.workshop.invoice.ui.Strings
 import ma.workshop.invoice.ui.components.BannerKind
 import ma.workshop.invoice.ui.components.StatusBanner
+import ma.workshop.invoice.ui.components.strictClickable
 import ma.workshop.invoice.ui.theme.AppColors
 
 @Composable
@@ -46,7 +46,7 @@ private fun HomeCard(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 132.dp)
-            .clickable(role = Role.Button, onClickLabel = text, onClick = onClick),
+            .strictClickable(role = Role.Button, onClickLabel = text, onClick = onClick),
         shape = RoundedCornerShape(28.dp),
         color = container,
         contentColor = content,
