@@ -118,8 +118,8 @@ jobs:
           find app/build/outputs/androidTest-results -name "*.xml" -print0 2>/dev/null | while IFS= read -r -d '' f; do
             echo "--- $f"
             grep -o '<testsuite [^>]*' "$f" | sed 's/xmlns[^ ]*//' | head -3
-            grep -B1 -A6 "<failure" "$f" | cut -c1-400 | head -120
-            grep -B1 -A6 "<error" "$f" | cut -c1-400 | head -40
+            grep -B1 -A6 "<failure" "$f" | cut -c1-1800 | head -120
+            grep -B1 -A6 "<error" "$f" | cut -c1-1800 | head -40
           done
           echo "=============== END ==============="
       - name: Publish screenshots (manual runs only)

@@ -40,12 +40,20 @@ class AndroidTextMeasurer(private val regular: Typeface, private val bold: Typef
     }
 
     companion object {
+        /**
+         * Cairo's line box is about 1.87 em tall (ascent 1.30 em + descent 0.57 em), roughly 40% more than
+         * Arabic text needs. Scaling the line spacing trims the unused descent area; the baseline stays
+         * put and descenders simply overlap the empty ascent area of the next line. Measuring and drawing
+         * share this builder, so they always agree.
+         */
+        const val LINE_SPACING = 0.7f
+
         fun buildLayout(text: CharSequence, paint: TextPaint, width: Float, alignment: Layout.Alignment): StaticLayout =
             StaticLayout.Builder.obtain(text, 0, text.length, paint, ceil(width).toInt().coerceAtLeast(1))
                 .setAlignment(alignment)
                 .setTextDirection(TextDirectionHeuristics.RTL)
                 .setIncludePad(false)
-                .setLineSpacing(0f, 1f)
+                .setLineSpacing(0f, LINE_SPACING)
                 .build()
     }
 }

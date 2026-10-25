@@ -240,11 +240,11 @@ class InvoiceLayoutEngine(private val measurer: TextMeasurer) {
         val textLeft = spec.margin + totalColumn + gap
         val textWidth = textRight - textLeft
 
-        // name / measurements / quantity / calculation (which contains the unit rate)
+        // name / measurements and quantity / calculation (which contains the unit rate). Measurements and
+        // quantity share a line so a row stays short: a typical invoice then fits on one A4 page.
         val lines = ArrayList<Pair<String, TextStyle>>()
         lines += row.name to TextStyle.BODY_BOLD
-        row.measures?.let { lines += it to TextStyle.BODY }
-        lines += "${ArabicTerms.QUANTITY}: ${row.quantity}" to TextStyle.SMALL
+        lines += listOfNotNull(row.measures, "${ArabicTerms.QUANTITY}: ${row.quantity}").joinToString("  ·  ") to TextStyle.BODY
         lines += row.calculation to TextStyle.SMALL
 
         val heights = lines.map { (t, s) -> measurer.measureHeight(t, s, textWidth) }
