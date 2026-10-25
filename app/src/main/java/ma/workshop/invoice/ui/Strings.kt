@@ -50,6 +50,8 @@ object Strings {
     const val ALL_CATEGORIES = "الكل"
     const val NO_PRODUCTS = "لا توجد منتوجات. أضف منتوجاً من الإعدادات"
     const val SPEAK_NAME = "نطق الاسم"
+    /** Speaker tile of a button: "نطق: متابعة". */
+    const val SPEAK_LABEL = "نطق"
 
     // item entry
     const val WIDTH = "العرض"

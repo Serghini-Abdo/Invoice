@@ -12,6 +12,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.runBlocking
 import ma.workshop.invoice.domain.invoice.Invoice
 import ma.workshop.invoice.domain.invoice.InvoiceVersioning
+import ma.workshop.invoice.domain.layout.InvoiceColors
 import ma.workshop.invoice.domain.settings.AppSettings
 import ma.workshop.invoice.domain.settings.ExportFormat
 import ma.workshop.invoice.platform.export.ExportFiles
@@ -90,7 +91,34 @@ class ExportInstrumentedTest {
             }
         }
 
-    private val accent = 0xB8541A // remaining balance colour on an unpaid invoice
+    /**
+     * The payment summary is the tallest block filled with the invoice panel colour. The column-title strip
+     * has the same fill but is only one small line high. (The unpaid balance is ink now, so it has no colour
+     * of its own to look for.)
+     */
+    private fun Bitmap.hasPaymentSummary(fromY: Int = 0): Boolean = tallestPanelBlock(fromY) > width / 10
+
+    private fun Bitmap.tallestPanelBlock(fromY: Int): Int {
+        val panel = InvoiceColors.PANEL.toInt()
+        val row = IntArray(width)
+        var best = 0
+        var run = 0
+        for (y in fromY until height) {
+            getPixels(row, 0, width, 0, y, width, 1)
+            var span = 0
+            var longest = 0
+            for (pixel in row) {
+                val near = abs(Color.red(pixel) - Color.red(panel)) <= 3 &&
+                    abs(Color.green(pixel) - Color.green(panel)) <= 3 &&
+                    abs(Color.blue(pixel) - Color.blue(panel)) <= 3
+                span = if (near) span + 1 else 0
+                if (span > longest) longest = span
+            }
+            run = if (longest > width / 3) run + 1 else 0
+            if (run > best) best = run
+        }
+        return best
+    }
     private val doorSteel = 0x37474F // door thumbnail frame
 
     // Scenario 16
@@ -112,8 +140,8 @@ class ExportInstrumentedTest {
 
         Shots.savePng("sample-invoice-png", bitmap)
         assertTrue("product thumbnails are drawn", bitmap.hasPixelNear(doorSteel))
-        // the remaining balance sits in the lower part of the image in the accent colour
-        assertTrue("payment summary is drawn", bitmap.hasPixelNear(accent, fromY = bitmap.height * 3 / 4))
+        // the total, deposit and balance box sits in the lower half of the image
+        assertTrue("payment summary is drawn", bitmap.hasPaymentSummary(fromY = bitmap.height / 2))
         assertNotNull(files.preview)
     }
 
@@ -157,7 +185,7 @@ class ExportInstrumentedTest {
             bmp.recycle()
         }
         val lastPng = BitmapFactory.decodeFile(files.png.last().path)
-        assertTrue("the summary is on the last PNG", lastPng.hasPixelNear(accent))
+        assertTrue("the summary is on the last PNG", lastPng.hasPaymentSummary())
 
         // PDF: several A4 pages, content on every page, and the summary on the final one
         val pages = renderPdfPages(files.pdf!!)
@@ -169,7 +197,8 @@ class ExportInstrumentedTest {
         }
         Shots.savePng("sample-long-pdf-page1", pages.first())
         Shots.savePng("sample-long-pdf-last-page", pages.last())
-        assertTrue("payment summary on the last page", pages.last().hasPixelNear(accent))
+        assertTrue("payment summary on the last page", pages.last().hasPaymentSummary())
+        assertTrue("no payment summary on the first page", !pages.first().hasPaymentSummary())
     }
 
     @Test

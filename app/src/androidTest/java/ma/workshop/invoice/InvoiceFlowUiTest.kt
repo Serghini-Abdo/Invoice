@@ -64,7 +64,7 @@ class InvoiceFlowUiTest {
         for (key in keys) rule.onNodeWithTag("key-$key").performClick()
     }
 
-    private fun addButton() = "+ ${Strings.ADD_PRODUCT}"
+    private fun addButton() = Strings.ADD_PRODUCT
 
     @Test
     fun homeHasExactlyTheThreeMainActions() {

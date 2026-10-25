@@ -38,6 +38,9 @@ interface SpeechText {
 
     /** Played by "تجربة الصوت" in Settings. */
     val voiceTest: String
+
+    /** The speaker tile of the yellow "+ إضافة منتوج" button. */
+    val addProduct: String
 }
 
 object SpeechTexts {

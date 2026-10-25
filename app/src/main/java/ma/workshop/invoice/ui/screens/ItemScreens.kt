@@ -19,7 +19,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -49,7 +49,9 @@ import ma.workshop.invoice.ui.components.FieldBox
 import ma.workshop.invoice.ui.components.IllustrationImage
 import ma.workshop.invoice.ui.components.NumericKeypad
 import ma.workshop.invoice.ui.components.QuantityStepper
-import ma.workshop.invoice.ui.components.ScreenHeader
+import ma.workshop.invoice.ui.components.AppSubBar
+import ma.workshop.invoice.ui.components.AppTopBar
+import ma.workshop.invoice.ui.components.ArabicText
 import ma.workshop.invoice.ui.components.SpeakerButton
 import ma.workshop.invoice.ui.components.StatusBanner
 import ma.workshop.invoice.ui.components.UnitToggle
@@ -125,35 +127,35 @@ fun ItemEntryScreen(
     fun errorFor(field: Field): String? = if (show) evaluation.issueFor(field)?.arabic() else null
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        ScreenHeader(
+        AppTopBar(
             title = pending.product.name,
             onBack = onBack,
-            actions = { IllustrationImage(pending.product.illustration, Modifier.size(48.dp)) },
+            centerIcon = { IllustrationImage(pending.product.illustration, Modifier.size(36.dp)) },
         )
 
-        // live total + continue, always visible
+        // live total + continue, always visible: the button on the left, the total on the right
         Surface(color = MaterialTheme.colorScheme.primaryContainer) {
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column(Modifier.weight(1f)) {
-                    Text(Strings.ITEM_TOTAL, style = MaterialTheme.typography.titleSmall)
-                    Text(
-                        evaluation.pricing?.let { ArabicFormat.amount(it.total) } ?: "-",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                    evaluation.pricing?.let { ItemDescriber.baseAmount(it) }?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall)
-                    }
-                }
                 BigButton(
                     text = Strings.CONTINUE,
                     icon = Icons.AutoMirrored.Filled.ArrowForward,
                     onClick = onSubmit,
                     modifier = Modifier.width(170.dp).testTag("entry-continue"),
                 )
+                Spacer(Modifier.width(8.dp))
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                    ArabicText(Strings.ITEM_TOTAL, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    ArabicText(
+                        evaluation.pricing?.let { ArabicFormat.amount(it.total) } ?: "-",
+                        style = MaterialTheme.typography.headlineMedium,
+                    )
+                    evaluation.pricing?.let { ItemDescriber.baseAmount(it) }?.let {
+                        ArabicText(it, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
             }
         }
 
@@ -194,7 +196,7 @@ fun ItemEntryScreen(
                 onClick = { select(ActiveField.RATE) },
                 error = errorFor(Field.RATE),
                 trailing = {
-                    Text(formula.rateUnit(), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ArabicText(formula.rateUnit(), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 },
             )
             QuantityStepper(
@@ -250,7 +252,12 @@ fun ItemConfirmScreen(
     LaunchedEffect(pricing) { if (pricing != null) onSpeakTotal() }
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        ScreenHeader(Strings.CONFIRM_ITEM_TITLE, onBack, actions = { AudioToggle(audioEnabled, onToggleAudio) })
+        AppTopBar(
+            title = Strings.CONFIRM_ITEM_TITLE,
+            onBack = onBack,
+            centerIcon = { IllustrationImage(pending.product.illustration, Modifier.size(36.dp)) },
+        )
+        AppSubBar { AudioToggle(audioEnabled, onToggleAudio) }
         if (pricing == null) return@Column
 
         Column(
@@ -258,11 +265,11 @@ fun ItemConfirmScreen(
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            IllustrationImage(pending.product.illustration, Modifier.size(96.dp))
-            Text(pending.product.name, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+            // The picture is in the top bar now; the name stays large, on the right.
+            ArabicText(pending.product.name, style = MaterialTheme.typography.headlineMedium)
 
             // The total comes first: it is what the owner came here to check (and hear), so it never
             // needs scrolling to find. The step-by-step calculation follows below it.
@@ -272,15 +279,14 @@ fun ItemConfirmScreen(
                 color = MaterialTheme.colorScheme.primaryContainer,
             ) {
                 Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(Strings.ITEM_TOTAL, style = MaterialTheme.typography.titleMedium)
-                        Text(
+                    SpeakerButton(onClick = onReplay, available = speechAvailable, description = Strings.REPLAY)
+                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                        ArabicText(Strings.ITEM_TOTAL, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        ArabicText(
                             ArabicFormat.amount(pricing.total),
                             style = MaterialTheme.typography.displaySmall,
-                            color = MaterialTheme.colorScheme.primary,
                         )
                     }
-                    SpeakerButton(onClick = onReplay, available = speechAvailable, description = Strings.REPLAY)
                 }
             }
 
@@ -290,12 +296,12 @@ fun ItemConfirmScreen(
                 color = MaterialTheme.colorScheme.surface,
                 shadowElevation = 2.dp,
             ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(Strings.CALCULATION, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp), horizontalAlignment = Alignment.End) {
+                    ArabicText(Strings.CALCULATION, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     for (line in ItemDescriber.breakdown(pricing)) {
-                        Column {
-                            Text(line.label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(line.value, style = MaterialTheme.typography.titleMedium)
+                        Column(horizontalAlignment = Alignment.End) {
+                            ArabicText(line.label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            ArabicText(line.value, style = MaterialTheme.typography.titleMedium)
                         }
                     }
                 }

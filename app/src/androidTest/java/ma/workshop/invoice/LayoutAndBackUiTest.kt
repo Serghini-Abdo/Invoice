@@ -17,6 +17,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
@@ -33,7 +34,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Checks right-to-left placement, touch-target sizes and the system Back button on the real UI. */
+/** Checks the forced left-to-right layout, touch-target sizes and the system Back button on the real UI. */
 @RunWith(AndroidJUnit4::class)
 class LayoutAndBackUiTest {
 
@@ -67,17 +68,23 @@ class LayoutAndBackUiTest {
     }
 
     private fun goToCatalog() {
+        goToItemList()
+        rule.onNodeWithText(Strings.ADD_PRODUCT).performClick()
+        waitForText(Strings.CHOOSE_PRODUCT)
+    }
+
+    private fun goToItemList() {
         waitForText(Strings.NEW_INVOICE)
         rule.onNodeWithText(Strings.NEW_INVOICE).performClick()
         waitForText(Strings.CONTINUE)
         rule.onNodeWithText(Strings.CONTINUE).performClick()
-        waitForText("+ ${Strings.ADD_PRODUCT}")
-        rule.onNodeWithText("+ ${Strings.ADD_PRODUCT}").performClick()
-        waitForText(Strings.CHOOSE_PRODUCT)
+        waitForText(Strings.ADD_PRODUCT)
     }
 
+    private fun rootWidth() = rule.onRoot().getBoundsInRoot().width
+
     @Test
-    fun theBackArrowIsOnTheRightAndHomeButtonsAreLarge() {
+    fun theLayoutIsLeftToRightWithTheBackArrowLeftAndTheTitleRight() {
         waitForText(Strings.NEW_INVOICE)
         for (label in listOf(Strings.NEW_INVOICE, Strings.PREVIOUS_INVOICES, Strings.SETTINGS)) {
             rule.onNodeWithText(label).assertHeightIsAtLeast(100.dp)
@@ -85,13 +92,84 @@ class LayoutAndBackUiTest {
         rule.onNodeWithText(Strings.NEW_INVOICE).performClick()
         waitForText(Strings.CUSTOMER_TITLE)
 
-        val rootWidth = rule.onRoot().getBoundsInRoot().width
+        val width = rootWidth()
         val back = rule.onNodeWithContentDescription(Strings.BACK).getBoundsInRoot()
-        assertTrue("in right-to-left the back arrow is at the right edge", back.left > rootWidth / 2)
+        assertTrue("the back arrow is at the left edge, was $back", back.right < width / 2)
         val title = rule.onNodeWithText(Strings.CUSTOMER_TITLE).getBoundsInRoot()
-        assertTrue("the title sits left of the back arrow", title.right <= back.left + 1.dp)
+        assertTrue("the title sits right of the back arrow, was $title", title.left >= back.right)
+        assertTrue("the title ends at the right edge, was $title of $width", title.right > width - 32.dp)
         rule.onNodeWithContentDescription(Strings.BACK).assertWidthIsAtLeast(48.dp).assertHeightIsAtLeast(48.dp)
         rule.onNodeWithText(Strings.CONTINUE).assertHeightIsAtLeast(64.dp)
+    }
+
+    @Test
+    fun arabicLabelsAndTextFieldsAreRightAligned() {
+        waitForText(Strings.NEW_INVOICE)
+        rule.onNodeWithText(Strings.NEW_INVOICE).performClick()
+        waitForText(Strings.CUSTOMER_TITLE)
+        val width = rootWidth()
+
+        val label = rule.onNodeWithText(Strings.CUSTOMER_NAME).getBoundsInRoot()
+        assertTrue("the field label sits on the right, was $label of $width", label.left > width / 2)
+        val hint = rule.onNodeWithText(Strings.CUSTOMER_HINT).getBoundsInRoot()
+        assertTrue("the banner text reaches towards the right, was $hint of $width", hint.right > width * 3 / 4)
+
+        rule.onNodeWithTag("customer-name").performTextInput("أحمد")
+        rule.onNodeWithTag("customer-phone").performTextInput("0612345678")
+        rule.waitForIdle()
+        // Both typed values are right-aligned in their box: the text ends near the right edge.
+        for (typed in listOf("أحمد", "0612345678")) {
+            val box = rule.onNodeWithText(typed).getBoundsInRoot()
+            assertTrue("\"$typed\" is a field filling the width, was $box of $width", box.right > width - 48.dp && box.left < width / 2)
+        }
+    }
+
+    @Test
+    fun theYellowAddButtonIsLargeWithItsOwnSpeakerTileOnTheLeft() {
+        goToItemList()
+        rule.onNodeWithTag("add-product").assertHeightIsAtLeast(64.dp)
+        val button = rule.onNodeWithTag("add-product").getBoundsInRoot()
+        val tile = rule.onNodeWithContentDescription("${Strings.SPEAK_LABEL}: ${Strings.ADD_PRODUCT}")
+        tile.assertWidthIsAtLeast(48.dp).assertHeightIsAtLeast(48.dp)
+        val tileBounds = tile.getBoundsInRoot()
+        assertTrue("the speaker tile is left of its button, tile $tileBounds, button $button", tileBounds.right <= button.left)
+        assertTrue("the gap is small (4 dp), tile $tileBounds, button $button", button.left - tileBounds.right < 8.dp)
+        assertTrue("tile and button have the same height", kotlin.math.abs(tileBounds.height.value - button.height.value) < 1f)
+
+        // A tap on the tile only speaks (audio is off here): no product screen opens.
+        tile.performClick()
+        rule.waitForIdle()
+        assertTrue(rule.onAllNodesWithText(Strings.CHOOSE_PRODUCT).fetchSemanticsNodes().isEmpty())
+        rule.onNodeWithTag("add-product").performClick()
+        waitForText(Strings.CHOOSE_PRODUCT)
+    }
+
+    @Test
+    fun itemScreensShowTheirPictureInTheCentreOfTheTopBarAndTheMuteChipBelowIt() {
+        goToCatalog()
+        rule.onNodeWithText("باب حديد").performClick()
+        waitForText(Strings.WIDTH)
+        val width = rootWidth()
+        val icon = rule.onNodeWithTag("top-bar-icon").getBoundsInRoot()
+        val centre = (icon.left + icon.right) / 2
+        assertTrue("the picture is centred, was $icon of $width", kotlin.math.abs(centre.value - width.value / 2) < 2f)
+        val title = rule.onAllNodesWithText("باب حديد").onFirst().getBoundsInRoot()
+        assertTrue("the title stays in the right half, was $title, icon $icon", title.left >= icon.right)
+        assertTrue("the back arrow is left of the picture", rule.onNodeWithContentDescription(Strings.BACK).getBoundsInRoot().right <= icon.left)
+
+        for (key in listOf("1", "decimal", "2")) rule.onNodeWithTag("key-$key").performClick()
+        rule.onNodeWithTag("key-next").performClick()
+        for (key in listOf("2")) rule.onNodeWithTag("key-$key").performClick()
+        rule.onNodeWithTag("key-next").performClick()
+        for (key in listOf("5", "0", "0")) rule.onNodeWithTag("key-$key").performClick()
+        rule.onNodeWithTag("entry-continue").performClick()
+        waitForText(Strings.CONFIRM_ITEM_TITLE)
+
+        val back = rule.onNodeWithContentDescription(Strings.BACK).getBoundsInRoot()
+        val chip = rule.onNodeWithTag("audio-toggle").getBoundsInRoot()
+        assertTrue("the mute chip is in the sub-bar under the top bar, chip $chip, back $back", chip.top >= back.bottom)
+        assertTrue("the mute chip is on the left, was $chip", chip.right < width / 2)
+        rule.onNodeWithTag("top-bar-icon").assertExists()
     }
 
     @Test
@@ -189,7 +267,7 @@ class LayoutAndBackUiTest {
     fun systemBackWalksBackThroughTheWorkflowWithoutLosingTheStep() {
         goToCatalog()
         systemBack() // catalog -> item list
-        waitForText("+ ${Strings.ADD_PRODUCT}")
+        waitForText(Strings.ADD_PRODUCT)
         assertTrue(rule.onAllNodesWithText(Strings.CHOOSE_PRODUCT).fetchSemanticsNodes().isEmpty())
 
         systemBack() // item list -> customer

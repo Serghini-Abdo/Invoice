@@ -42,6 +42,9 @@ object DarijaTerms {
     const val METHOD_PERIMETER = "بالمتر الطولي"
     const val METHOD_PIECE = "بالحبة"
 
+    // buttons
+    const val ADD_PRODUCT = "زيد منتوج"
+
     /** Played by "تجربة الصوت" in Settings. */
     const val VOICE_TEST = "هادا هو الصوت ديال التطبيق. ألف و ميتين و ستين درهم"
 }

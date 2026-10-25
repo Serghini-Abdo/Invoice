@@ -46,9 +46,11 @@ fun Modifier.strictClickable(
     enabled: Boolean = true,
     role: Role? = Role.Button,
     onClickLabel: String? = null,
+    interactionSource: MutableInteractionSource? = null,
     onClick: () -> Unit,
 ): Modifier = composed {
-    val interactionSource = remember { MutableInteractionSource() }
+    val ownSource = remember { MutableInteractionSource() }
+    val interactionSource = interactionSource ?: ownSource
     val currentOnClick by rememberUpdatedState(onClick)
     val slop = LocalViewConfiguration.current.touchSlop
     this
@@ -111,12 +113,16 @@ fun StrictButton(
     contentColor: Color = MaterialTheme.colorScheme.primary,
     border: BorderStroke? = null,
     contentPadding: PaddingValues = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
+    interactionSource: MutableInteractionSource? = null,
+    /** For buttons without words (a speaker tile): the name screen readers and tests find it by. */
+    contentDescription: String? = null,
     content: @Composable RowScope.() -> Unit,
 ) {
     Surface(
         modifier = modifier
             .clip(shape)
-            .strictClickable(enabled = enabled, onClickLabel = onClickLabel, onClick = onClick),
+            .then(if (contentDescription != null) Modifier.semantics { this.contentDescription = contentDescription } else Modifier)
+            .strictClickable(enabled = enabled, onClickLabel = onClickLabel, interactionSource = interactionSource, onClick = onClick),
         shape = shape,
         color = containerColor,
         contentColor = contentColor,

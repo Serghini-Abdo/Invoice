@@ -31,7 +31,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -65,11 +64,17 @@ import ma.workshop.invoice.ui.components.ButtonKind
 import ma.workshop.invoice.ui.components.ConfirmDialog
 import ma.workshop.invoice.ui.components.IllustrationImage
 import ma.workshop.invoice.ui.components.ProductCard
-import ma.workshop.invoice.ui.components.ScreenHeader
+import ma.workshop.invoice.ui.components.AddProductButton
+import ma.workshop.invoice.ui.components.AppTextField
+import ma.workshop.invoice.ui.components.AppTopBar
+import ma.workshop.invoice.ui.components.ArabicText
 import ma.workshop.invoice.ui.components.StatusBanner
 import ma.workshop.invoice.ui.components.StrictButton
 import ma.workshop.invoice.ui.components.strictClickable
-import ma.workshop.invoice.ui.theme.AppColors
+import ma.workshop.invoice.ui.theme.appPalette
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -87,7 +92,7 @@ fun CustomerScreen(
 ) {
     val focus = LocalFocusManager.current
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        ScreenHeader(Strings.CUSTOMER_TITLE, onBack)
+        AppTopBar(Strings.CUSTOMER_TITLE, onBack)
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -96,27 +101,23 @@ fun CustomerScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             StatusBanner(Strings.CUSTOMER_HINT, BannerKind.Info)
-            OutlinedTextField(
+            AppTextField(
                 value = customer.name,
                 onValueChange = { onChange(it.take(60), customer.phone) },
-                label = { Text("${Strings.CUSTOMER_NAME} (${Strings.OPTIONAL})", style = MaterialTheme.typography.bodyMedium) },
-                textStyle = MaterialTheme.typography.headlineSmall,
-                singleLine = true,
+                label = Strings.CUSTOMER_NAME,
+                hint = "(${Strings.OPTIONAL})",
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
+                tag = "customer-name",
             )
-            OutlinedTextField(
+            AppTextField(
                 value = customer.phone,
                 onValueChange = { v -> onChange(customer.name, v.filter { it.isDigit() || it == '+' || it == ' ' }.take(20)) },
-                label = { Text("${Strings.CUSTOMER_PHONE} (${Strings.OPTIONAL})", style = MaterialTheme.typography.bodyMedium) },
-                textStyle = MaterialTheme.typography.headlineSmall,
-                singleLine = true,
+                label = Strings.CUSTOMER_PHONE,
+                hint = "(${Strings.OPTIONAL})",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
+                tag = "customer-phone",
             )
         }
         Surface(shadowElevation = 8.dp, color = MaterialTheme.colorScheme.surface) {
@@ -143,30 +144,30 @@ fun ItemCard(item: InvoiceItem, onEdit: () -> Unit, onRemove: () -> Unit, modifi
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Amount on the left, product on the right, as on the printed invoice.
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IllustrationImage(item.illustration, Modifier.size(64.dp))
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(item.productName, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                ArabicText(
+                    ArabicFormat.amount(item.pricing.total),
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                Spacer(Modifier.width(8.dp))
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                    ArabicText(item.productName, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     ItemDescriber.measures(item.pricing)?.let {
-                        Text(it, style = MaterialTheme.typography.bodyMedium)
+                        ArabicText(it, style = MaterialTheme.typography.bodyMedium)
                     }
-                    Text(
+                    ArabicText(
                         "${ArabicTerms.QUANTITY}: ${item.pricing.quantity}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    ArabicFormat.amount(item.pricing.total),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+                Spacer(Modifier.width(12.dp))
+                IllustrationImage(item.illustration, Modifier.size(64.dp))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SmallAction(Strings.EDIT, Icons.Filled.Edit, onEdit, Modifier.weight(1f))
                 SmallAction(Strings.DELETE, Icons.Filled.Delete, onRemove, Modifier.weight(1f), danger = true)
+                SmallAction(Strings.EDIT, Icons.Filled.Edit, onEdit, Modifier.weight(1f))
             }
         }
     }
@@ -184,7 +185,7 @@ private fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) 
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
     ) {
-        Text(label, style = MaterialTheme.typography.titleSmall)
+        ArabicText(label, style = MaterialTheme.typography.titleSmall)
     }
 }
 
@@ -195,13 +196,13 @@ private fun SmallAction(text: String, icon: androidx.compose.ui.graphics.vector.
             .heightIn(min = 48.dp)
             .strictClickable(role = androidx.compose.ui.semantics.Role.Button, onClickLabel = text, onClick = onClick),
         shape = RoundedCornerShape(12.dp),
-        color = if (danger) AppColors.RedPale else MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = if (danger) AppColors.Red else MaterialTheme.colorScheme.onSecondaryContainer,
+        color = if (danger) MaterialTheme.appPalette.errorContainer else MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = if (danger) MaterialTheme.appPalette.onErrorContainer else MaterialTheme.colorScheme.onSecondaryContainer,
     ) {
         Row(Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp))
+            ArabicText(text, style = MaterialTheme.typography.titleSmall)
             Spacer(Modifier.width(8.dp))
-            Text(text, style = MaterialTheme.typography.titleSmall)
+            Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp))
         }
     }
 }
@@ -219,9 +220,11 @@ fun ItemListScreen(
     onEditCustomer: () -> Unit,
     onContinue: () -> Unit,
     onBack: () -> Unit,
+    onSpeakAdd: () -> Unit = {},
+    speechAvailable: Boolean = true,
 ) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        ScreenHeader(if (isEditing) Strings.EDIT else Strings.ITEMS_TITLE, onBack)
+        AppTopBar(if (isEditing) Strings.EDIT else Strings.ITEMS_TITLE, onBack)
 
         if (state.items.isEmpty()) {
             Column(
@@ -243,8 +246,8 @@ fun ItemListScreen(
                     ) {
                         IllustrationImage("door", Modifier.size(120.dp))
                         Icon(Icons.Filled.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(64.dp))
-                        Text(Strings.ADD_FIRST_PRODUCT, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
-                        Text(Strings.NO_ITEMS_HINT, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
+                        ArabicText(Strings.ADD_FIRST_PRODUCT, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+                        ArabicText(Strings.NO_ITEMS_HINT, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
                     }
                 }
             }
@@ -263,17 +266,18 @@ fun ItemListScreen(
                         color = MaterialTheme.colorScheme.secondaryContainer,
                     ) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(28.dp))
+                            Icon(Icons.Filled.Edit, contentDescription = Strings.EDIT, modifier = Modifier.size(24.dp))
                             Spacer(Modifier.width(10.dp))
                             val summary = listOf(state.customer.name.trim(), state.customer.phone.trim()).filter { it.isNotEmpty() }
-                            Text(
+                            ArabicText(
                                 if (summary.isEmpty()) "${Strings.EDIT_CUSTOMER} (${Strings.OPTIONAL})" else summary.joinToString("  •  "),
                                 style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.weight(1f),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
-                            Icon(Icons.Filled.Edit, contentDescription = Strings.EDIT, modifier = Modifier.size(24.dp))
+                            Spacer(Modifier.width(10.dp))
+                            Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(28.dp))
                         }
                     }
                 }
@@ -291,12 +295,7 @@ fun ItemListScreen(
                 if (state.issue == FlowIssue.NO_ITEMS) {
                     StatusBanner(Strings.NEED_ONE_ITEM, BannerKind.Warning)
                 }
-                // The label already starts with "+", so no second plus icon next to it.
-                if (state.items.isNotEmpty()) {
-                    BigButton("+ ${Strings.ADD_PRODUCT}", null, onAdd, kind = ButtonKind.Secondary)
-                } else {
-                    BigButton("+ ${Strings.ADD_PRODUCT}", null, onAdd)
-                }
+                AddProductButton(onClick = onAdd, onSpeak = onSpeakAdd, speechAvailable = speechAvailable)
                 BigButton(
                     Strings.CONTINUE,
                     Icons.AutoMirrored.Filled.ArrowForward,
@@ -337,9 +336,11 @@ fun CatalogPickerScreen(
     val shown = if (selectedCategory == null) products else products.filter { it.category?.trim() == selectedCategory }
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        ScreenHeader(Strings.CHOOSE_PRODUCT, onBack)
+        AppTopBar(Strings.CHOOSE_PRODUCT, onBack)
         if (categories.size >= 2) {
+            // reverseLayout: "all" first, on the right, and the rest towards the left.
             LazyRow(
+                reverseLayout = true,
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -361,26 +362,32 @@ fun CatalogPickerScreen(
         }
         if (shown.isEmpty()) {
             Box(Modifier.weight(1f).fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                Text(Strings.NO_PRODUCTS, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+                ArabicText(Strings.NO_PRODUCTS, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
             }
         } else {
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 150.dp),
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                contentPadding = PaddingValues(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                gridItems(shown, key = { it.id }) { product ->
-                    ProductCard(
-                        name = product.name,
-                        illustration = product.illustration,
-                        onSelect = { onPick(product) },
-                        onSpeak = { onSpeak(product.name) },
-                        speechAvailable = speechAvailable,
-                    )
+            // The one right-to-left island of the layout: the grid keeps today's order, first product top-right
+            // (decided). Each card is laid out left-to-right again, like the rest of the app.
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 150.dp),
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    gridItems(shown, key = { it.id }) { product ->
+                        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                            ProductCard(
+                                name = product.name,
+                                illustration = product.illustration,
+                                onSelect = { onPick(product) },
+                                onSpeak = { onSpeak(product.name) },
+                                speechAvailable = speechAvailable,
+                            )
+                        }
+                    }
+                    item(span = { GridItemSpan(maxLineSpan) }) { Spacer(Modifier.size(8.dp)) }
                 }
-                item(span = { GridItemSpan(maxLineSpan) }) { Spacer(Modifier.size(8.dp)) }
             }
         }
     }

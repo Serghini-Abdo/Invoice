@@ -28,11 +28,9 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,7 +38,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -54,13 +51,15 @@ import ma.workshop.invoice.ui.components.BigButton
 import ma.workshop.invoice.ui.components.ButtonKind
 import ma.workshop.invoice.ui.components.ConfirmDialog
 import ma.workshop.invoice.ui.components.IllustrationImage
-import ma.workshop.invoice.ui.components.ScreenHeader
+import ma.workshop.invoice.ui.components.AppTextField
+import ma.workshop.invoice.ui.components.AppTopBar
+import ma.workshop.invoice.ui.components.ArabicText
 import ma.workshop.invoice.ui.components.SectionCard
 import ma.workshop.invoice.ui.components.StatusBanner
 import ma.workshop.invoice.ui.components.UnitToggle
 import ma.workshop.invoice.ui.components.strictClickable
 import ma.workshop.invoice.ui.methodName
-import ma.workshop.invoice.ui.theme.AppColors
+import ma.workshop.invoice.ui.theme.appPalette
 
 /** Manage the workshop's own product types. Inactive products stay listed (dimmed) and keep their history. */
 @Composable
@@ -72,7 +71,7 @@ fun CatalogManagementScreen(
     onBack: () -> Unit,
 ) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        ScreenHeader(Strings.CATALOG_TITLE, onBack)
+        AppTopBar(Strings.CATALOG_TITLE, onBack)
         LazyColumn(
             modifier = Modifier.weight(1f).fillMaxWidth(),
             contentPadding = PaddingValues(16.dp),
@@ -88,29 +87,30 @@ fun CatalogManagementScreen(
                     shadowElevation = if (product.isActive) 2.dp else 0.dp,
                 ) {
                     Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        IllustrationImage(product.illustration, Modifier.size(64.dp))
-                        Spacer(Modifier.width(12.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text(
+                        Column(
+                            Modifier.strictClickable(role = Role.Switch) { onSetActive(product.id, !product.isActive) },
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Switch(checked = product.isActive, onCheckedChange = null)
+                            ArabicText(
+                                if (product.isActive) Strings.ACTIVE else Strings.INACTIVE,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (product.isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                            )
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                            ArabicText(
                                 product.name,
                                 style = MaterialTheme.typography.titleMedium,
                                 color = if (product.isActive) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
                             )
-                            Text(product.formula.methodName(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            ArabicText(product.formula.methodName(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        Column(
-                            Modifier.strictClickable(role = Role.Switch) { onSetActive(product.id, !product.isActive) },
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            Switch(checked = product.isActive, onCheckedChange = null)
-                            Text(
-                                if (product.isActive) Strings.ACTIVE else Strings.INACTIVE,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (product.isActive) AppColors.Green else MaterialTheme.colorScheme.outline,
-                            )
-                        }
+                        Spacer(Modifier.width(12.dp))
+                        IllustrationImage(product.illustration, Modifier.size(64.dp))
                     }
                 }
             }
@@ -132,11 +132,11 @@ private fun FormulaOption(title: String, hint: String, selected: Boolean, onClic
         color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
     ) {
         Row(Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            RadioButton(selected = selected, onClick = null, modifier = Modifier.padding(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleMedium)
-                Text(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                ArabicText(title, style = MaterialTheme.typography.titleMedium)
+                ArabicText(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+            RadioButton(selected = selected, onClick = null, modifier = Modifier.padding(12.dp))
         }
     }
 }
@@ -155,18 +155,18 @@ fun ProductEditScreen(
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         when (state) {
             ProductEditState.Loading -> {
-                ScreenHeader(Strings.EDIT_PRODUCT, onBack)
+                AppTopBar(Strings.EDIT_PRODUCT, onBack)
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             }
             ProductEditState.NotFound -> {
-                ScreenHeader(Strings.EDIT_PRODUCT, onBack)
+                AppTopBar(Strings.EDIT_PRODUCT, onBack)
                 Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-                    Text(Strings.INVOICE_NOT_FOUND, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
+                    ArabicText(Strings.INVOICE_NOT_FOUND, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
                 }
             }
             is ProductEditState.Editing -> {
                 val form = state.form
-                ScreenHeader(if (state.isNew) Strings.NEW_PRODUCT else Strings.EDIT_PRODUCT, onBack)
+                AppTopBar(if (state.isNew) Strings.NEW_PRODUCT else Strings.EDIT_PRODUCT, onBack)
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -176,24 +176,22 @@ fun ProductEditScreen(
                 ) {
                     StatusBanner(Strings.NO_PRICE_NOTE, BannerKind.Info)
 
-                    OutlinedTextField(
+                    AppTextField(
                         value = form.name,
                         onValueChange = { v -> onEdit { it.copy(name = v.take(40)) } },
-                        label = { Text(Strings.PRODUCT_NAME) },
-                        isError = state.nameMissing,
-                        supportingText = if (state.nameMissing) ({ Text(Strings.NAME_REQUIRED) }) else null,
-                        textStyle = MaterialTheme.typography.headlineSmall,
-                        singleLine = true,
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 76.dp),
+                        label = Strings.PRODUCT_NAME,
+                        error = if (state.nameMissing) Strings.NAME_REQUIRED else null,
+                        tag = "product-name",
                     )
 
                     SectionCard {
-                        Text(Strings.PRODUCT_PICTURE, style = MaterialTheme.typography.titleMedium)
+                        ArabicText(Strings.PRODUCT_PICTURE, style = MaterialTheme.typography.titleMedium)
                         val pictures = Illustrations.all
                         for (row in pictures.chunked(4)) {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                for (picture in row) {
+                                // keep the last row aligned with the others; the first picture stays top-right
+                                repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
+                                for (picture in row.reversed()) {
                                     val selected = picture.key == form.illustration
                                     Surface(
                                         modifier = Modifier
@@ -215,9 +213,9 @@ fun ProductEditScreen(
                                                 Icon(
                                                     Icons.Filled.Check,
                                                     contentDescription = null,
-                                                    tint = Color.White,
+                                                    tint = MaterialTheme.appPalette.onColor,
                                                     modifier = Modifier
-                                                        .align(Alignment.TopStart)
+                                                        .align(Alignment.TopEnd)
                                                         .size(22.dp)
                                                         .background(MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.CircleShape),
                                                 )
@@ -225,14 +223,12 @@ fun ProductEditScreen(
                                         }
                                     }
                                 }
-                                // keep the last row aligned with the others
-                                repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
                             }
                         }
                     }
 
                     SectionCard {
-                        Text(Strings.PRICING_METHOD, style = MaterialTheme.typography.titleMedium)
+                        ArabicText(Strings.PRICING_METHOD, style = MaterialTheme.typography.titleMedium)
                         FormulaOption(Strings.FORMULA_AREA, Strings.FORMULA_AREA_HINT, form.formula == PricingFormula.AREA) {
                             onEdit { it.copy(formula = PricingFormula.AREA) }
                         }
@@ -243,25 +239,23 @@ fun ProductEditScreen(
                             onEdit { it.copy(formula = PricingFormula.PER_ITEM) }
                         }
                         if (!state.isNew) {
-                            Text(Strings.FORMULA_LOCKED_NOTE, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            ArabicText(Strings.FORMULA_LOCKED_NOTE, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
 
                     if (form.formula.needsDimensions) {
                         SectionCard {
-                            Text(Strings.DEFAULT_UNIT, style = MaterialTheme.typography.titleMedium)
+                            ArabicText(Strings.DEFAULT_UNIT, style = MaterialTheme.typography.titleMedium)
                             UnitToggle(form.defaultUnit, { unit -> onEdit { it.copy(defaultUnit = unit) } })
                         }
                     }
 
-                    OutlinedTextField(
+                    AppTextField(
                         value = form.category,
                         onValueChange = { v -> onEdit { it.copy(category = v.take(30)) } },
-                        label = { Text(Strings.CATEGORY) },
+                        label = Strings.CATEGORY,
                         textStyle = MaterialTheme.typography.bodyLarge,
-                        singleLine = true,
-                        shape = RoundedCornerShape(14.dp),
-                        modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+                        tag = "product-category",
                     )
 
                     Row(
@@ -271,8 +265,8 @@ fun ProductEditScreen(
                             .strictClickable(role = Role.Switch) { onEdit { it.copy(isActive = !it.isActive) } },
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(if (form.isActive) Strings.ACTIVE else Strings.INACTIVE, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                         Switch(checked = form.isActive, onCheckedChange = null)
+                        ArabicText(if (form.isActive) Strings.ACTIVE else Strings.INACTIVE, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                     }
                 }
                 Column(

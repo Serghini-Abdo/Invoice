@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -26,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import ma.workshop.invoice.domain.speech.DictationProblem
@@ -113,7 +113,7 @@ fun MicButton(dictation: Dictation, maxLength: Int, onText: (String) -> Unit, mo
                 listening = false
             },
             icon = { Icon(Icons.Filled.Mic, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(48.dp)) },
-            title = { Text(Strings.DICTATE_LISTENING, style = MaterialTheme.typography.titleLarge) },
+            title = { ArabicText(Strings.DICTATE_LISTENING, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center) },
             confirmButton = {
                 StrictButton(
                     onClick = {
@@ -123,9 +123,9 @@ fun MicButton(dictation: Dictation, maxLength: Int, onText: (String) -> Unit, mo
                     modifier = Modifier.defaultMinSize(minHeight = 56.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                 ) {
-                    Icon(Icons.Filled.Close, contentDescription = null)
+                    ArabicText(Strings.CANCEL, style = MaterialTheme.typography.labelLarge)
                     Spacer(Modifier.width(8.dp))
-                    Text(Strings.CANCEL, style = MaterialTheme.typography.labelLarge)
+                    Icon(Icons.Filled.Close, contentDescription = null)
                 }
             },
         )

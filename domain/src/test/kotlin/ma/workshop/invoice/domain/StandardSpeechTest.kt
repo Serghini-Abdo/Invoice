@@ -106,6 +106,12 @@ class StandardSpeechTest {
     }
 
     @Test
+    fun `the add-product tile speaks in the chosen language`() {
+        assertEquals("زيد منتوج", SpeechTexts.of(SpeechLanguage.DARIJA).addProduct)
+        assertEquals("إضافة منتوج", SpeechTexts.of(SpeechLanguage.STANDARD).addProduct)
+    }
+
+    @Test
     fun `speech language is backed up, and older backups restore in Darija`() {
         val json = Json { ignoreUnknownKeys = true }
         val standard = AppSettings(speechLanguage = SpeechLanguage.STANDARD).toDto()

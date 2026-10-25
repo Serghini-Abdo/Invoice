@@ -19,8 +19,8 @@ class MainActivity : ComponentActivity() {
             ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
         enableEdgeToEdge()
-        // The app is Arabic-only: lay out right-to-left whatever the phone's language is.
-        window.decorView.layoutDirection = View.LAYOUT_DIRECTION_RTL
+        // Forced left-to-right whatever the phone's language (see InvoiceTheme); Arabic text aligns itself.
+        window.decorView.layoutDirection = View.LAYOUT_DIRECTION_LTR
         val container = (application as InvoiceApp).container
         setContent {
             InvoiceTheme {

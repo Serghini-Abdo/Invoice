@@ -14,7 +14,8 @@ import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,7 +42,8 @@ import ma.workshop.invoice.ui.VmFactory
 import ma.workshop.invoice.ui.components.BigButton
 import ma.workshop.invoice.ui.components.ButtonKind
 import ma.workshop.invoice.ui.components.ConfirmDialog
-import ma.workshop.invoice.ui.components.ScreenHeader
+import ma.workshop.invoice.ui.components.AppTopBar
+import ma.workshop.invoice.ui.components.ArabicText
 import ma.workshop.invoice.ui.components.VoiceMissingDialog
 import ma.workshop.invoice.ui.screens.CatalogPickerScreen
 import ma.workshop.invoice.ui.screens.CustomerScreen
@@ -140,6 +142,8 @@ fun InvoiceFlowRoute(
                 onEditCustomer = { vm.onEvent(FlowEvent.EditCustomerPressed) },
                 onContinue = { vm.onEvent(FlowEvent.ContinueToReview) },
                 onBack = { vm.onEvent(FlowEvent.BackPressed) },
+                onSpeakAdd = { speakFeedback(vm.speakAddProduct()) },
+                speechAvailable = speechAvailable,
             )
             FlowStep.Catalog -> CatalogPickerScreen(
                 products = products,
@@ -211,10 +215,10 @@ fun InvoiceFlowRoute(
         val isNew = current.mode == FlowMode.New
         AlertDialog(
             onDismissRequest = { vm.onEvent(FlowEvent.ExitCancelled) },
-            title = { Text(Strings.LEAVE_TITLE, style = MaterialTheme.typography.titleLarge) },
+            title = { ArabicText(Strings.LEAVE_TITLE, style = MaterialTheme.typography.titleLarge, modifier = Modifier.fillMaxWidth()) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(if (isNew) Strings.LEAVE_NEW_MESSAGE else Strings.LEAVE_EDIT_MESSAGE, style = MaterialTheme.typography.bodyLarge)
+                    ArabicText(if (isNew) Strings.LEAVE_NEW_MESSAGE else Strings.LEAVE_EDIT_MESSAGE, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth())
                     if (isNew) {
                         BigButton(Strings.LEAVE_KEEP_DRAFT, Icons.Filled.Save, { vm.onEvent(FlowEvent.ExitKeepDraft) })
                     }
@@ -230,9 +234,9 @@ fun InvoiceFlowRoute(
 @Composable
 private fun LoadErrorScreen(message: String, onBack: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
-        ScreenHeader(Strings.INVOICE_DETAILS, onBack)
+        AppTopBar(Strings.INVOICE_DETAILS, onBack)
         Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-            Text(message, style = MaterialTheme.typography.titleLarge)
+            ArabicText(message, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
         }
     }
 }

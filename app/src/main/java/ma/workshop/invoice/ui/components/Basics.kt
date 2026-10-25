@@ -2,6 +2,8 @@ package ma.workshop.invoice.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,9 +20,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Info
@@ -29,56 +30,46 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ma.workshop.invoice.ui.Strings
-import ma.workshop.invoice.ui.theme.AppColors
-import ma.workshop.invoice.ui.theme.TouchTarget
+import ma.workshop.invoice.ui.theme.appPalette
 
-/** Top bar of every screen: a large back arrow and a clear title. */
+/** Accent is the yellow of "+ إضافة منتوج": dark text and a darker edge, never white on it. */
+enum class ButtonKind { Primary, Secondary, Success, Danger, Accent }
+
+internal class ButtonColors(val container: Color, val content: Color, val border: BorderStroke?)
+
+/** Colours of a button and of its speaker tile, so the two always match. */
 @Composable
-fun ScreenHeader(
-    title: String,
-    onBack: (() -> Unit)?,
-    modifier: Modifier = Modifier,
-    actions: @Composable RowScope.() -> Unit = {},
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 8.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (onBack != null) {
-            StrictIconButton(onClick = onBack, contentDescription = Strings.BACK, modifier = Modifier.size(TouchTarget)) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(32.dp))
-            }
-        } else {
-            Spacer(Modifier.width(12.dp))
-        }
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 8.dp),
+internal fun buttonColors(kind: ButtonKind, enabled: Boolean, pressed: Boolean): ButtonColors {
+    val palette = MaterialTheme.appPalette
+    if (!enabled) return ButtonColors(palette.infoContainer, palette.gray, null)
+    return when (kind) {
+        ButtonKind.Primary, ButtonKind.Success -> ButtonColors(MaterialTheme.colorScheme.primary, palette.onColor, null)
+        ButtonKind.Danger -> ButtonColors(palette.error, palette.onColor, null)
+        ButtonKind.Secondary -> ButtonColors(MaterialTheme.colorScheme.surface, palette.ink, BorderStroke(2.dp, palette.gray))
+        ButtonKind.Accent -> ButtonColors(
+            if (pressed) palette.balancePressed else palette.balance,
+            palette.onBalance,
+            BorderStroke(2.dp, palette.balanceBorder),
         )
-        actions()
     }
 }
 
-enum class ButtonKind { Primary, Secondary, Success, Danger }
-
 /**
  * The app's one button: always an icon AND a label (colour is never the only cue), at least 64dp tall.
+ * The icon sits on the right of the label, in Arabic reading order ("→ متابعة"), and a forward arrow
+ * points right. Pressed, the button darkens (yellow) and shrinks a little, so the press is visible.
  */
 @Composable
 fun BigButton(
@@ -89,48 +80,58 @@ fun BigButton(
     kind: ButtonKind = ButtonKind.Primary,
     enabled: Boolean = true,
 ) {
-    val shape = RoundedCornerShape(16.dp)
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val colors = buttonColors(kind, enabled, pressed)
     val content: @Composable RowScope.() -> Unit = {
+        ArabicText(text, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center, modifier = Modifier.weight(1f, fill = false))
         if (icon != null) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(28.dp))
             Spacer(Modifier.width(10.dp))
-        }
-        Text(text, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
-    }
-    val buttonModifier = modifier
-        .fillMaxWidth()
-        .defaultMinSize(minHeight = 64.dp)
-    // Tighter than Material's 24dp so a two-word label fits beside its icon in a half-width button.
-    val padding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-    val disabledContent = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-    when (kind) {
-        ButtonKind.Secondary -> StrictButton(
-            onClick = onClick,
-            modifier = buttonModifier,
-            enabled = enabled,
-            shape = shape,
-            contentPadding = padding,
-            contentColor = if (enabled) MaterialTheme.colorScheme.primary else disabledContent,
-            border = BorderStroke(2.dp, if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
-            content = content,
-        )
-        else -> {
-            val container = when (kind) {
-                ButtonKind.Success -> AppColors.Green
-                ButtonKind.Danger -> AppColors.Red
-                else -> MaterialTheme.colorScheme.primary
+            if (kind == ButtonKind.Accent) {
+                // The plus in a dark circle, yellow on dark: the plus never sits as a thin glyph on yellow.
+                Box(Modifier.size(38.dp).background(colors.content, CircleShape), contentAlignment = Alignment.Center) {
+                    Icon(icon, contentDescription = null, tint = colors.container, modifier = Modifier.size(28.dp))
+                }
+            } else {
+                Icon(icon, contentDescription = null, modifier = Modifier.size(28.dp))
             }
-            StrictButton(
-                onClick = onClick,
-                modifier = buttonModifier,
-                enabled = enabled,
-                shape = shape,
-                contentPadding = padding,
-                containerColor = if (enabled) container else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
-                contentColor = if (enabled) Color.White else disabledContent,
-                content = content,
-            )
         }
+    }
+    StrictButton(
+        onClick = onClick,
+        modifier = modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 64.dp)
+            .graphicsLayer {
+                val scale = if (pressed && enabled) 0.97f else 1f
+                scaleX = scale
+                scaleY = scale
+            },
+        enabled = enabled,
+        shape = RoundedCornerShape(16.dp),
+        // Tighter than Material's 24dp so a two-word label fits beside its icon in a half-width button.
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+        containerColor = colors.container,
+        contentColor = colors.content,
+        border = colors.border,
+        interactionSource = interaction,
+        content = content,
+    )
+}
+
+/** The words, then the icon on their right: the small buttons of dialogs. */
+@Composable
+private fun DialogButton(text: String, icon: ImageVector, onClick: () -> Unit, container: Color = Color.Transparent, content: Color = MaterialTheme.colorScheme.primary) {
+    StrictButton(
+        onClick = onClick,
+        modifier = Modifier.defaultMinSize(minHeight = 56.dp),
+        containerColor = container,
+        contentColor = content,
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        ArabicText(text, style = MaterialTheme.typography.labelLarge)
+        Spacer(Modifier.width(8.dp))
+        Icon(icon, contentDescription = null)
     }
 }
 
@@ -148,36 +149,24 @@ fun ConfirmDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title, style = MaterialTheme.typography.titleLarge) },
+        title = { ArabicText(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.fillMaxWidth()) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(message, style = MaterialTheme.typography.bodyLarge)
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.End) {
+                if (message.isNotEmpty()) ArabicText(message, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth())
                 extra?.invoke()
             }
         },
+        // Left-to-right: cancel on the left, confirm on the right ("| إلغاء | تأكيد |").
         confirmButton = {
-            StrictButton(
-                onClick = onConfirm,
-                modifier = Modifier.defaultMinSize(minHeight = 56.dp),
-                containerColor = if (danger) AppColors.Red else MaterialTheme.colorScheme.primary,
-                contentColor = Color.White,
-            ) {
-                Icon(Icons.Filled.Check, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(confirmText, style = MaterialTheme.typography.labelLarge)
-            }
+            DialogButton(
+                confirmText,
+                Icons.Filled.Check,
+                onConfirm,
+                container = if (danger) MaterialTheme.appPalette.error else MaterialTheme.colorScheme.primary,
+                content = MaterialTheme.appPalette.onColor,
+            )
         },
-        dismissButton = {
-            StrictButton(
-                onClick = onDismiss,
-                modifier = Modifier.defaultMinSize(minHeight = 56.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-            ) {
-                Icon(Icons.Filled.Close, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(dismissText, style = MaterialTheme.typography.labelLarge)
-            }
-        },
+        dismissButton = { DialogButton(dismissText, Icons.Filled.Close, onDismiss) },
     )
 }
 
@@ -190,55 +179,43 @@ fun VoiceMissingDialog(onInstall: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.AutoMirrored.Filled.VolumeOff, contentDescription = null, modifier = Modifier.size(36.dp)) },
-        title = { Text(Strings.VOICE_MISSING_TITLE, style = MaterialTheme.typography.titleLarge) },
-        text = { Text(Strings.VOICE_MISSING_MESSAGE, style = MaterialTheme.typography.bodyLarge) },
+        title = { ArabicText(Strings.VOICE_MISSING_TITLE, style = MaterialTheme.typography.titleLarge, modifier = Modifier.fillMaxWidth()) },
+        text = { ArabicText(Strings.VOICE_MISSING_MESSAGE, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth()) },
         confirmButton = {
-            StrictButton(
-                onClick = onInstall,
-                modifier = Modifier.defaultMinSize(minHeight = 56.dp),
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White,
-            ) {
-                Icon(Icons.Filled.Download, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(Strings.AUDIO_INSTALL, style = MaterialTheme.typography.labelLarge)
-            }
+            DialogButton(
+                Strings.AUDIO_INSTALL,
+                Icons.Filled.Download,
+                onInstall,
+                container = MaterialTheme.colorScheme.primary,
+                content = MaterialTheme.appPalette.onColor,
+            )
         },
-        dismissButton = {
-            StrictButton(
-                onClick = onDismiss,
-                modifier = Modifier.defaultMinSize(minHeight = 56.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-            ) {
-                Icon(Icons.Filled.Close, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(Strings.LATER, style = MaterialTheme.typography.labelLarge)
-            }
-        },
+        dismissButton = { DialogButton(Strings.LATER, Icons.Filled.Close, onDismiss) },
     )
 }
 
 enum class BannerKind { Info, Success, Warning, Error }
 
-/** A message that always carries an icon and words, never colour alone. */
+/** A message that always carries an icon and words, never colour alone. The icon is on the right. */
 @Composable
 fun StatusBanner(text: String, kind: BannerKind, modifier: Modifier = Modifier) {
+    val palette = MaterialTheme.appPalette
     val (container, content, icon) = when (kind) {
-        BannerKind.Info -> Triple(AppColors.SteelPale, AppColors.Steel, Icons.Filled.Info)
-        BannerKind.Success -> Triple(AppColors.GreenPale, AppColors.Green, Icons.Filled.Check)
-        BannerKind.Warning -> Triple(AppColors.AmberPale, AppColors.Amber, Icons.Filled.Warning)
-        BannerKind.Error -> Triple(AppColors.RedPale, AppColors.Red, Icons.Filled.Warning)
+        BannerKind.Info -> Triple(palette.infoContainer, palette.info, Icons.Filled.Info)
+        BannerKind.Success -> Triple(palette.paidContainer, MaterialTheme.colorScheme.onPrimaryContainer, Icons.Filled.Check)
+        BannerKind.Warning -> Triple(palette.warningContainer, palette.onWarningContainer, Icons.Filled.Warning)
+        BannerKind.Error -> Triple(palette.errorContainer, palette.onErrorContainer, Icons.Filled.Warning)
     }
     Surface(modifier = modifier.fillMaxWidth(), color = container, shape = RoundedCornerShape(12.dp)) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, tint = content, modifier = Modifier.size(28.dp))
+            ArabicText(text, color = content, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
             Spacer(Modifier.width(12.dp))
-            Text(text, color = content, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+            Icon(icon, contentDescription = null, tint = content, modifier = Modifier.size(28.dp))
         }
     }
 }
 
-/** A label on one side and an amount on the other. */
+/** The label on the right and the amount on the left, as on the printed invoice. */
 @Composable
 fun AmountRow(
     label: String,
@@ -253,16 +230,16 @@ fun AmountRow(
             .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            label,
-            style = if (emphasized) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
+        ArabicText(
             value,
             style = if (emphasized) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.titleLarge,
             color = valueColor,
-            textAlign = TextAlign.Start,
+        )
+        Spacer(Modifier.width(8.dp))
+        ArabicText(
+            label,
+            style = if (emphasized) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
+            modifier = Modifier.weight(1f),
         )
     }
 }
@@ -285,6 +262,7 @@ fun IconBadge(icon: ImageVector, modifier: Modifier = Modifier, size: Int = 72) 
     }
 }
 
+/** A white card; its content lines up on the right. */
 @Composable
 fun SectionCard(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Surface(
@@ -293,7 +271,7 @@ fun SectionCard(modifier: Modifier = Modifier, content: @Composable () -> Unit) 
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 2.dp,
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) { content() }
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.End) { content() }
     }
 }
 
