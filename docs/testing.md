@@ -47,7 +47,19 @@ below), so it runs on the oldest and a current Android version.
   button and keypad touch targets of at least 48 dp, the speaker tapping without selecting the product, the system
   Back button walking back through the steps, leaving with unsaved work asking first, and typing on the keypad
   filling each field without wiping the others.
-* `MigrationTest`: the committed Room schema version 1 opens and matches the entities.
+* `BackupWorkerTest`: the real `BackupWorker` run through work-testing with in-memory fakes for the phone folder
+  and for Google Drive: a local backup is written, validated and recorded; retention keeps the newest 10 and never
+  touches foreign files; a write failure retries and is then recorded; a disabled schedule does nothing; Drive
+  creates the new copy before deleting any old one and keeps 5; a failed upload deletes nothing; gone consent is
+  recorded with no UI and becomes a home alert; a developer error is not retried and keeps its raw code.
+* `AppFolderStoreTest`: the real storage path. MediaStore into `Documents/Fawatir Warsha` on API 34, the public
+  Documents directory with the runtime permission on API 24; list, read back, delete, two backups in one minute do
+  not overwrite each other, and the app-private fallback when the permission is missing (API 24 only).
+* Domain `AutoBackupTest`: file names (ASCII, sortable, no collisions), retention rules (never the new copy, always
+  at least one, foreign files untouched), Play Services and HTTP error mapping, the "more than twice the interval"
+  warning, catch-up decisions.
+* `MigrationTest`: the committed Room schema version 1 opens and matches the entities. (The backup schedule and
+  history are kept in SharedPreferences, so the Room schema did not change.)
 * `DatabaseTest`: invoice numbers are sequential and never reused, deleting an invoice removes its items and
   revisions, the starter catalog is seeded once, settings persist, drafts round trip, backup round trips
   including the audit trail.
@@ -73,6 +85,10 @@ These were real bugs in code that all 145 JVM tests passed:
 ## What is deliberately not verified
 
 * **Google Drive** against a real Google account (needs your own OAuth client, see `google-drive-setup.md`).
+  What is tested is everything around it (error classification, retention, the worker with a scripted Drive).
+* **WorkManager actually firing on schedule** on a phone (Doze, reboot, battery optimisation). The worker is run
+  directly; the periodic and catch-up scheduling calls are exercised only by the app starting.
+* **The file picker opening inside `Documents/Fawatir Warsha`** (it is a hint to the system; not observable here).
 * **Arabic speech quality.** The CI emulators have no Arabic voice. Only the "voice unavailable" path is exercised.
 * **Physical phones.** Emulators only: API 24 and API 34, Pixel 5 profile (1080 x 2340, 440 dpi). Smaller
   screens are handled by scrolling and by moving the active field into view, but were not run.
