@@ -370,9 +370,7 @@ page, PDF fallback for a too-long invoice, every earlier test.
 * **Not placed yet:** speakers inside the Home and catalogue cards, on field labels, on the totals card
   and on the customer chip, and the empty-list message. Those are still sprint 7.
 * Tests: `SpeakerToggleUiTest` (hidden by default; on: title speaker + Continue tile, tap does not navigate;
-  never in Settings). **Not run on the device yet:** the phone was locked when the suite was started (every test
-  failed with "no compose hierarchies"); build and lint pass and the domain tests pass. Unlock the phone, keep
-  the screen on, and rerun.
+  never in Settings). Full instrumented suite on the Samsung SM-S931B: **OK (65 tests)** (the first attempt failed only because the phone was locked).
 
 ### Notes for the next sprints
 
