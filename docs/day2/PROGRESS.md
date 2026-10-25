@@ -13,8 +13,13 @@ on the screens after the layout sprint.
 | Design | Four review rounds, approved 2026-10-25 | Done |
 | 3 (speech core) | TTS wrapper, voice check and prompt, Darija speech, speech rate, speech recognizer core | Done, see below |
 | 3 (add-on) | Spoken-language setting: Darija (default) or standard Arabic | Done, see below |
-| Layout | Theme tokens, forced LTR, new top bar, speaker-beside-button component, unit settings, fields, catalogue photos, invoice table | Not started |
-| Placement | Speakers on every row/card/field/CTA; mic on customer name and product name | Not started (needs the layout sprint) |
+| 4 (foundations) | Theme tokens, forced LTR, Arabic text and field components, top bar, speaker tile, Add button | Not started |
+| 5 (units, fields, photos) | cm/m and unit-label settings, invoice unit, field icons, photo import, backup with images | Not started |
+| 6 (invoice output) | Table option A, PDF headers and footer, totals colours, one PNG or point to PDF | Not started |
+| 7 (placement) | Speakers on every row/card/field/CTA; mic on customer name and product name | Not started (needs 4 to 6) |
+
+The step-by-step plan for sprints 4 to 7 and a starter prompt for the next session are in
+[Next sprints, step by step](#next-sprints-step-by-step) at the end of this file.
 
 ## Sprint 3: speech core
 
@@ -146,3 +151,133 @@ Requested by the owner after the speech core.
   `ANDROID_SERIAL`), and never a phone with real invoices.
 * On this PC the emulator and Gradle do not fit in memory together: build first, stop Gradle
   (`./gradlew --stop`), then start the emulator; or install the APKs and run `adb shell am instrument`.
+
+## Next sprints, step by step
+
+Rules for every sprint below:
+
+* Branch `day2/sprint-N` from the previous sprint's branch (sprint 4 from `day2/sprint-3`). Do not push
+  unless the owner asks.
+* Read `CLAUDE.md`, [DECISIONS.md](DECISIONS.md) and the mock-ups in [design-review.html](design-review.html)
+  first. Build only what the sprint lists.
+* Definition of done: `./gradlew -p domain test`, `:app:assembleDebug`, `:app:assembleDebugAndroidTest`,
+  `:app:lintDebug`, the instrumented suite on **one** explicitly targeted device (ask the owner before
+  using the phone), this file updated (delivered, tests, verified vs. still to check by hand), one commit.
+* Every Room version bump ships a migration, a `MigrationTest` case and the committed schema JSON.
+  The schema is at version 3 now, so the next bump is 4.
+* No new `when (formula)` branches: calculation stays pluggable.
+
+### Sprint 4: foundations (theme, LTR, base components)
+
+1. **Theme tokens.** Replace `AppColors` with the palette in DECISIONS.md as `ColorScheme` tokens plus a
+   small `AppPalette` (paid green, balance yellow, error, gray, surface). Remove every direct
+   `AppColors.*` and hard-coded `Color.White` use in the 8 UI files (Basics, Inputs, Home,
+   CustomerAndItems, ReviewAndSaved, History, InvoiceDetail, Catalog). Put the printed-invoice colours
+   (`InvoiceColors` in the domain) in one shared palette table so screens and invoice cannot drift.
+   Unpaid balance becomes ink; green means paid only.
+2. **Forced LTR.** Switch `MainActivity` and `InvoiceTheme` to `LayoutDirection.Ltr`. Add one
+   `ArabicText` composable (right-aligned, RTL text direction) and use it for screen text, so strings
+   that start with digits or Latin ("DH / م²", phone numbers) stay right-aligned. Labels stay on the
+   right, amounts on the left. The printed invoice stays RTL (renderer unchanged).
+3. **App text field.** Replace the 9 Material `OutlinedTextField`s (customer name/phone, product name,
+   category, workshop name/phone/thank-you, history search) with one app field: label above on the
+   right, box below, optional illustration beside it, optional trailing slot (for the mic in sprint 7).
+4. **Arrows.** Forward arrows point right and sit on the right of the label ("→ متابعة"); back arrow on
+   the left.
+5. **`AppTopBar`** (replaces `ScreenHeader`): back on the left, title on the right with its speaker
+   slot, optional centred icon (item details, item confirmation), title ellipsis before the icon. Move the
+   mute chip on confirm/review to a slim sub-bar under the header.
+6. **`SpokenButton`**: a speaker tile on the button's left, styled like its button (colour, border,
+   radius, height), 4 dp gap, its own target of at least 48 dp. Build it and use it for the
+   "+ إضافة منتوج" button now; full placement waits for sprint 7.
+7. **"+ إضافة منتوج"**: yellow (`#F2B705`, dark text, `#A67C00` edge), 64 dp, plus in a dark circle,
+   visible pressed state.
+8. **Tests.** Rewrite `LayoutAndBackUiTest` for LTR (back arrow left, title right); keep the touch-target
+   checks; update `ScreenshotTourTest` if it asserts positions. Existing flow tests must pass unchanged.
+
+### Sprint 5: units, fields, photos
+
+1. **Settings.** `lengthUnit` (cm / m) and `unitLabelScript` (Arabic سم / م, Latin cm / m) in
+   `AppSettings`, Room v4 migration, backup fields with defaults (older backups: metres, Arabic labels).
+   Both shown in Settings as in the mock-up, without speakers.
+2. **Invoice unit.** New nullable `invoices.lengthUnit`: set on create; old invoices that mix m and cm
+   take their first item's unit; existing lines stay as typed. Editing uses the invoice's unit, not the
+   current setting. `ItemEntryForm` gets one unit for both dimensions.
+3. **Remove the per-item unit switch.** `UnitToggle` goes from item entry and product edit; the box shows
+   only the unit, where the switch was. `ProductDefinition.defaultUnit` stays in the database, unused.
+4. **Unit labels.** Pass the label script into `ItemDescriber` and `InvoiceDocumentBuilder` (screens,
+   printed invoices and re-exports of old invoices). Wrap Latin labels as LTR isolates (see the bidi demo
+   in the mock-ups).
+5. **Field icons.** ↔ width, ↕ height, DH coin for the unit price, stacked boxes for quantity, person and
+   phone for the customer. Labels on the right, directly above their icons.
+6. **Photo import (product edit only).** System photo picker, downscale to about 512 px, store in app
+   storage; `products.imageFile` (nullable). On item confirmation copy the file for that item
+   (`invoice_items.imageFile`, a literal copy per item); delete it with its item or invoice.
+   `IllustrationImage` and the renderer show the photo when present, otherwise the built-in picture.
+   The choose-product screen has no image change.
+7. **Backup with images.** Backup format v2: a ZIP with `backup.json` plus `images/`. Restore accepts
+   v1 JSON and v2 ZIP; images are staged and swapped in with the DB transaction; the validator checks
+   every referenced file; the safety copy includes images; update file names, MIME types and the Drive
+   upload. Show the backup size line in Backup.
+8. **Tests.** Migration 3 → 4, invoice unit on create / edit / old mixed invoices, label script in
+   descriptions (both scripts, bidi isolation), image copy per item, backup v1 and v2 round trips.
+
+### Sprint 6: invoice output
+
+1. **Table option A** in `InvoiceLayoutEngine`: columns left to right Price | Measurement / Formula |
+   Quantity | Name/Icon; unit price inside the formula cell ("2,52 م² × 500 DH"), quantity dropped from
+   that cell; "DH" in the column header; quantity column with its own margins, centred, no dividers.
+2. **Thumbnails** 34 units on the PNG (26 pt ≈ 9 mm on A4); change `InvoiceLayoutTest`'s 60–80 check to
+   the new 32–40 range.
+3. **PDF.** Full header on page 1 only; pages 2+ start with one slim line (workshop · invoice number ·
+   date) above the column titles; footer "صفحة 2 / 3" on every page; total, deposit and balance only on
+   the last page with at least the last row. Deposit in green, slightly smaller than the total; balance
+   in a yellow band (dark text), same size as the total.
+4. **PNG.** One image. If it would be taller than 8,000 px (about 55 items), the saved screen shows
+   "هذه الفاتورة طويلة على صورة واحدة. شاركها كملف PDF" and the PDF buttons instead of the image button,
+   even when the format setting is "image". Remove the multi-PNG split.
+5. **Tests.** Pagination (rows per page, slim header, footer, totals on the last page only), the PNG limit
+   switch, both label scripts in the output.
+
+### Sprint 7: placement (speakers and mic)
+
+1. **Speakers**, following DECISIONS.md: `SpokenButton` tiles on every labelled button in the invoice
+   flow, history and product catalogue; speaker inside the Home and catalogue cards; one round speaker
+   per title, field label, item row and invoice line in previews and history; one speaker for the
+   calculation card and one for the total + deposit + balance card. None on icon-only controls, none in
+   Settings or Backup except the المنتوجات card and its screens (product list, product edit, including
+   the calculation-method options).
+2. **Speech calls.** Taps use `Speaker.say(...)`, automatic speech `Speaker.sayIfReady(...)`, and every
+   sentence comes from `SpeechTexts.of(settings.speechLanguage)` (never `DarijaSpeech` directly). Add any
+   missing sentence (history card, product list row) to both `DarijaSpeech` and `StandardSpeech`.
+3. **Mic.** `MicButton` in the trailing slot of the customer-name and product-name fields only.
+4. **Tests.** A speaker tap never selects, presses or navigates (one per screen type); the mic appears
+   only on the two text fields; voice off keeps the whole flow usable; the missing-voice dialog appears
+   once.
+5. **By hand on the phone.** Voice quality in both languages, speech rate, the voice download flow,
+   dictation with and without the offline ar-MA pack, the microphone permission flow.
+
+### Open items outside the sprints
+
+* Listen on the phone to the Darija and standard-Arabic readings (see the checklists above).
+* Decide whether to keep the test build installed on the Samsung phone (it holds only test data).
+* Existing bug: the product "not found" state of `ProductEditScreen` shows "الفاتورة غير موجودة".
+* Cleanup: `Strings.AUDIO_TEST_SENTENCE` is unused.
+* Optional, not decided: recolour the rust launcher icon.
+
+### Starter prompt for the next session
+
+```text
+Day 2, Sprint 4 (foundations) of the Workshop Invoice app in C:\dev\projects\Kotlin\Invoice.
+Read CLAUDE.md, docs/day2/DECISIONS.md, docs/day2/PROGRESS.md (section "Next sprints, step by step")
+and the approved mock-ups in docs/day2/design-review.html first.
+Create branch day2/sprint-4 from day2/sprint-3 and build exactly the Sprint 4 steps listed in
+PROGRESS.md: theme tokens, forced LTR with an ArabicText component, the app text field, arrows,
+AppTopBar, SpokenButton, the yellow "+ إضافة منتوج" button, and the LTR UI tests. No features beyond
+that list.
+Safety: instrumented tests wipe the app database. Target one device explicitly (adb -s / ANDROID_SERIAL)
+and ask me before using my phone. This PC cannot run the emulator and Gradle together (7.7 GB RAM):
+build first, stop Gradle, then run the APKs with adb shell am instrument.
+Before ending: build, run all tests, update docs/day2/PROGRESS.md, commit on day2/sprint-4 (do not
+push), and tell me what was verified on a device and what I must check by hand.
+```
