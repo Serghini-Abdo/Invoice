@@ -333,10 +333,7 @@ page, PDF fallback for a too-long invoice, every earlier test.
 * The "فاتورة معدلة" line is no longer printed on the shared invoice.
 * No thumbnails on the shared invoice (PNG and PDF): the name takes the space. Screens keep their pictures.
 * PDF text is bigger: one layout unit = one point (table text 12 pt, was about 9 pt), so fewer rows per page.
-* **Verification:** domain tests, build and lint pass. The instrumented suite was **not rerun** after these
-  tweaks (the phone was disconnected); the last device run (57 tests OK) was before them. Rerun it, and look at
-  the PNG/PDF by eye: divider weight, yellow patch width (estimated from the digit count), quantity column.
-  `ExportInstrumentedTest` no longer looks for thumbnails.
+* **Verification:** domain tests, build and lint pass, and the full instrumented suite was rerun on the Samsung SM-S931B after these tweaks: **OK (57 tests)**. Still to check by eye: PNG/PDF divider weight, the yellow patch width (estimated from the digit count) and the quantity column. `ExportInstrumentedTest` no longer looks for thumbnails.
 
 ### Notes for the next sprints
 
