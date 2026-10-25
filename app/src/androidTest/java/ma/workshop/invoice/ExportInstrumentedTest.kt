@@ -110,6 +110,7 @@ class ExportInstrumentedTest {
         assertTrue("not blank (ink=$ink)", ink > 0.02)
         assertTrue("not a solid fill (ink=$ink)", ink < 0.6)
 
+        Shots.savePng("sample-invoice-png", bitmap)
         assertTrue("product thumbnails are drawn", bitmap.hasPixelNear(doorSteel))
         // the remaining balance sits in the lower part of the image in the accent colour
         assertTrue("payment summary is drawn", bitmap.hasPixelNear(accent, fromY = bitmap.height * 3 / 4))
@@ -128,6 +129,7 @@ class ExportInstrumentedTest {
         assertEquals(1, pages.size)
         assertEquals(595, pages[0].width)
         assertEquals(842, pages[0].height)
+        Shots.savePng("sample-invoice-pdf-page1", pages[0])
         assertTrue("PDF page has content", pages[0].fractionNotWhite() > 0.01)
         assertTrue("PDF shows the thumbnails", pages[0].hasPixelNear(doorSteel))
         assertNotNull(files.preview)
@@ -165,6 +167,8 @@ class ExportInstrumentedTest {
             assertEquals(842, page.height)
             assertTrue("page ${index + 1} has content", page.fractionNotWhite() > 0.005)
         }
+        Shots.savePng("sample-long-pdf-page1", pages.first())
+        Shots.savePng("sample-long-pdf-last-page", pages.last())
         assertTrue("payment summary on the last page", pages.last().hasPixelNear(accent))
     }
 

@@ -73,6 +73,8 @@ jobs:
     name: Emulator tests (Room, export, UI workflow)
     runs-on: ubuntu-latest
     timeout-minutes: 50
+    permissions:
+      contents: write # only used to publish screenshots on manual (workflow_dispatch) runs
     steps:
       - uses: actions/checkout@v4
       - name: Enable KVM
@@ -114,3 +116,19 @@ jobs:
             grep -B1 -A12 "<error" "$f" | head -40
           done
           echo "=============== END ==============="
+      - name: Publish screenshots (manual runs only)
+        if: always() && github.event_name == 'workflow_dispatch'
+        run: |
+          out=app/build/outputs/connected_android_test_additional_output
+          if [ -d "$out" ]; then
+            rm -rf /tmp/shots && mkdir /tmp/shots
+            find "$out" -type f \( -name '*.png' -o -name '*.jpg' \) -exec cp {} /tmp/shots/ \;
+            ls -la /tmp/shots
+            cd /tmp/shots
+            git init -q -b ci-screenshots
+            git add -A
+            git -c user.name=ci -c user.email=ci@users.noreply.github.com commit -q -m "screenshots for ${{ github.sha }}"
+            git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" ci-screenshots
+          else
+            echo "no additional test output found"
+          fi
