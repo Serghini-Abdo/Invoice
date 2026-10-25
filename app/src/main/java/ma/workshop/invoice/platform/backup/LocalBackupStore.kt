@@ -21,7 +21,7 @@ import java.time.ZoneId
 class LocalBackupException(val failure: BackupFailure, val detail: String) : Exception("$failure: $detail")
 
 /** Where a local backup really ended up. [inPrivateFolder] means the public folder could not be used. */
-class LocalWrite(val id: String, val name: String, val inPrivateFolder: Boolean)
+class LocalWrite(val id: String, val name: String, val inPrivateFolder: Boolean, val fallbackReason: String? = null)
 
 /** The phone-side destination. An interface so the worker tests can run without touching real storage. */
 interface LocalBackupStore {
@@ -66,7 +66,7 @@ class AppFolderBackupStore(private val context: Context, private val zone: () ->
         } catch (e: LocalBackupException) {
             // A full disk will not be better in another folder; every other problem falls back to private storage.
             if (e.failure == BackupFailure.LOCAL_FULL) throw e
-            return writePrivate(name, bytes)
+            return writePrivate(name, bytes, reason = "${e.failure}: ${e.detail}")
         }
     }
 
@@ -142,9 +142,9 @@ class AppFolderBackupStore(private val context: Context, private val zone: () ->
 
     // ---- app-private fallback ----
 
-    private fun writePrivate(name: String, bytes: ByteArray): LocalWrite {
+    private fun writePrivate(name: String, bytes: ByteArray, reason: String): LocalWrite {
         val file = writeFile(privateDir, name, bytes)
-        return LocalWrite(file.absolutePath, name, inPrivateFolder = true)
+        return LocalWrite(file.absolutePath, name, inPrivateFolder = true, fallbackReason = reason)
     }
 
     // ---- shared ----
