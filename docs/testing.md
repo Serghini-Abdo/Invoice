@@ -54,14 +54,23 @@ below), so it runs on the oldest and a current Android version.
   recorded with no UI and becomes a home alert; a developer error is not retried and keeps its raw code.
 * `AppFolderStoreTest`: the real storage path. MediaStore into `Documents/Fawatir Warsha` on API 34 (list, read back,
   delete, two backups in one minute do not overwrite each other: **passes**), and on API 24 the app-private fallback
-  when the permission is missing (**passes**). The API 24 public-folder write with the permission granted
-  (`scripts/legacy-storage-test.sh`, a fresh process after `pm grant`) **did not pass on the CI emulator**: the app
-  could not write inside `/sdcard/Documents` even with the permission granted. The diagnostics it printed show why:
-  the test process ran with Android 7's "default" storage view (`/mnt/runtime/default`, no shared-storage access)
-  although `WRITE_EXTERNAL_STORAGE` was listed as granted, so a shell `pm grant` does not give that process real
-  storage access on this emulator image. That points at the test setup rather than the app, but it means the
-  public-folder write was not exercised. It is reported as a CI warning, not a failure. Whether `Documents/Fawatir Warsha` works on real Android 7 to 9 phones is therefore **unverified**; the
-  app falls back to its private folder and says so on screen.
+  when the permission is missing (**passes**). The API 24 public-folder write with the permission granted is
+  checked by `scripts/legacy-storage-test.sh`, which runs the tests twice in a fresh process:
+  * Run 1, after `pm grant` of `WRITE_EXTERNAL_STORAGE` only: **fails on the CI emulator**. The app could not write
+    inside `/sdcard/Documents` although the permission was listed as granted. The diagnostics show the test process
+    ran with Android 7's "default" storage view (`/mnt/runtime/default`, no shared-storage access), and `dumpsys`
+    listed `READ_EXTERNAL_STORAGE` as declared but not granted.
+  * Run 2, after `am force-stop` and `pm grant` of **both** `READ_EXTERNAL_STORAGE` and `WRITE_EXTERNAL_STORAGE`:
+    **passes** (`OK (3 tests)`): the backup is written to `Documents/Fawatir Warsha`, listed and deleted, and two
+    backups in one minute do not overwrite each other.
+
+  So the public-folder write is **verified on the API 24 emulator when READ and WRITE are granted after a
+  force-stop**. The two runs differ in two ways at once (the force-stop and the READ grant), so which of them
+  matters is not established; the likely cause is the missing READ grant, but that is a guess. The script reports
+  VERIFIED if either run passes and a CI warning (not a failure) if neither does. The app asks for
+  `WRITE_EXTERNAL_STORAGE` and the system dialog normally grants the whole storage group, so a real phone should
+  behave like run 2, but that was **not observed on a physical Android 7 to 9 phone**. If the write is refused,
+  the app falls back to its private folder and says so on screen.
 * Domain `AutoBackupTest`: file names (ASCII, sortable, no collisions), retention rules (never the new copy, always
   at least one, foreign files untouched), Play Services and HTTP error mapping, the "more than twice the interval"
   warning, catch-up decisions.
