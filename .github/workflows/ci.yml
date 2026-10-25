@@ -55,6 +55,15 @@ jobs:
         with:
           name: app-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+      - name: Debug APK must be signed with the pinned key (the Drive OAuth client matches this SHA-1)
+        run: |
+          apksigner=$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$apksigner" verify --print-certs app/build/outputs/apk/debug/app-debug.apk | tee certs.txt
+          sha1=$(grep -m1 "certificate SHA-1 digest" certs.txt | sed 's/.*: //')
+          echo "APK signing certificate SHA-1 (no colons): $sha1"
+          expected=$(grep -m1 -oE '([0-9A-F]{2}:){19}[0-9A-F]{2}' docs/google-drive-setup.md | tr -d ':' | tr 'A-F' 'a-f')
+          echo "SHA-1 documented in docs/google-drive-setup.md:  $expected"
+          test -n "$sha1" && test "$sha1" = "$expected"
       - name: Room schema must match the committed baseline
         # The build regenerates app/schemas/**/N.json from the entities. If it differs from what is committed,
         # an entity changed without a new schema version / committed schema (migrations would silently break).

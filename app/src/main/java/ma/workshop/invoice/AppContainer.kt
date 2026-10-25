@@ -38,7 +38,9 @@ class AppContainer(val application: Application) {
     val drafts: DraftRepository by lazy { DraftRepository(database, environment) }
     val backups: BackupRepository by lazy { BackupRepository(database) }
 
-    val backupPrefs: BackupPrefs by lazy { BackupPrefs(application.getSharedPreferences("backup", android.content.Context.MODE_PRIVATE)) }
+    /** Replaceable so instrumented tests can start from a clean schedule and history. */
+    @Volatile
+    var backupPrefs: BackupPrefs = BackupPrefs(application.getSharedPreferences("backup", android.content.Context.MODE_PRIVATE))
 
     /** The two backup destinations. Replaceable so instrumented tests can run the worker without Google or real storage. */
     @Volatile
@@ -51,15 +53,17 @@ class AppContainer(val application: Application) {
         saveAccount = { backupPrefs.driveAccount = it },
     )
 
-    val backupService: BackupService by lazy {
-        BackupService(
-            export = { backups.export() },
-            prefs = backupPrefs,
-            local = { localStore },
-            drive = { drive },
-            appVersion = BuildConfig.VERSION_NAME,
-        )
-    }
+    @Volatile
+    var backupService: BackupService = newBackupService(backupPrefs)
+
+    fun newBackupService(prefs: BackupPrefs, now: () -> Long = { System.currentTimeMillis() }) = BackupService(
+        export = { backups.export() },
+        prefs = prefs,
+        local = { localStore },
+        drive = { drive },
+        appVersion = BuildConfig.VERSION_NAME,
+        now = now,
+    )
     val backupScheduler: BackupScheduler by lazy { BackupScheduler(application) }
     val restoreSafety: RestoreSafety by lazy { RestoreSafety(File(application.filesDir, "backups")) }
 
