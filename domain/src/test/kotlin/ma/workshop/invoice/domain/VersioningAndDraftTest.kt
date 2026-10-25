@@ -169,3 +169,23 @@ class VersioningAndDraftTest {
         assertNull(DraftCodec.decode("{}"))
     }
 }
+
+class SnapshotCodecTest {
+
+    @Test
+    fun `changes and a previous invoice survive a round trip`() {
+        val invoice = Fixtures.invoice()
+        val changes = listOf(
+            ma.workshop.invoice.domain.invoice.Change(ma.workshop.invoice.domain.invoice.ChangeType.ITEM_ADDED, "باب"),
+            ma.workshop.invoice.domain.invoice.Change(ma.workshop.invoice.domain.invoice.ChangeType.DEPOSIT_CHANGED),
+        )
+        assertEquals(changes, ma.workshop.invoice.domain.backup.SnapshotCodec.decodeChanges(ma.workshop.invoice.domain.backup.SnapshotCodec.encodeChanges(changes)))
+        assertEquals(invoice, ma.workshop.invoice.domain.backup.SnapshotCodec.decodeInvoice(ma.workshop.invoice.domain.backup.SnapshotCodec.encodeInvoice(invoice)))
+    }
+
+    @Test
+    fun `unreadable audit data degrades gracefully instead of throwing`() {
+        assertEquals(emptyList(), ma.workshop.invoice.domain.backup.SnapshotCodec.decodeChanges("garbage"))
+        assertNull(ma.workshop.invoice.domain.backup.SnapshotCodec.decodeInvoice("garbage"))
+    }
+}
