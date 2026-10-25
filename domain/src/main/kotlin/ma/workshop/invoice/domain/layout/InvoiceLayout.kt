@@ -72,11 +72,11 @@ data class LayoutSpec(
     /** Fixed page height for PDF pagination; null produces one tall page (PNG). */
     val pageHeight: Float? = null,
     val margin: Float = 16f,
-    /** Product thumbnail box: 34 units, which is 26 pt (about 9 mm) on A4 and 102 px on the PNG. */
+    /** Product thumbnail box. 0 = no pictures on the shared invoice (the name takes the space). */
     val thumbnail: Float = THUMBNAIL,
 ) {
     companion object {
-        const val THUMBNAIL = 34f
+        const val THUMBNAIL = 0f
     }
 }
 
@@ -96,8 +96,8 @@ object InvoiceColors {
 
 /** The invoice table's column widths (layout units), left to right: price, measurement / formula, quantity, name. */
 class TableColumns(contentWidth: Float) {
-    val price = maxOf(70f, contentWidth * 0.17f)
-    val quantity = maxOf(44f, contentWidth * 0.10f)
+    val price = maxOf(66f, contentWidth * 0.17f)
+    val quantity = maxOf(56f, contentWidth * 0.10f)
     val formula = contentWidth * 0.36f
     val name = contentWidth - price - quantity - formula
 
@@ -125,7 +125,7 @@ object PngLimits {
  *  - nothing is ever drawn outside the page or its margins;
  *  - an item row (thumbnail, name, quantity, measurements, total) is never split across pages;
  *  - the table is Price | Measurement / Formula | Quantity | Name, with the unit price inside the formula cell,
- *    the currency in the column title only, and no divider lines;
+ *    the currency in the column title only, and a thin divider between rows;
  *  - the full header is on page 1 only; later pages start with one slim line (workshop, invoice number, date);
  *  - every page of a paginated layout has the footer "صفحة 2 / 3";
  *  - the payment summary (total, deposit, balance) is on the last page only, never split, and shares its page
@@ -141,7 +141,7 @@ class InvoiceLayoutEngine(private val measurer: TextMeasurer) {
         val contentWidth = spec.width - 2 * spec.margin
         val header = headerBlock(doc, spec, contentWidth)
         val tableHeader = tableHeaderBlock(spec, contentWidth)
-        val rows = doc.rows.map { rowBlock(it, spec, contentWidth) }
+        val rows = doc.rows.mapIndexed { index, row -> rowBlock(row, spec, contentWidth, divider = index < doc.rows.lastIndex) }
         val summary = summaryBlock(doc, spec, contentWidth)
 
         val pageHeight = spec.pageHeight
@@ -269,7 +269,6 @@ class InvoiceLayoutEngine(private val measurer: TextMeasurer) {
         height += 9f
 
         addPair("${doc.title} ${ArabicTerms.NUMBER} ${doc.number}", doc.date, TextStyle.HEADING)
-        doc.updatedNote?.let { addFull(it, TextStyle.SMALL, HAlign.RIGHT, InvoiceColors.MUTED) }
         addPair(
             doc.customerName?.let { "${ArabicTerms.CUSTOMER}: $it" },
             doc.customerPhone?.let { "${ArabicTerms.PHONE}: $it" },
@@ -320,8 +319,8 @@ class InvoiceLayoutEngine(private val measurer: TextMeasurer) {
         }
     }
 
-    private fun rowBlock(row: DocumentRow, spec: LayoutSpec, contentWidth: Float): Block {
-        val vPad = 4f
+    private fun rowBlock(row: DocumentRow, spec: LayoutSpec, contentWidth: Float, divider: Boolean): Block {
+        val vPad = 6f
         val thumb = spec.thumbnail
         val cols = TableColumns(contentWidth)
         val pad = TableColumns.CELL_PADDING
@@ -352,7 +351,7 @@ class InvoiceLayoutEngine(private val measurer: TextMeasurer) {
         return Block(height) { y ->
             val mid = y + vPad + contentHeight / 2
             buildList {
-                add(DrawOp.Image(row.illustration, thumbX, mid - thumb / 2, thumb))
+                if (thumb > 0f) add(DrawOp.Image(row.illustration, thumbX, mid - thumb / 2, thumb))
                 add(text(nameX + pad, mid - nameHeight / 2, nameWidth, row.name, TextStyle.SMALL_BOLD, HAlign.RIGHT))
                 add(text(quantityX + qtyMargin, mid - quantityHeight / 2, quantityWidth, quantityText, TextStyle.SMALL_BOLD, HAlign.CENTER))
                 var ty = mid - formulaStack / 2
@@ -361,13 +360,17 @@ class InvoiceLayoutEngine(private val measurer: TextMeasurer) {
                     ty += formulaHeights[i] + 2f
                 }
                 add(text(priceX + pad, mid - priceHeight / 2, priceWidth, row.totalNumber, TextStyle.SMALL_BOLD, HAlign.LEFT))
+                if (divider) {
+                    val lineY = y + height - 0.25f
+                    add(DrawOp.Line(spec.margin, lineY, spec.margin + contentWidth, lineY, InvoiceColors.DIVIDER, 0.5f))
+                }
             }
         }
     }
 
     /**
      * Total, deposit and balance. The deposit is green and a little smaller than the total; the balance sits in
-     * a yellow band at the total's size, with dark text. A fully paid invoice also gets the "خالص" badge.
+     * a yellow patch behind the amount only (the word stays on the panel), at the total's size, with dark text. A fully paid invoice also gets the "خالص" badge.
      */
     private fun summaryBlock(doc: InvoiceDocument, spec: LayoutSpec, contentWidth: Float): Block {
         val inner = 12f
@@ -405,9 +408,11 @@ class InvoiceLayoutEngine(private val measurer: TextMeasurer) {
                 add(text(labelX, ly, labelWidth, ArabicTerms.DEPOSIT, TextStyle.BODY_BOLD, HAlign.RIGHT))
                 add(text(valueX, ly, valueWidth, doc.deposit, TextStyle.DEPOSIT, HAlign.LEFT, InvoiceColors.PAID))
                 ly += depositHeight + rowGap
+                // Only the amount sits on the yellow; the word stays on the panel.
+                val bandWidth = minOf(valueWidth + inner / 2, doc.remaining.length * TextStyle.TOTAL.size * 0.62f + 2 * bandPad + 8f)
                 add(
                     DrawOp.Rect(
-                        spec.margin + inner / 2, ly, boxWidth - inner, bandHeight,
+                        spec.margin + inner / 2, ly, bandWidth, bandHeight,
                         fill = InvoiceColors.BALANCE_BAND, stroke = InvoiceColors.BALANCE_EDGE, strokeWidth = 1f, cornerRadius = 6f,
                     ),
                 )

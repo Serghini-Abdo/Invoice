@@ -140,7 +140,6 @@ class ExportInstrumentedTest {
         assertTrue("not a solid fill (ink=$ink)", ink < 0.6)
 
         Shots.savePng("sample-invoice-png", bitmap)
-        assertTrue("product thumbnails are drawn", bitmap.hasPixelNear(doorSteel))
         // the total, deposit and balance box sits in the lower half of the image
         assertTrue("payment summary is drawn", bitmap.hasPaymentSummary(fromY = bitmap.height / 2))
         assertNotNull(files.preview)
@@ -160,7 +159,6 @@ class ExportInstrumentedTest {
         assertEquals(595, pages[0].width)
         assertEquals(842, pages[0].height)
         assertTrue("PDF page has content", pages[0].fractionNotWhite() > 0.01)
-        assertTrue("PDF shows the thumbnails", pages[0].hasPixelNear(doorSteel))
         assertNotNull(files.preview)
     }
 

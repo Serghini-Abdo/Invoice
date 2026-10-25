@@ -324,6 +324,20 @@ page, PDF fallback for a too-long invoice, every earlier test.
 * The long-invoice message on Saved with 56+ items and format "image" (only the PDF buttons show).
 * Bidi order of "2,52 م² × 500 DH" and "صفحة 2 / 3" in the PDF.
 
+### Owner tweaks after the first device run
+
+* Thin divider between table rows (paper and the review/detail tables; none after the last row).
+* Balance: the yellow is behind the amount only, the word "الباقي" stays on the panel.
+* Quantity column wider (56 units on paper, 54 dp on screen); label "الكمية" is now "العدد" everywhere
+  (screens, paper, standard-Arabic speech, DECISIONS.md).
+* The "فاتورة معدلة" line is no longer printed on the shared invoice.
+* No thumbnails on the shared invoice (PNG and PDF): the name takes the space. Screens keep their pictures.
+* PDF text is bigger: one layout unit = one point (table text 12 pt, was about 9 pt), so fewer rows per page.
+* **Verification:** domain tests, build and lint pass. The instrumented suite was **not rerun** after these
+  tweaks (the phone was disconnected); the last device run (57 tests OK) was before them. Rerun it, and look at
+  the PNG/PDF by eye: divider weight, yellow patch width (estimated from the digit count), quantity column.
+  `ExportInstrumentedTest` no longer looks for thumbnails.
+
 ### Notes for the next sprints
 
 * Latin unit labels and photos will reach the table through `DocumentRow` / `IllustrationImage` (sprint 6).

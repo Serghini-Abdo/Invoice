@@ -109,7 +109,7 @@ object ArabicTerms {
     const val CUSTOMER = "الزبون"
     const val PHONE = "الهاتف"
     const val PRODUCT = "المنتوج"
-    const val QUANTITY = "الكمية"
+    const val QUANTITY = "العدد"
     const val RATE = "الثمن"
     const val TOTAL = "المجموع"
     const val DEPOSIT = "التسبيق"

@@ -53,11 +53,11 @@ class StandardSpeechTest {
     fun `a row is one sentence`() {
         val door = Fixtures.pricing(PricingFormula.AREA, Fixtures.m("1.2"), Fixtures.m("2.1"), 2, "500")
         assertEquals(
-            "باب حديد، متر واحد وعشرون سنتيمتر في متران وعشرة سنتيمترات، الكمية اثنان، المجموع ألفان وخمسمائة وعشرون درهم",
+            "باب حديد، متر واحد وعشرون سنتيمتر في متران وعشرة سنتيمترات، العدد اثنان، المجموع ألفان وخمسمائة وعشرون درهم",
             msa.itemLine("باب حديد", door),
         )
         val hinges = Fixtures.pricing(PricingFormula.PER_ITEM, quantity = 8, rate = "35")
-        assertEquals("مفصلات، الكمية ثمانية، المجموع مائتان وثمانون درهم", msa.itemLine("مفصلات", hinges))
+        assertEquals("مفصلات، العدد ثمانية، المجموع مائتان وثمانون درهم", msa.itemLine("مفصلات", hinges))
     }
 
     @Test
@@ -65,19 +65,19 @@ class StandardSpeechTest {
         val door = Fixtures.pricing(PricingFormula.AREA, Fixtures.m("1.2"), Fixtures.m("2.1"), 2, "500")
         assertEquals(
             "الحساب بالمتر المربع، العرض متر واحد وعشرون سنتيمتر، الارتفاع متران وعشرة سنتيمترات، " +
-                "المساحة اثنان فاصلة اثنان وخمسون متر مربع، الثمن خمسمائة درهم للمتر المربع، الكمية اثنان، " +
+                "المساحة اثنان فاصلة اثنان وخمسون متر مربع، الثمن خمسمائة درهم للمتر المربع، العدد اثنان، " +
                 "المجموع ألفان وخمسمائة وعشرون درهم",
             msa.calculation(door),
         )
         val frame = Fixtures.pricing(PricingFormula.PERIMETER, Fixtures.m("2"), Fixtures.m("1.1"), 1, "120")
         assertEquals(
             "الحساب بالمتر الطولي، العرض متران، الارتفاع متر واحد وعشرة سنتيمترات، المحيط ستة أمتار وعشرون سنتيمتر، " +
-                "الثمن مائة وعشرون درهم للمتر، الكمية واحد، المجموع سبعمائة وأربعة وأربعون درهم",
+                "الثمن مائة وعشرون درهم للمتر، العدد واحد، المجموع سبعمائة وأربعة وأربعون درهم",
             msa.calculation(frame),
         )
         val hinges = Fixtures.pricing(PricingFormula.PER_ITEM, quantity = 8, rate = "35")
         assertEquals(
-            "الحساب بالقطعة، الثمن خمسة وثلاثون درهم للقطعة، الكمية ثمانية، المجموع مائتان وثمانون درهم",
+            "الحساب بالقطعة، الثمن خمسة وثلاثون درهم للقطعة، العدد ثمانية، المجموع مائتان وثمانون درهم",
             msa.calculation(hinges),
         )
     }

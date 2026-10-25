@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -38,7 +39,7 @@ object TablePicture {
 }
 
 private val AmountColumn = 66.dp
-private val QuantityColumn = 44.dp
+private val QuantityColumn = 54.dp
 private val QuantityMargin = 8.dp
 private const val FormulaWeight = 1.2f
 private const val NameWeight = 1f
@@ -110,7 +111,12 @@ fun InvoiceTableRow(row: DocumentRow, picture: Dp, modifier: Modifier = Modifier
 fun InvoiceTable(rows: List<DocumentRow>, picture: Dp, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth().testTag("invoice-table")) {
         InvoiceTableHeader()
-        rows.forEachIndexed { index, row -> InvoiceTableRow(row, picture, index = index) }
+        rows.forEachIndexed { index, row ->
+            InvoiceTableRow(row, picture, index = index)
+            if (index < rows.lastIndex) {
+                Box(Modifier.fillMaxWidth().padding(horizontal = 4.dp).height(0.5.dp).background(MaterialTheme.colorScheme.outlineVariant))
+            }
+        }
     }
 }
 

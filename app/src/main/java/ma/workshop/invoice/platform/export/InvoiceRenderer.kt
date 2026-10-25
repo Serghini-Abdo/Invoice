@@ -244,13 +244,10 @@ class InvoiceRenderer(context: Context) {
     }
 
     companion object {
-        /**
-         * A4 in PostScript points. A 34-unit thumbnail must print 26 pt (about 9 mm), so one layout unit is
-         * 26/34 pt and the page is about 778 units wide; 12-unit text then prints at about 9 pt.
-         */
+        /** A4 in PostScript points. One layout unit is one point, so 12-unit table text prints at 12 pt. */
         const val PDF_PAGE_WIDTH = 595f
         const val PDF_PAGE_HEIGHT = 842f
-        const val PDF_SCALE = 26f / LayoutSpec.THUMBNAIL
+        const val PDF_SCALE = 1f
         const val PDF_WIDTH_UNITS = PDF_PAGE_WIDTH / PDF_SCALE
         const val PDF_MARGIN = 28f
     }
