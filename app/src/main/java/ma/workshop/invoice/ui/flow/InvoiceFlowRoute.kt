@@ -158,6 +158,7 @@ fun InvoiceFlowRoute(
                 export = export,
                 onShare = { vm.share(context, it) },
                 onRetry = vm::retryExport,
+                onPrint = { vm.print(context) },
                 onNewInvoice = onNewInvoice,
                 onHome = onHome,
             )

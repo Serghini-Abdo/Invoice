@@ -73,6 +73,7 @@ fun InvoiceDetailScreen(
     onEdit: () -> Unit,
     onPrepareShare: () -> Unit,
     onShare: (ShareChoice) -> Unit,
+    onPrint: () -> Unit,
     onDelete: () -> Unit,
     onBack: () -> Unit,
 ) {
@@ -107,7 +108,7 @@ fun InvoiceDetailScreen(
                     if (export == null) {
                         BigButton(Strings.PREPARE_SHARE, Icons.Filled.Share, onPrepareShare, kind = ButtonKind.Success)
                     } else {
-                        ExportPanel(exportFormat, export, onShare, onRetry = onPrepareShare)
+                        ExportPanel(exportFormat, export, onShare, onRetry = onPrepareShare, onPrint = onPrint)
                     }
                 }
                 Column(

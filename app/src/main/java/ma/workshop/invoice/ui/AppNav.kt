@@ -154,6 +154,7 @@ fun AppNav(container: AppContainer) {
                     onEdit = { nav.navigate(Routes.edit(id)) },
                     onPrepareShare = vm::prepareShare,
                     onShare = { vm.share(context, it) },
+                    onPrint = { vm.print(context) },
                     onDelete = vm::delete,
                     onBack = { nav.popBackStack() },
                 )
