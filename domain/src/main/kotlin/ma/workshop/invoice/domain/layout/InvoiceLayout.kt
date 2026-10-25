@@ -388,8 +388,10 @@ class InvoiceLayoutEngine(private val measurer: TextMeasurer) {
         val balanceHeight = lineHeight(ArabicTerms.REMAINING, TextStyle.HEADING, doc.remaining, TextStyle.TOTAL)
         val bandHeight = balanceHeight + 2 * bandPad
         val badgeHeight = if (doc.isFullyPaid) measurer.measureHeight(ArabicTerms.FULLY_PAID, TextStyle.BADGE, boxWidth) + 14f else 0f
-        val boxHeight = inner * 2 + totalHeight + rowGap + depositHeight + rowGap + bandHeight +
-            if (doc.isFullyPaid) rowGap + badgeHeight else 0f
+        // Without a deposit the invoice shows the total only: no deposit line and no balance line.
+        val boxHeight = inner * 2 + totalHeight +
+            (if (doc.hasDeposit) rowGap + depositHeight + rowGap + bandHeight else 0f) +
+            if (doc.hasDeposit && doc.isFullyPaid) rowGap + badgeHeight else 0f
         val thanks = doc.thankYou
         val thanksHeight = thanks?.let { measurer.measureHeight(it, TextStyle.BODY, contentWidth) } ?: 0f
         val height = top + boxHeight + if (thanks != null) 14f + thanksHeight else 0f
@@ -404,6 +406,12 @@ class InvoiceLayoutEngine(private val measurer: TextMeasurer) {
                 add(text(labelX, ly, labelWidth, ArabicTerms.TOTAL, TextStyle.HEADING, HAlign.RIGHT))
                 add(text(valueX, ly, valueWidth, doc.total, TextStyle.TOTAL, HAlign.LEFT))
                 ly += totalHeight + rowGap
+                if (!doc.hasDeposit) {
+                    if (thanks != null) {
+                        add(text(spec.margin, boxTop + boxHeight + 14f, contentWidth, thanks, TextStyle.BODY, HAlign.CENTER, InvoiceColors.MUTED))
+                    }
+                    return@buildList
+                }
                 add(text(labelX, ly, labelWidth, ArabicTerms.DEPOSIT, TextStyle.BODY_BOLD, HAlign.RIGHT))
                 add(text(valueX, ly, valueWidth, doc.deposit, TextStyle.DEPOSIT, HAlign.LEFT, InvoiceColors.PAID))
                 ly += depositHeight + rowGap

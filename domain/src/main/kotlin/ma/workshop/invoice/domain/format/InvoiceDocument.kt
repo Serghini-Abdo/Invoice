@@ -44,6 +44,8 @@ data class InvoiceDocument(
     val total: String,
     val deposit: String,
     val remaining: String,
+    /** False when no deposit was entered: the invoice then shows the total only. */
+    val hasDeposit: Boolean,
     val isFullyPaid: Boolean,
     val thankYou: String?,
 )
@@ -66,6 +68,7 @@ object InvoiceDocumentBuilder {
             total = ArabicFormat.amount(payment.total),
             deposit = ArabicFormat.amount(payment.deposit),
             remaining = ArabicFormat.amount(payment.remaining),
+            hasDeposit = payment.deposit.isPositive,
             isFullyPaid = payment.isFullyPaid,
             thankYou = settings.thankYouMessage.trim().ifEmpty { null },
         )

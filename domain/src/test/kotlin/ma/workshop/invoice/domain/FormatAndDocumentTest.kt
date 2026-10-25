@@ -146,6 +146,14 @@ class FormatAndDocumentTest {
     }
 
     @Test
+    fun `the document knows whether a deposit was entered`() {
+        val none = InvoiceDocumentBuilder.build(Fixtures.invoice(deposit = Fixtures.dh("0")), Fixtures.settings(), zone)
+        assertFalse(none.hasDeposit)
+        val some = InvoiceDocumentBuilder.build(Fixtures.invoice(), Fixtures.settings(), zone)
+        assertTrue(some.hasDeposit)
+    }
+
+    @Test
     fun `optional customer and thank you are omitted when blank and paid invoices are flagged`() {
         val invoice = Fixtures.invoice(customer = ma.workshop.invoice.domain.invoice.CustomerInfo(), deposit = Fixtures.dh("1380"))
         val doc = InvoiceDocumentBuilder.build(invoice, Fixtures.settings().copy(thankYouMessage = "  "), zone)

@@ -355,6 +355,10 @@ page, PDF fallback for a too-long invoice, every earlier test.
   Domain tests pass; full instrumented suite on the Samsung: **OK (61 tests)**. By hand: pick a real photo in
   product edit (picker UI, rotation of a portrait photo), see it in the catalogue and item list.
 
+* **Deposit only if entered:** the printed/shared invoice (PNG and PDF) shows the total only when no deposit
+  was entered; deposit, balance and the paid badge appear only with a deposit (`InvoiceDocument.hasDeposit`).
+  Tests: `InvoiceLayoutTest`, `FormatAndDocumentTest`; full device suite OK (61 tests). Screens are unchanged.
+
 ### Notes for the next sprints
 
 * Latin unit labels and photos will reach the table through `DocumentRow` / `IllustrationImage` (sprint 6).
