@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -104,12 +105,15 @@ fun BigButton(
     val buttonModifier = modifier
         .fillMaxWidth()
         .defaultMinSize(minHeight = 64.dp)
+    // Tighter than Material's 24dp so a two-word label fits beside its icon in a half-width button.
+    val padding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
     when (kind) {
         ButtonKind.Secondary -> OutlinedButton(
             onClick = onClick,
             modifier = buttonModifier,
             enabled = enabled,
             shape = shape,
+            contentPadding = padding,
             border = BorderStroke(2.dp, if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
             content = content,
         )
@@ -124,6 +128,7 @@ fun BigButton(
                 modifier = buttonModifier,
                 enabled = enabled,
                 shape = shape,
+                contentPadding = padding,
                 colors = ButtonDefaults.buttonColors(containerColor = container, contentColor = Color.White),
                 content = content,
             )
