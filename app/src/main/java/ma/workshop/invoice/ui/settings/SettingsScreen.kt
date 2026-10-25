@@ -76,7 +76,7 @@ private fun NavCard(title: String, hint: String, icon: ImageVector, onClick: () 
 }
 
 @Composable
-private fun FormatOption(title: String, hint: String, selected: Boolean, onClick: () -> Unit) {
+internal fun FormatOption(title: String, hint: String, selected: Boolean, onClick: () -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -121,6 +121,7 @@ fun SettingsScreen(
     onUpdate: ((AppSettings) -> AppSettings) -> Unit,
     onOpenCatalog: () -> Unit,
     onOpenBackup: () -> Unit,
+    backupHint: String,
     onTestVoice: () -> Unit,
     onInstallVoice: () -> Unit,
     onBack: () -> Unit,
@@ -226,7 +227,7 @@ fun SettingsScreen(
                 }
             }
 
-            NavCard(Strings.BACKUP, Strings.BACKUP_HINT, Icons.Filled.Backup, onOpenBackup)
+            NavCard(Strings.BACKUP, backupHint, Icons.Filled.Backup, onOpenBackup)
         }
     }
 }

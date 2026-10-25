@@ -67,6 +67,12 @@ class AutoBackupTest {
         assertTrue(t - back in 0 until 60_000, "names have minute precision")
     }
 
+    @Test
+    fun dateTimeIsDayMonthYearWithA24HourClock() {
+        val t = java.time.LocalDateTime.of(2026, 10, 5, 14, 7).toInstant(ZoneOffset.UTC).toEpochMilli()
+        assertEquals("05/10/2026 14:07", ma.workshop.invoice.domain.format.ArabicFormat.dateTime(t, utc))
+    }
+
     // ---- retention ----
 
     private fun stored(id: String, minute: Int) = StoredBackup(id, BackupFiles.nameFor(minute * 60_000L, utc), minute * 60_000L)
