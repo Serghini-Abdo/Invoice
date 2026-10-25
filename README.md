@@ -5,8 +5,8 @@ garage gates, frames, accessories). Arabic first, right-to-left, illustration fi
 who reads little: large buttons, large numbers, one decision per screen, optional spoken Arabic.
 
 * Kotlin, Jetpack Compose + Material 3, Room (SQLite), Android TextToSpeech, Android Sharesheet.
-* **Everything for normal invoicing works with no internet and no account.** Google Drive backup is an
-  optional, explicit action in Settings.
+* **Everything for normal invoicing works with no internet and no account.** Backups (automatic or manual, on
+  the phone and optionally on Google Drive) are configured in Settings.
 * No taxes, no inventory, no accounting: invoices only.
 
 > **Status.** The app is built and tested by the GitHub Actions workflow in this repository
@@ -43,6 +43,26 @@ rate and quantity. Nothing is merged.
 Settings contains only: the product catalog, workshop name/phone (and an optional thank-you line),
 the invoice format (PNG / PDF / both and choose when sharing), audio, and backup/restore.
 
+### Backups
+
+Settings > Backup has: automatic backup **off / every day / every week**; where to save (**this phone**,
+**Google Drive**, or both); **انسخ الآن** (back up now); the time of the last successful backup per destination
+and the last error with what to do about it; and restore.
+
+* **On the phone**: `Documents/Fawatir Warsha/backup-YYYY-MM-DD-HHmm.json`, created automatically (Android 10+
+  needs no permission; Android 7 to 9 ask once, and if refused the copy is kept inside the app and the screen
+  says so). The newest 10 are kept. Files the app did not name are never touched.
+* **On Google Drive** (hidden app folder): the newest 5 are kept. Needs the one-time Google Cloud setup in
+  [docs/google-drive-setup.md](docs/google-drive-setup.md); after the first consent it runs silently.
+* Automatic backups use WorkManager (survives reboot): one job for the phone with no network requirement, one
+  for Drive that waits for a connection. If a backup is missed because the phone was off, the next app start
+  takes it. The home screen shows a banner when Drive needs the owner to reconnect, or when no backup has
+  succeeded for more than twice the chosen interval.
+* A new copy is written and verified first and only then are old ones removed, so the last good copy is never
+  deleted. Every backup is parsed back with the full validator before it is stored.
+* Restore: **استرجاع من الهاتف** opens the file picker in the backup folder; **استرجاع من Google Drive** takes the
+  newest copy. Both go through the same staged, validated, atomic restore.
+
 ## Build and run
 
 Requirements: **JDK 17** and the Android SDK (platform 35). Android Studio (Ladybug or newer) handles both.
@@ -61,7 +81,13 @@ export INVOICE_KEYSTORE_PASSWORD=...  INVOICE_KEY_ALIAS=...  INVOICE_KEY_PASSWOR
 ```
 
 Google Drive backup needs a one-time Google Cloud OAuth setup: see [docs/google-drive-setup.md](docs/google-drive-setup.md).
-Without it, the Drive buttons show a clear message and the file backup still works.
+Without it, switching Drive on shows the exact reason in Arabic and backups to the phone keep working.
+
+**Debug signing key.** The debug build is signed with the committed `app/debug.keystore` (standard public debug
+credentials), so every build, local or CI, has the same certificate. That is what lets the Google OAuth client
+match, and lets a newer APK install over an older one without losing data. Builds made before this change were
+signed with a different, throw-away key: moving to this build needs one uninstall and a restore from a file, see
+[docs/google-drive-setup.md](docs/google-drive-setup.md#important-the-first-install-of-the-pinned-key-cannot-update-the-old-app).
 
 ## Tests
 
@@ -81,9 +107,9 @@ domain/   pure Kotlin/JVM (no Android): everything that must be correct
   format/ layout/               Arabic formatting, invoice document model, page layout + pagination
   backup/                       backup format, strict validator, snapshot codec
   catalog/                      built-in illustrations (SVG path data) and the starter catalog
-app/      Android: Compose UI, Room, TextToSpeech, PDF/PNG renderer, FileProvider, Google Drive client
+app/      Android: Compose UI, Room, TextToSpeech, PDF/PNG renderer, FileProvider, Google Drive client, WorkManager
   data/        Room entities, DAOs, repositories (transactions)
-  platform/    speech, export (renderer/exporter/share), Drive client, restore safety
+  platform/    speech, export (renderer/exporter/share), Drive client, backup (service, scheduler/worker, folder store), restore safety
   ui/          theme, components, screens, ViewModels, navigation
 ```
 
@@ -127,7 +153,12 @@ Proven by the CI workflow (`.github/workflows/ci.yml`), on every push:
 
 Not proven, stated plainly:
 
-* Google Drive backup against a real Google account (needs your OAuth client).
+* Google Drive backup against a real Google account (needs your OAuth client). The Drive error mapping,
+  retention and the worker's behaviour with a scripted fake Drive are tested; the live Google calls are not.
+* A background backup actually firing on schedule on a real phone (the worker is tested by running it
+  directly; WorkManager's own timing, Doze and reboot behaviour were not observed).
+* Saving to `Documents/Fawatir Warsha` was tested on API 24 and API 34 emulators only, and the file picker
+  opening in that folder was not observed.
 * Spoken Arabic quality (the CI emulators have no Arabic voice).
 * Any physical phone, any screen smaller than the Pixel 5 profile, device restart, airplane mode, and a
   failing share target.
@@ -145,7 +176,8 @@ These are real, current limits, not future plans:
 
 * **Google Drive backup/restore has not been run against a real Google account.** It needs an OAuth
   client (see [docs/google-drive-setup.md](docs/google-drive-setup.md)), Google Play Services and internet,
-  none of which exist in automated tests. The parts that make a restore *safe* (strict validation,
+  none of which exist in automated tests. Until the owner completes the setup and presses "Back up now" once,
+  treat Drive as unverified. The parts that make a restore *safe* (strict validation,
   staged confirmation, safety copy, atomic transaction) are tested without Drive, and the identical
   restore path is exercised through the file backup.
 * **Arabic speech depends on the phone.** The app uses whatever Arabic text-to-speech voice is installed
