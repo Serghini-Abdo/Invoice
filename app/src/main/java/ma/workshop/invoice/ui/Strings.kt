@@ -208,6 +208,8 @@ object Strings {
     const val EDIT_PRODUCT = "تعديل المنتوج"
     const val PRODUCT_NAME = "اسم المنتوج"
     const val PRODUCT_PICTURE = "الصورة"
+    const val PICK_PHOTO = "اختيار صورة من الهاتف"
+    const val PHOTO_FAILED = "تعذر استعمال هذه الصورة. جرّب صورة أخرى"
     const val PRICING_METHOD = "طريقة الحساب"
     const val FORMULA_AREA = "بالمتر المربع"
     const val FORMULA_AREA_HINT = "العرض × الارتفاع"

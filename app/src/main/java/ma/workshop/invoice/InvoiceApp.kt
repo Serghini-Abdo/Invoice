@@ -13,6 +13,8 @@ class InvoiceApp : Application() {
         container = AppContainer(this)
         if (container.restoreSafety.consumeInterrupted()) container.startupNotice = ma.workshop.invoice.ui.Strings.RESTORE_INTERRUPTED
         container.appScope.launch { container.products.ensureSeeded() }
+        // Photos nothing refers to any more (an abandoned product edit, a deleted invoice) are removed.
+        container.appScope.launch { runCatching { container.sweepPhotos() } }
         container.appScope.launch {
             // Re-assert the schedule (idempotent) and take a missed backup now, e.g. after the phone was off.
             val plan = container.backupPrefs.plan.value

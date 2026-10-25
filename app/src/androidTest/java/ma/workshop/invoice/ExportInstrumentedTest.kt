@@ -191,9 +191,9 @@ class ExportInstrumentedTest {
         Shots.savePng("sample-long-pdf-last-page", pages.last())
         assertTrue("payment summary on the last page", pages.last().hasPaymentSummary())
         assertTrue("no payment summary on the first page", !pages.first().hasPaymentSummary())
-        // the yellow balance band is on the last page only
-        assertTrue(pages.last().hasPixelNear(Palette.SECONDARY.toInt(), tolerance = 2))
-        assertTrue(!pages.first().hasPixelNear(Palette.SECONDARY.toInt(), tolerance = 2))
+        // the yellow balance amount is on the last page only
+        assertTrue(pages.last().hasPixelNear(InvoiceColors.BALANCE_TEXT.toInt(), tolerance = 2))
+        assertTrue(!pages.first().hasPixelNear(InvoiceColors.BALANCE_TEXT.toInt(), tolerance = 2))
     }
 
     @Test

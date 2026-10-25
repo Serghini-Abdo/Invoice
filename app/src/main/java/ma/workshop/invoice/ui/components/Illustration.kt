@@ -1,6 +1,18 @@
 package ma.workshop.invoice.ui.components
 
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import ma.workshop.invoice.domain.catalog.PhotoKey
+import ma.workshop.invoice.platform.PhotoStore
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -39,6 +51,19 @@ fun Illustration.toImageVector(): ImageVector {
 /** A product picture. Unknown keys fall back to a generic picture instead of failing. */
 @Composable
 fun IllustrationImage(key: String, modifier: Modifier = Modifier, contentDescription: String? = null) {
+    if (PhotoKey.isPhoto(key)) {
+        val context = LocalContext.current
+        val photo by produceState<ImageBitmap?>(null, key) {
+            value = withContext(Dispatchers.IO) {
+                PhotoStore.file(context, key)?.let { BitmapFactory.decodeFile(it.path)?.asImageBitmap() }
+            }
+        }
+        photo?.let {
+            Image(bitmap = it, contentDescription = contentDescription, modifier = modifier.clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
+            return
+        }
+        // A missing file (for example after a restore on another phone) shows the generic picture.
+    }
     val vector = remember(key) { Illustrations.get(key).toImageVector() }
     Image(
         imageVector = vector,

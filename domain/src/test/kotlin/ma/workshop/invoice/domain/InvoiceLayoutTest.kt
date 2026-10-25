@@ -13,6 +13,7 @@ import ma.workshop.invoice.domain.layout.PngLimits
 import ma.workshop.invoice.domain.layout.TableColumns
 import ma.workshop.invoice.domain.layout.TextMeasurer
 import ma.workshop.invoice.domain.layout.TextStyle
+import ma.workshop.invoice.domain.palette.Palette
 import kotlin.math.ceil
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -195,7 +196,7 @@ class InvoiceLayoutTest {
     // ---- totals ----
 
     @Test
-    fun `the deposit is green and smaller than the total and the balance sits in a yellow band at the total size`() {
+    fun `the deposit is green and smaller than the total and the balance amount is yellow text at the total size`() {
         val layout = engine.layout(doc(), phone)
         val page = layout.pages[0]
         val totals = texts(page).filter { it.style == TextStyle.TOTAL }
@@ -207,13 +208,11 @@ class InvoiceLayoutTest {
         assertTrue(TextStyle.TOTAL.size > TextStyle.BODY_BOLD.size)
         assertTrue((totals + deposit).all { it.align == HAlign.LEFT })
 
-        val band = page.ops.filterIsInstance<DrawOp.Rect>().single { it.fill == InvoiceColors.BALANCE_BAND }
         val balance = totals.last()
-        assertTrue(balance.y >= band.y && balance.y < band.y + band.height, "the amount is drawn on the band")
-        assertTrue(band.width < layout.width / 2, "the band covers the amount only, not the whole line")
+        assertEquals(InvoiceColors.BALANCE_TEXT, balance.color, "the balance amount itself is yellow")
+        assertTrue(page.ops.filterIsInstance<DrawOp.Rect>().none { it.fill == Palette.SECONDARY }, "no yellow patch")
         val word = texts(page).single { it.text == "الباقي" }
-        assertTrue(word.x >= band.x + band.width, "the word الباقي sits outside the band")
-        assertEquals(InvoiceColors.INK, balance.color, "dark text on yellow")
+        assertEquals(InvoiceColors.INK, word.color, "the word stays ink")
         assertEquals(InvoiceColors.INK, totals.first().color)
     }
 
@@ -366,7 +365,7 @@ class InvoiceLayoutTest {
             assertTrue(rowCount(last) > 0, "summary must share its page with an item row ($rows rows)")
             for (page in layout.pages.dropLast(1)) {
                 assertTrue(texts(page).none { it.style == TextStyle.DEPOSIT }, "no deposit before the last page ($rows rows)")
-                assertTrue(page.ops.filterIsInstance<DrawOp.Rect>().none { it.fill == InvoiceColors.BALANCE_BAND })
+                assertTrue(texts(page).none { it.color == InvoiceColors.BALANCE_TEXT }, "no balance before the last page ($rows rows)")
             }
 
             for ((i, page) in layout.pages.withIndex()) {

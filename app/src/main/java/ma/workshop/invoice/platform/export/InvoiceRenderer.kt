@@ -244,10 +244,10 @@ class InvoiceRenderer(context: Context) {
     }
 
     companion object {
-        /** A4 in PostScript points. One layout unit is one point, so 12-unit table text prints at 12 pt. */
+        /** A4 in PostScript points. One layout unit is 1.1 pt, so 12-unit table text prints at 13.2 pt. */
         const val PDF_PAGE_WIDTH = 595f
         const val PDF_PAGE_HEIGHT = 842f
-        const val PDF_SCALE = 1f
+        const val PDF_SCALE = 1.1f
         const val PDF_WIDTH_UNITS = PDF_PAGE_WIDTH / PDF_SCALE
         const val PDF_MARGIN = 28f
     }
