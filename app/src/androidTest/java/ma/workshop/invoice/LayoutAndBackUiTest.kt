@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
@@ -103,7 +104,8 @@ class LayoutAndBackUiTest {
         val count = speakers.fetchSemanticsNodes().size
         var placed = 0
         for (index in 0 until count) {
-            val bounds = speakers[index].getBoundsInRoot()
+            // Unclipped on purpose: a card half scrolled off the bottom has a clipped, shorter visible area.
+            val bounds = speakers[index].getUnclippedBoundsInRoot()
             // The lazy grid composes a few cards ahead of the screen without placing them (empty bounds).
             if (bounds.width.value == 0f && bounds.height.value == 0f) continue
             placed++
