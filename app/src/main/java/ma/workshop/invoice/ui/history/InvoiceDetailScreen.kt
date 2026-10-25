@@ -50,6 +50,7 @@ import ma.workshop.invoice.ui.components.IllustrationImage
 import ma.workshop.invoice.ui.components.ScreenHeader
 import ma.workshop.invoice.ui.components.SectionCard
 import ma.workshop.invoice.ui.components.StatusBanner
+import ma.workshop.invoice.ui.components.StrictIconButton
 import ma.workshop.invoice.ui.screens.ExportPanel
 import ma.workshop.invoice.ui.screens.ExportUi
 import ma.workshop.invoice.ui.screens.ShareChoice
@@ -200,7 +201,11 @@ private fun RevisionLog(revisions: List<InvoiceRevision>, zone: ZoneId) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(Strings.REVISION_LOG, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-            androidx.compose.material3.IconButton(onClick = { expanded = !expanded }, modifier = Modifier.size(56.dp)) {
+            StrictIconButton(
+                onClick = { expanded = !expanded },
+                contentDescription = Strings.REVISION_LOG,
+                modifier = Modifier.size(56.dp),
+            ) {
                 Icon(
                     if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                     contentDescription = Strings.REVISION_LOG,

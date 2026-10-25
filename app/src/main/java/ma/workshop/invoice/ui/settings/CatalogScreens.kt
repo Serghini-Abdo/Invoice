@@ -2,7 +2,6 @@ package ma.workshop.invoice.ui.settings
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,6 +58,7 @@ import ma.workshop.invoice.ui.components.ScreenHeader
 import ma.workshop.invoice.ui.components.SectionCard
 import ma.workshop.invoice.ui.components.StatusBanner
 import ma.workshop.invoice.ui.components.UnitToggle
+import ma.workshop.invoice.ui.components.strictClickable
 import ma.workshop.invoice.ui.methodName
 import ma.workshop.invoice.ui.theme.AppColors
 
@@ -82,7 +82,7 @@ fun CatalogManagementScreen(
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable(role = Role.Button, onClickLabel = Strings.EDIT_PRODUCT) { onEdit(product.id) },
+                        .strictClickable(role = Role.Button, onClickLabel = Strings.EDIT_PRODUCT) { onEdit(product.id) },
                     shape = RoundedCornerShape(18.dp),
                     color = if (product.isActive) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
                     shadowElevation = if (product.isActive) 2.dp else 0.dp,
@@ -100,8 +100,11 @@ fun CatalogManagementScreen(
                             )
                             Text(product.formula.methodName(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Switch(checked = product.isActive, onCheckedChange = { onSetActive(product.id, it) })
+                        Column(
+                            Modifier.strictClickable(role = Role.Switch) { onSetActive(product.id, !product.isActive) },
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Switch(checked = product.isActive, onCheckedChange = null)
                             Text(
                                 if (product.isActive) Strings.ACTIVE else Strings.INACTIVE,
                                 style = MaterialTheme.typography.labelSmall,
@@ -124,7 +127,7 @@ private fun FormulaOption(title: String, hint: String, selected: Boolean, onClic
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 64.dp)
-            .clickable(role = Role.RadioButton, onClickLabel = title, onClick = onClick),
+            .strictClickable(role = Role.RadioButton, onClickLabel = title, onClick = onClick),
         shape = RoundedCornerShape(14.dp),
         color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
     ) {
@@ -196,7 +199,7 @@ fun ProductEditScreen(
                                         modifier = Modifier
                                             .weight(1f)
                                             .aspectRatio(1f)
-                                            .clickable(role = Role.RadioButton, onClickLabel = picture.nameAr) {
+                                            .strictClickable(role = Role.RadioButton, onClickLabel = picture.nameAr) {
                                                 onEdit { it.copy(illustration = picture.key) }
                                             },
                                         shape = RoundedCornerShape(14.dp),
@@ -265,7 +268,7 @@ fun ProductEditScreen(
                         Modifier
                             .fillMaxWidth()
                             .heightIn(min = 56.dp)
-                            .clickable(role = Role.Switch) { onEdit { it.copy(isActive = !it.isActive) } },
+                            .strictClickable(role = Role.Switch) { onEdit { it.copy(isActive = !it.isActive) } },
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(if (form.isActive) Strings.ACTIVE else Strings.INACTIVE, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))

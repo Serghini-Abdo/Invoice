@@ -44,7 +44,7 @@ below), so it runs on the oldest and a current Android version.
 ## Other emulator checks
 
 * `LayoutAndBackUiTest`: right-to-left placement (back arrow on the right, first catalog product on the right),
-  button and keypad touch targets of at least 48 dp, the speaker tapping without selecting the product, the system
+  button and keypad touch targets of at least 48 dp, the speaker tapping without selecting the product, a finger sliding off a product not selecting it, the system
   Back button walking back through the steps, leaving with unsaved work asking first, and typing on the keypad
   filling each field without wiping the others.
 * `BackupWorkerTest`: the real `BackupWorker` run through work-testing with in-memory fakes for the phone folder

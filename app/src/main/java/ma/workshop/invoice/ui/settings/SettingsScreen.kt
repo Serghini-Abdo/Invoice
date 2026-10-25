@@ -1,7 +1,6 @@
 package ma.workshop.invoice.ui.settings
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -52,13 +51,14 @@ import ma.workshop.invoice.ui.components.IconBadge
 import ma.workshop.invoice.ui.components.ScreenHeader
 import ma.workshop.invoice.ui.components.SectionCard
 import ma.workshop.invoice.ui.components.StatusBanner
+import ma.workshop.invoice.ui.components.strictClickable
 
 @Composable
 private fun NavCard(title: String, hint: String, icon: ImageVector, onClick: () -> Unit) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(role = Role.Button, onClickLabel = title, onClick = onClick),
+            .strictClickable(role = Role.Button, onClickLabel = title, onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 2.dp,
@@ -81,7 +81,7 @@ internal fun FormatOption(title: String, hint: String, selected: Boolean, onClic
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 64.dp)
-            .clickable(role = Role.RadioButton, onClickLabel = title, onClick = onClick),
+            .strictClickable(role = Role.RadioButton, onClickLabel = title, onClick = onClick),
         shape = RoundedCornerShape(14.dp),
         color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
     ) {
@@ -101,7 +101,7 @@ private fun SwitchRow(label: String, checked: Boolean, enabled: Boolean = true, 
         Modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
-            .clickable(enabled = enabled, role = Role.Switch) { onChange(!checked) },
+            .strictClickable(enabled = enabled, role = Role.Switch) { onChange(!checked) },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
