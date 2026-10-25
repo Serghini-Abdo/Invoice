@@ -273,10 +273,11 @@ fun ItemListScreen(
                 if (state.issue == FlowIssue.NO_ITEMS) {
                     StatusBanner(Strings.NEED_ONE_ITEM, BannerKind.Warning)
                 }
+                // The label already starts with "+", so no second plus icon next to it.
                 if (state.items.isNotEmpty()) {
-                    BigButton("+ ${Strings.ADD_PRODUCT}", Icons.Filled.Add, onAdd, kind = ButtonKind.Secondary)
+                    BigButton("+ ${Strings.ADD_PRODUCT}", null, onAdd, kind = ButtonKind.Secondary)
                 } else {
-                    BigButton("+ ${Strings.ADD_PRODUCT}", Icons.Filled.Add, onAdd)
+                    BigButton("+ ${Strings.ADD_PRODUCT}", null, onAdd)
                 }
                 BigButton(
                     Strings.CONTINUE,
