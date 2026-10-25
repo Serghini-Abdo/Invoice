@@ -13,3 +13,5 @@
 *.jks
 *.keystore
 google-services.json
+# The pinned debug key is committed on purpose (standard public debug credentials), see docs/google-drive-setup.md
+!app/debug.keystore

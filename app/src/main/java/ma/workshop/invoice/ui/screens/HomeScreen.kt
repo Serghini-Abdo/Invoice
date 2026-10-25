@@ -74,6 +74,8 @@ fun HomeScreen(
     onHistory: () -> Unit,
     onSettings: () -> Unit,
     notice: String? = null,
+    backupAlert: String? = null,
+    onBackupAlert: () -> Unit = {},
 ) {
     Column(
         Modifier
@@ -83,6 +85,9 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterVertically),
     ) {
         notice?.let { StatusBanner(it, BannerKind.Warning) }
+        backupAlert?.let {
+            StatusBanner(it, BannerKind.Warning, Modifier.clickable(role = Role.Button, onClickLabel = it, onClick = onBackupAlert))
+        }
         HomeCard(Strings.NEW_INVOICE, Icons.Filled.Add, AppColors.Rust, Color.White, onNewInvoice, Modifier.weight(1f))
         HomeCard(Strings.PREVIOUS_INVOICES, Icons.AutoMirrored.Filled.ReceiptLong, AppColors.Steel, Color.White, onHistory, Modifier.weight(1f))
         HomeCard(Strings.SETTINGS, Icons.Filled.Settings, AppColors.SteelPale, AppColors.Steel, onSettings, Modifier.weight(1f))

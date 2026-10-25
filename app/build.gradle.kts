@@ -23,6 +23,15 @@ android {
     // Release signing comes from the environment only, so no key or password is ever in the repository.
     // Without INVOICE_KEYSTORE_PATH the release APK is produced unsigned (sign it yourself with apksigner).
     signingConfigs {
+        // One fixed debug key, committed on purpose (the standard public debug credentials protect nothing).
+        // Every build, local or CI, then has the same certificate: the Google Drive OAuth client can match it,
+        // and a newer debug APK installs over an older one without losing data. SHA-1 in docs/google-drive-setup.md.
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         val keystorePath = providers.environmentVariable("INVOICE_KEYSTORE_PATH").orNull
         if (keystorePath != null) {
             create("release") {
@@ -95,6 +104,7 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
+    implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.play.services.auth)
     implementation(libs.kotlinx.coroutines.android)
 
@@ -112,4 +122,5 @@ dependencies {
     androidTestImplementation(libs.androidx.test.rules)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.androidx.work.testing)
 }

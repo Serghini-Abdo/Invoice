@@ -27,6 +27,7 @@ object ArabicFormat {
     const val RLM = '‏'
 
     private val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    private val dateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 
     /** "1 260,5" style number: [minDecimals]..[maxDecimals] decimals, rounded half-up for display only. */
     fun decimal(value: BigDecimal, minDecimals: Int = 0, maxDecimals: Int = 4): String {
@@ -61,6 +62,10 @@ object ArabicFormat {
 
     fun date(epochMillis: Long, zone: ZoneId): String =
         dateFormatter.format(Instant.ofEpochMilli(epochMillis).atZone(zone))
+
+    /** "25/10/2026 14:30", Western digits, 24-hour clock. */
+    fun dateTime(epochMillis: Long, zone: ZoneId): String =
+        dateTimeFormatter.format(Instant.ofEpochMilli(epochMillis).atZone(zone))
 
     /** The same dd/MM/yyyy with Western digits, for a calendar date picked by the user. */
     fun date(date: java.time.LocalDate): String = dateFormatter.format(date)

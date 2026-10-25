@@ -16,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
@@ -32,6 +33,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import ma.workshop.invoice.AppContainer
+import ma.workshop.invoice.domain.backup.BackupHealth
+import ma.workshop.invoice.ui.backup.OpenBackupDocument
+import ma.workshop.invoice.ui.backup.backupHint
 import ma.workshop.invoice.ui.backup.BackupScreen
 import ma.workshop.invoice.ui.backup.BackupViewModel
 import ma.workshop.invoice.ui.flow.InvoiceFlowRoute
@@ -85,7 +89,12 @@ fun AppNav(container: AppContainer) {
             composable(Routes.HOME) {
                 // The notice about an interrupted restore is shown once.
                 val notice = remember { container.startupNotice.also { container.startupNotice = null } }
+                val backupPlan by container.backupPrefs.plan.collectAsStateWithLifecycle()
+                val backupStatus by container.backupPrefs.status.collectAsStateWithLifecycle()
+                val backupAlerts = BackupHealth.alerts(backupPlan, backupStatus, System.currentTimeMillis())
                 HomeScreen(
+                    backupAlert = if (backupAlerts.isEmpty()) null else Strings.ALERT_HOME,
+                    onBackupAlert = { nav.navigate(Routes.BACKUP) },
                     onNewInvoice = { nav.navigate(Routes.NEW_INVOICE) },
                     onHistory = { nav.navigate(Routes.HISTORY) },
                     onSettings = { nav.navigate(Routes.SETTINGS) },
@@ -164,7 +173,10 @@ fun AppNav(container: AppContainer) {
                 val vm: SettingsViewModel = viewModel(factory = VmFactory { SettingsViewModel(container) })
                 val settings by vm.settings.collectAsStateWithLifecycle()
                 val speech by vm.speechStatus.collectAsStateWithLifecycle()
+                val backupPlan by container.backupPrefs.plan.collectAsStateWithLifecycle()
+                val backupStatus by container.backupPrefs.status.collectAsStateWithLifecycle()
                 SettingsScreen(
+                    backupHint = backupHint(backupPlan, BackupHealth.alerts(backupPlan, backupStatus, System.currentTimeMillis())),
                     settings = settings,
                     speechStatus = speech,
                     onUpdate = vm::update,
@@ -216,6 +228,9 @@ fun AppNav(container: AppContainer) {
             composable(Routes.BACKUP) {
                 val vm: BackupViewModel = viewModel(factory = VmFactory { BackupViewModel(container) })
                 val state by vm.state.collectAsStateWithLifecycle()
+                val plan by vm.plan.collectAsStateWithLifecycle()
+                val status by vm.status.collectAsStateWithLifecycle()
+                val alerts = BackupHealth.alerts(plan, status, System.currentTimeMillis())
 
                 val consentLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
                     vm.onConsentResult(if (result.resultCode == Activity.RESULT_OK) result.data else null)
@@ -225,18 +240,47 @@ fun AppNav(container: AppContainer) {
                         consentLauncher.launch(IntentSenderRequest.Builder(pending).build())
                     }
                 }
+                // Android 7 to 9 ask before writing to Documents. Whatever the answer, the action then goes ahead:
+                // without permission the copy is kept inside the app and the screen says so.
+                val afterPermission = remember { mutableStateOf<(() -> Unit)?>(null) }
+                val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+                    val action = afterPermission.value
+                    afterPermission.value = null
+                    action?.invoke()
+                }
+                val withStoragePermission: (() -> Unit) -> Unit = { action ->
+                    val needs = android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q &&
+                        androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+                        android.content.pm.PackageManager.PERMISSION_GRANTED
+                    if (needs) {
+                        afterPermission.value = action
+                        permissionLauncher.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    } else {
+                        action()
+                    }
+                }
                 val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
                     if (uri != null) vm.exportToFile(context, uri)
                 }
-                val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+                val importLauncher = rememberLauncherForActivityResult(OpenBackupDocument()) { uri ->
                     if (uri != null) vm.importFromFile(context, uri)
                 }
                 BackupScreen(
                     state = state,
-                    onDriveBackup = vm::backupToDrive,
-                    onDriveRestore = vm::restoreFromDrive,
+                    plan = plan,
+                    status = status,
+                    alerts = alerts,
+                    driveAccount = vm.driveAccount,
+                    onSetFrequency = { f ->
+                        if (f == ma.workshop.invoice.domain.backup.BackupFrequency.OFF) vm.setFrequency(f) else withStoragePermission { vm.setFrequency(f) }
+                    },
+                    onSetLocal = { on -> if (on) withStoragePermission { vm.setLocal(true) } else vm.setLocal(false) },
+                    onSetDrive = { on -> vm.setDrive(on) },
+                    onBackUpNow = { withStoragePermission { vm.backUpNow() } },
+                    onReconnectDrive = { vm.reconnectDrive() },
+                    onDriveRestore = { vm.restoreFromDrive() },
                     onFileExport = {
-                        exportLauncher.launch("workshop-invoices-backup-${java.time.LocalDate.now()}.json")
+                        exportLauncher.launch("backup-${java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmm"))}.json")
                     },
                     onFileImport = { importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
                     onConfirmRestore = vm::confirmRestore,

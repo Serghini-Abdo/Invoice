@@ -13,6 +13,12 @@ import ma.workshop.invoice.data.SettingsRepository
 import ma.workshop.invoice.data.db.AppDatabase
 import ma.workshop.invoice.platform.RestoreSafety
 import ma.workshop.invoice.platform.SpeechController
+import ma.workshop.invoice.platform.backup.AppFolderBackupStore
+import ma.workshop.invoice.platform.backup.BackupPrefs
+import ma.workshop.invoice.platform.backup.BackupScheduler
+import ma.workshop.invoice.platform.backup.BackupService
+import ma.workshop.invoice.platform.backup.LocalBackupStore
+import ma.workshop.invoice.platform.drive.DriveBackupApi
 import ma.workshop.invoice.platform.drive.DriveBackupClient
 import java.io.File
 import ma.workshop.invoice.platform.export.InvoiceExporter
@@ -32,7 +38,29 @@ class AppContainer(val application: Application) {
     val drafts: DraftRepository by lazy { DraftRepository(database, environment) }
     val backups: BackupRepository by lazy { BackupRepository(database) }
 
-    val drive: DriveBackupClient by lazy { DriveBackupClient(application) }
+    val backupPrefs: BackupPrefs by lazy { BackupPrefs(application.getSharedPreferences("backup", android.content.Context.MODE_PRIVATE)) }
+
+    /** The two backup destinations. Replaceable so instrumented tests can run the worker without Google or real storage. */
+    @Volatile
+    var localStore: LocalBackupStore = AppFolderBackupStore(application)
+
+    @Volatile
+    var drive: DriveBackupApi = DriveBackupClient(
+        application,
+        savedAccount = { backupPrefs.driveAccount },
+        saveAccount = { backupPrefs.driveAccount = it },
+    )
+
+    val backupService: BackupService by lazy {
+        BackupService(
+            export = { backups.export() },
+            prefs = backupPrefs,
+            local = { localStore },
+            drive = { drive },
+            appVersion = BuildConfig.VERSION_NAME,
+        )
+    }
+    val backupScheduler: BackupScheduler by lazy { BackupScheduler(application) }
     val restoreSafety: RestoreSafety by lazy { RestoreSafety(File(application.filesDir, "backups")) }
 
     /** Set at startup if the previous restore was cut off; shown once on the home screen. */

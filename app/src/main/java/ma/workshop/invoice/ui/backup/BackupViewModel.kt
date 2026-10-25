@@ -23,13 +23,17 @@ import ma.workshop.invoice.domain.backup.BackupData
 import ma.workshop.invoice.domain.backup.BackupFormat
 import ma.workshop.invoice.domain.backup.BackupParseResult
 import ma.workshop.invoice.domain.backup.BackupProblemCode
+import ma.workshop.invoice.domain.backup.BackupDestination
+import ma.workshop.invoice.domain.backup.BackupFailure
+import ma.workshop.invoice.domain.backup.BackupFrequency
+import ma.workshop.invoice.platform.backup.BackupOutcome
 import ma.workshop.invoice.platform.drive.DriveAuthResult
 import ma.workshop.invoice.platform.drive.DriveException
 import ma.workshop.invoice.ui.Strings
 import ma.workshop.invoice.ui.components.BannerKind
 import kotlin.coroutines.cancellation.CancellationException
 
-data class BackupMessage(val text: String, val kind: BannerKind)
+data class BackupMessage(val text: String, val kind: BannerKind, val detail: String = "")
 
 /** A validated backup waiting for the user's confirmation. Nothing local has been touched yet. */
 class PendingRestore(
@@ -41,85 +45,183 @@ class PendingRestore(
 
 data class BackupUiState(
     val working: Boolean = false,
-    val message: BackupMessage? = null,
+    val messages: List<BackupMessage> = emptyList(),
     val pendingRestore: PendingRestore? = null,
 )
 
-private enum class DriveAction { BACKUP, RESTORE }
+private enum class DriveAction {
+    /** Download the newest Drive copy and offer to restore it. */
+    RESTORE,
+
+    /** Ask for access, take a first backup, and only if that works switch Drive on. */
+    ENABLE,
+
+    /** Part of "back up now": the phone copy is already done, this is the Drive copy. */
+    BACKUP_NOW,
+}
 
 /**
- * Backup and restore, via Google Drive (explicit user action, needs internet and consent) or a plain
- * file. Restoring is staged: download/read, then full validation, then user confirmation, then a
- * safety copy of the current data, then one atomic database transaction. A bad file therefore can
- * never touch existing data.
+ * The backup screen: choose the automatic schedule and destinations, back up now, and restore.
+ *
+ * Restoring is staged: read/download, then full validation, then user confirmation, then a safety copy of
+ * the current data, then one atomic database transaction. A bad file therefore can never touch existing data.
+ * The actual backups are made by [ma.workshop.invoice.platform.backup.BackupService], the same code the
+ * background worker uses.
  */
 class BackupViewModel(private val container: AppContainer) : ViewModel() {
 
     private val _state = MutableStateFlow(BackupUiState())
     val state: StateFlow<BackupUiState> = _state.asStateFlow()
 
+    val plan = container.backupPrefs.plan
+    val status = container.backupPrefs.status
+
+    val driveAccount: String? get() = container.backupPrefs.driveAccount
+
     private val consentChannel = Channel<PendingIntent>(Channel.BUFFERED)
     val consentRequests = consentChannel.receiveAsFlow()
 
     private var pendingAction: DriveAction? = null
+    private val collected = ArrayList<BackupMessage>()
 
-    // ---- Google Drive ----
+    // ---- schedule ----
 
-    fun backupToDrive() = startDrive(DriveAction.BACKUP)
+    fun setFrequency(frequency: BackupFrequency) {
+        val wasOff = plan.value.frequency == BackupFrequency.OFF
+        changePlan { it.copy(frequency = frequency) }
+        // Periodic work waits most of a period before its first run, so the first backup is taken right away.
+        if (wasOff && frequency != BackupFrequency.OFF) backUpNow()
+    }
 
-    fun restoreFromDrive() = startDrive(DriveAction.RESTORE)
+    fun setLocal(enabled: Boolean) {
+        if (!enabled && !plan.value.drive) return
+        changePlan { it.copy(local = enabled) }
+    }
 
-    private fun startDrive(action: DriveAction) {
-        if (_state.value.working) return
-        pendingAction = action
-        _state.update { it.copy(working = true, message = null) }
-        viewModelScope.launch {
-            when (val auth = container.drive.authorize()) {
-                is DriveAuthResult.Token -> runDrive(action, auth.accessToken)
-                is DriveAuthResult.NeedsConsent -> consentChannel.trySend(auth.pendingIntent)
-                DriveAuthResult.PlayServicesMissing -> finish(Strings.PLAY_SERVICES_MISSING, BannerKind.Warning)
-                is DriveAuthResult.Failed -> finish(Strings.AUTH_NEEDED, BannerKind.Warning)
-            }
+    fun setDrive(enabled: Boolean) {
+        if (enabled) {
+            if (!_state.value.working) startDrive(DriveAction.ENABLE)
+        } else {
+            if (!plan.value.local) changePlan { it.copy(local = true, drive = false) } else changePlan { it.copy(drive = false) }
         }
     }
 
-    /** Called with the result of Google's one-time consent screen. */
+    fun reconnectDrive() {
+        if (!_state.value.working) startDrive(DriveAction.ENABLE)
+    }
+
+    private fun changePlan(transform: (ma.workshop.invoice.domain.backup.BackupPlan) -> ma.workshop.invoice.domain.backup.BackupPlan) {
+        container.backupPrefs.updatePlan(System.currentTimeMillis(), transform)
+        container.backupScheduler.apply(plan.value)
+    }
+
+    // ---- back up now ----
+
+    /** Backs up to the chosen destinations (the phone if none is chosen) and reports each result. */
+    fun backUpNow() {
+        if (_state.value.working) return
+        _state.update { it.copy(working = true, messages = emptyList()) }
+        collected.clear()
+        viewModelScope.launch {
+            val current = plan.value
+            if (current.local || !current.drive) report(container.backupService.backUpLocal())
+            if (current.drive) startDriveAuth(DriveAction.BACKUP_NOW) else finishCollected()
+        }
+    }
+
+    private fun report(outcome: BackupOutcome) {
+        collected += when (outcome) {
+            is BackupOutcome.Done -> when {
+                outcome.destination == BackupDestination.LOCAL && outcome.usedPrivateFolder ->
+                    BackupMessage(Strings.PRIVATE_FOLDER_NOTE, BannerKind.Warning)
+                outcome.destination == BackupDestination.LOCAL -> BackupMessage("${Strings.STATUS_PHONE}: ${Strings.BACKUP_SUCCESS}", BannerKind.Success)
+                else -> BackupMessage("${Strings.STATUS_DRIVE}: ${Strings.BACKUP_SUCCESS}", BannerKind.Success)
+            }
+            is BackupOutcome.Failed -> failureMessage(outcome.destination, outcome.failure, outcome.detail)
+        }
+    }
+
+    private fun failureMessage(destination: BackupDestination, failure: BackupFailure, detail: String) = BackupMessage(
+        "${destination.label()}: ${failure.message()}. ${failure.advice()}",
+        BannerKind.Error,
+        detail,
+    )
+
+    private fun finishCollected() {
+        pendingAction = null
+        val messages = collected.toList()
+        _state.update { it.copy(working = false, messages = messages) }
+    }
+
+    // ---- Google Drive ----
+
+    fun restoreFromDrive() {
+        if (_state.value.working) return
+        collected.clear()
+        _state.update { it.copy(working = true, messages = emptyList()) }
+        viewModelScope.launch { startDriveAuth(DriveAction.RESTORE) }
+    }
+
+    private fun startDrive(action: DriveAction) {
+        collected.clear()
+        _state.update { it.copy(working = true, messages = emptyList()) }
+        viewModelScope.launch { startDriveAuth(action) }
+    }
+
+    private suspend fun startDriveAuth(action: DriveAction) {
+        pendingAction = action
+        // Interactive: the owner is looking at the screen, so a consent or account screen is allowed here.
+        when (val auth = container.drive.authorize(useSavedAccount = false)) {
+            is DriveAuthResult.Token -> runDrive(action, auth.accessToken)
+            is DriveAuthResult.NeedsConsent -> consentChannel.trySend(auth.pendingIntent)
+            is DriveAuthResult.Failed -> onDriveFailure(action, auth.failure, auth.detail)
+        }
+    }
+
+    /** Called with the result of Google's consent screen. */
     fun onConsentResult(data: Intent?) {
         val action = pendingAction ?: return
         val token = container.drive.tokenFromConsent(data)
         if (token == null) {
-            finish(Strings.AUTH_NEEDED, BannerKind.Warning)
+            viewModelScope.launch { onDriveFailure(action, BackupFailure.CONSENT_NEEDED, "consent declined") }
             return
         }
-        viewModelScope.launch { runDrive(action, token) }
+        viewModelScope.launch { runDrive(action, token.accessToken) }
+    }
+
+    private fun onDriveFailure(action: DriveAction, failure: BackupFailure, detail: String) {
+        if (action == DriveAction.BACKUP_NOW) container.backupService.reportFailure(BackupDestination.DRIVE, failure, detail)
+        collected += failureMessage(BackupDestination.DRIVE, failure, detail)
+        finishCollected()
     }
 
     private suspend fun runDrive(action: DriveAction, token: String) {
         try {
             when (action) {
-                DriveAction.BACKUP -> {
-                    container.drive.upload(token, buildBackupJson())
-                    finish(Strings.BACKUP_SUCCESS, BannerKind.Success)
+                DriveAction.BACKUP_NOW -> {
+                    report(container.backupService.backUpDrive(token))
+                    finishCollected()
+                }
+                DriveAction.ENABLE -> {
+                    val outcome = container.backupService.backUpDrive(token)
+                    // Drive is switched on only once a backup really reached it.
+                    if (outcome is BackupOutcome.Done) changePlan { it.copy(drive = true) }
+                    report(outcome)
+                    finishCollected()
                 }
                 DriveAction.RESTORE -> {
-                    val json = container.drive.download(token)
+                    val json = container.drive.downloadNewest(token)
                     if (json == null) finish(Strings.BACKUP_NOT_FOUND, BannerKind.Warning) else prepareRestore(json)
                 }
             }
         } catch (e: CancellationException) {
             throw e
         } catch (e: DriveException) {
-            finish(
-                when (e.kind) {
-                    DriveException.Kind.NETWORK -> Strings.NO_INTERNET
-                    DriveException.Kind.AUTH -> Strings.AUTH_NEEDED
-                    DriveException.Kind.NOT_FOUND -> Strings.BACKUP_NOT_FOUND
-                    else -> Strings.DRIVE_ERROR
-                },
-                BannerKind.Error,
-            )
+            collected += failureMessage(BackupDestination.DRIVE, e.failure, e.detail)
+            finishCollected()
         } catch (e: Exception) {
-            finish(Strings.DRIVE_ERROR, BannerKind.Error)
+            collected += failureMessage(BackupDestination.DRIVE, BackupFailure.DRIVE_UNKNOWN, e.javaClass.simpleName)
+            finishCollected()
         }
     }
 
@@ -127,7 +229,7 @@ class BackupViewModel(private val container: AppContainer) : ViewModel() {
 
     fun exportToFile(context: Context, uri: Uri) {
         if (_state.value.working) return
-        _state.update { it.copy(working = true, message = null) }
+        _state.update { it.copy(working = true, messages = emptyList()) }
         viewModelScope.launch {
             try {
                 val json = buildBackupJson()
@@ -146,7 +248,7 @@ class BackupViewModel(private val container: AppContainer) : ViewModel() {
 
     fun importFromFile(context: Context, uri: Uri) {
         if (_state.value.working) return
-        _state.update { it.copy(working = true, message = null) }
+        _state.update { it.copy(working = true, messages = emptyList()) }
         viewModelScope.launch {
             try {
                 val text = withContext(Dispatchers.IO) { readLimited(context, uri) }
@@ -210,7 +312,7 @@ class BackupViewModel(private val container: AppContainer) : ViewModel() {
 
     fun confirmRestore() {
         val pending = _state.value.pendingRestore ?: return
-        _state.update { it.copy(pendingRestore = null, working = true, message = null) }
+        _state.update { it.copy(pendingRestore = null, working = true, messages = emptyList()) }
         viewModelScope.launch {
             try {
                 // Not cancellable halfway: either the whole restore applies or none of it does.
@@ -233,11 +335,10 @@ class BackupViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
-    private suspend fun buildBackupJson(): String =
-        BackupCodec.encode(BackupCodec.toDocument(container.backups.export(), System.currentTimeMillis(), BuildConfig.VERSION_NAME))
+    private suspend fun buildBackupJson(): String = container.backupService.buildJson()
 
     private fun finish(text: String, kind: BannerKind) {
         pendingAction = null
-        _state.update { it.copy(working = false, message = BackupMessage(text, kind)) }
+        _state.update { it.copy(working = false, messages = listOf(BackupMessage(text, kind))) }
     }
 }
