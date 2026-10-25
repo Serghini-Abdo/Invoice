@@ -34,6 +34,14 @@ class AppFolderStoreTest {
     private val permission = Manifest.permission.WRITE_EXTERNAL_STORAGE
     private val granted get() = ContextCompat.checkSelfPermission(context, permission) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
+    /** `pm grant` through the shell: UiAutomation.grantRuntimePermission only exists from Android 8. */
+    private fun grantStoragePermission() {
+        val pipe = InstrumentationRegistry.getInstrumentation().uiAutomation
+            .executeShellCommand("pm grant ${context.packageName} $permission")
+        android.os.ParcelFileDescriptor.AutoCloseInputStream(pipe).use { it.readBytes() } // waits for the command to finish
+        assertTrue("permission granted", granted)
+    }
+
     private fun uniqueName() = BackupFiles.nameFor(System.currentTimeMillis(), ZoneOffset.UTC, store.existingNames())
 
     @Test
@@ -50,7 +58,7 @@ class AppFolderStoreTest {
     @Test
     fun b_backupIsWrittenToTheAppFolderListedAndDeleted() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            InstrumentationRegistry.getInstrumentation().uiAutomation.grantRuntimePermission(context.packageName, permission)
+            grantStoragePermission()
         }
         val name = uniqueName()
         val bytes = "{\"hello\":\"world\"}".toByteArray()
@@ -76,7 +84,7 @@ class AppFolderStoreTest {
     @Test
     fun c_twoBackupsInTheSameMinuteDoNotOverwriteEachOther() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            InstrumentationRegistry.getInstrumentation().uiAutomation.grantRuntimePermission(context.packageName, permission)
+            grantStoragePermission()
         }
         val now = System.currentTimeMillis()
         val first = BackupFiles.nameFor(now, ZoneOffset.UTC, store.existingNames())
