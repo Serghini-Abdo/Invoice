@@ -19,18 +19,22 @@ import java.math.BigDecimal
 // ---------- products ----------
 
 /** Rows with an unknown formula/unit (written by a future version) are skipped rather than crashing. */
-fun ProductEntity.toDomain(): ProductDefinition? = ProductDefinition(
-    id = id,
-    name = name,
-    illustration = illustration,
-    formula = PricingFormula.fromId(formula) ?: return null,
-    defaultUnit = LengthUnit.fromId(defaultUnit) ?: return null,
-    category = category,
-    isActive = isActive,
-    sortOrder = sortOrder,
-    createdAt = createdAt,
-    updatedAt = updatedAt,
-)
+fun ProductEntity.toDomain(): ProductDefinition? {
+    val formula = PricingFormula.fromId(formula) ?: return null
+    val defaultUnit = LengthUnit.fromId(defaultUnit) ?: return null
+    return ProductDefinition(
+        id = id,
+        name = name,
+        illustration = illustration,
+        formula = formula,
+        defaultUnit = defaultUnit,
+        category = category,
+        isActive = isActive,
+        sortOrder = sortOrder,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
+}
 
 fun ProductDefinition.toEntity() = ProductEntity(
     id = id,
