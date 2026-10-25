@@ -39,6 +39,8 @@ data class SettingsDto(
     val speechRate: String = SpeechRate.NORMAL.id,
     /** Added in Day 2; backups made before it restore in Darija. */
     val speechLanguage: String = SpeechLanguage.DARIJA.id,
+    /** Added in Day 2; older backups restore with the speaker icons hidden. */
+    val showSpeakers: Boolean = false,
 )
 
 @Serializable
@@ -112,7 +114,7 @@ data class InvoiceDto(
 
 fun AppSettings.toDto() = SettingsDto(
     workshopName, workshopPhone, exportFormat.id, audioEnabled, speakItemTotals, speakInvoiceTotals,
-    thankYouMessage, nextInvoiceNumber, speechRate.id, speechLanguage.id,
+    thankYouMessage, nextInvoiceNumber, speechRate.id, speechLanguage.id, showSpeakers,
 )
 
 fun ProductDefinition.toDto() = ProductDto(
@@ -172,6 +174,7 @@ fun SettingsDto.toDomain(): AppSettings? {
         // A rate written by a newer app is not a reason to refuse the whole backup.
         speechRate = SpeechRate.fromId(speechRate) ?: SpeechRate.NORMAL,
         speechLanguage = SpeechLanguage.fromId(speechLanguage) ?: SpeechLanguage.DARIJA,
+        showSpeakers = showSpeakers,
     )
 }
 

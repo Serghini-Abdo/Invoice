@@ -359,6 +359,21 @@ page, PDF fallback for a too-long invoice, every earlier test.
   was entered; deposit, balance and the paid badge appear only with a deposit (`InvoiceDocument.hasDeposit`).
   Tests: `InvoiceLayoutTest`, `FormatAndDocumentTest`; full device suite OK (61 tests). Screens are unchanged.
 
+### Speaker icons behind a Settings switch (part of sprint 7, pulled forward)
+
+* Settings → الصوت → "إظهار أيقونات النطق" (`AppSettings.showSpeakers`, **off by default**). Room **v4**
+  (`MIGRATION_3_4`, `4.json` committed, `MigrationTest` case); backups carry it, older ones restore with it off.
+* On: every title gets a round speaker next to it (`AppTopBar`), every labelled `BigButton` gets a `| speaker |`
+  tile of its own style (spoken text = its label), and table rows (item list, review, detail) get a round speaker
+  reading the row (`itemLine`, in the chosen spoken language). Speakers never act: they only speak, with the same
+  voice-missing dialog and toasts as the rest. Settings and Backup never show them (the product screens do).
+* **Not placed yet:** speakers inside the Home and catalogue cards, on field labels, on the totals card
+  and on the customer chip, and the empty-list message. Those are still sprint 7.
+* Tests: `SpeakerToggleUiTest` (hidden by default; on: title speaker + Continue tile, tap does not navigate;
+  never in Settings). **Not run on the device yet:** the phone was locked when the suite was started (every test
+  failed with "no compose hierarchies"); build and lint pass and the domain tests pass. Unlock the phone, keep
+  the screen on, and rerun.
+
 ### Notes for the next sprints
 
 * Latin unit labels and photos will reach the table through `DocumentRow` / `IllustrationImage` (sprint 6).

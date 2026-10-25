@@ -225,6 +225,7 @@ fun SettingsScreen(
             SectionCard {
                 ArabicText(Strings.AUDIO, style = MaterialTheme.typography.titleLarge)
                 SwitchRow(Strings.AUDIO_ENABLED, settings.audioEnabled) { v -> onUpdate { it.copy(audioEnabled = v) } }
+                SwitchRow(Strings.SHOW_SPEAKERS, settings.showSpeakers) { v -> onUpdate { it.copy(showSpeakers = v) } }
                 ArabicText(Strings.SPEECH_LANGUAGE, style = MaterialTheme.typography.titleMedium)
                 // Choices read from the right: the first (default) one is on the right.
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -40,6 +40,7 @@ object TablePicture {
 
 private val AmountColumn = 66.dp
 private val QuantityColumn = 54.dp
+private val SpeakerColumn = 48.dp
 private val QuantityMargin = 8.dp
 private const val FormulaWeight = 1.2f
 private const val NameWeight = 1f
@@ -54,6 +55,7 @@ private val FormulaSize = 12.sp
  */
 @Composable
 fun InvoiceTableHeader(modifier: Modifier = Modifier) {
+    val speakersShown = LocalSpeakers.current.show
     val palette = MaterialTheme.appPalette
     val style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.grayStrong)
     Row(
@@ -63,6 +65,7 @@ fun InvoiceTableHeader(modifier: Modifier = Modifier) {
             .padding(vertical = 5.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (speakersShown) Spacer(Modifier.width(SpeakerColumn))
         ArabicText(ArabicTerms.AMOUNT_HEADER, Modifier.width(AmountColumn).padding(horizontal = 3.dp), style, textAlign = TextAlign.Left)
         ArabicText(ArabicTerms.MEASURE_AND_CALCULATION, Modifier.weight(FormulaWeight).padding(horizontal = 3.dp), style)
         ArabicText(ArabicTerms.QUANTITY, Modifier.width(QuantityColumn).padding(horizontal = 2.dp), style, textAlign = TextAlign.Center, maxLines = 1)
@@ -72,12 +75,16 @@ fun InvoiceTableHeader(modifier: Modifier = Modifier) {
 
 /** One table row. [index] only names the test tags (`table-amount-0`, `table-name-0`, ...). */
 @Composable
-fun InvoiceTableRow(row: DocumentRow, picture: Dp, modifier: Modifier = Modifier, index: Int = row.position - 1) {
+fun InvoiceTableRow(row: DocumentRow, picture: Dp, modifier: Modifier = Modifier, index: Int = row.position - 1, speakText: String? = null) {
     val palette = MaterialTheme.appPalette
+    val speakersShown = LocalSpeakers.current.show
     Row(
         modifier.fillMaxWidth().padding(vertical = 4.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        if (speakersShown) {
+            Box(Modifier.width(SpeakerColumn), contentAlignment = Alignment.Center) { if (speakText != null) RoundSpeaker(speakText) }
+        }
         ArabicText(
             row.totalNumber,
             Modifier.width(AmountColumn).padding(horizontal = 3.dp).testTag("table-amount-$index"),
@@ -108,11 +115,11 @@ fun InvoiceTableRow(row: DocumentRow, picture: Dp, modifier: Modifier = Modifier
 
 /** The title strip and every row, for the review and the invoice detail. */
 @Composable
-fun InvoiceTable(rows: List<DocumentRow>, picture: Dp, modifier: Modifier = Modifier) {
+fun InvoiceTable(rows: List<DocumentRow>, picture: Dp, modifier: Modifier = Modifier, speakTexts: List<String>? = null) {
     Column(modifier.fillMaxWidth().testTag("invoice-table")) {
         InvoiceTableHeader()
         rows.forEachIndexed { index, row ->
-            InvoiceTableRow(row, picture, index = index)
+            InvoiceTableRow(row, picture, index = index, speakText = speakTexts?.getOrNull(index))
             if (index < rows.lastIndex) {
                 Box(Modifier.fillMaxWidth().padding(horizontal = 4.dp).height(0.5.dp).background(MaterialTheme.colorScheme.outlineVariant))
             }

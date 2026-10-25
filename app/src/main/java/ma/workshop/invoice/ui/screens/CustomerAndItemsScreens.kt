@@ -65,6 +65,7 @@ import ma.workshop.invoice.ui.components.ButtonKind
 import ma.workshop.invoice.ui.components.ConfirmDialog
 import ma.workshop.invoice.ui.components.IllustrationImage
 import ma.workshop.invoice.ui.components.InvoiceTableHeader
+import ma.workshop.invoice.ui.components.LocalSpeakers
 import ma.workshop.invoice.ui.components.InvoiceTableRow
 import ma.workshop.invoice.ui.components.TablePicture
 import ma.workshop.invoice.ui.components.ProductCard
@@ -144,6 +145,7 @@ fun CustomerScreen(
  */
 @Composable
 fun ItemCard(item: InvoiceItem, onEdit: () -> Unit, onRemove: () -> Unit, modifier: Modifier = Modifier, position: Int = 1) {
+    val speakers = LocalSpeakers.current
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
@@ -151,7 +153,11 @@ fun ItemCard(item: InvoiceItem, onEdit: () -> Unit, onRemove: () -> Unit, modifi
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(Modifier.padding(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            InvoiceTableRow(InvoiceDocumentBuilder.row(position, item), TablePicture.ItemList)
+            InvoiceTableRow(
+                InvoiceDocumentBuilder.row(position, item),
+                TablePicture.ItemList,
+                speakText = if (speakers.show) speakers.texts.itemLine(item.productName, item.pricing) else null,
+            )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 SmallAction(Strings.DELETE, Icons.Filled.Delete, onRemove, Modifier.weight(1f), danger = true)
                 SmallAction(Strings.EDIT, Icons.Filled.Edit, onEdit, Modifier.weight(1f))
