@@ -61,7 +61,7 @@ private fun KeyCap(
 ) {
     Surface(
         modifier = modifier
-            .height(60.dp)
+            .height(54.dp)
             .clickable(role = Role.Button, onClickLabel = contentDescription, onClick = onClick),
         shape = RoundedCornerShape(14.dp),
         color = MaterialTheme.colorScheme.secondaryContainer,
@@ -81,6 +81,7 @@ fun NumericKeypad(
     modifier: Modifier = Modifier,
     allowDecimal: Boolean = true,
     onNext: (() -> Unit)? = null,
+    nextLabel: String = Strings.NEXT,
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
         Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -117,14 +118,14 @@ fun NumericKeypad(
                     Surface(
                         modifier = Modifier
                             .weight(1f)
-                            .height(60.dp)
-                            .clickable(role = Role.Button, onClickLabel = Strings.NEXT, onClick = onNext),
+                            .height(54.dp)
+                            .clickable(role = Role.Button, onClickLabel = nextLabel, onClick = onNext),
                         shape = RoundedCornerShape(14.dp),
                         color = MaterialTheme.colorScheme.primary,
                         contentColor = androidx.compose.ui.graphics.Color.White,
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Text(Strings.NEXT, style = MaterialTheme.typography.titleMedium)
+                            Text(nextLabel, style = MaterialTheme.typography.titleMedium)
                         }
                     }
                 }
