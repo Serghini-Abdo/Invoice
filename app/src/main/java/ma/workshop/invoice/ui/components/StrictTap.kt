@@ -30,6 +30,7 @@ import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
@@ -142,6 +143,8 @@ fun StrictIconButton(
     Box(
         modifier = modifier
             .clip(CircleShape)
+            // The name screen readers (and tests) find the button by; onClickLabel alone only names the action.
+            .semantics { this.contentDescription = contentDescription }
             .strictClickable(enabled = enabled, onClickLabel = contentDescription, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
