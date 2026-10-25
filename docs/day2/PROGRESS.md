@@ -12,6 +12,7 @@ on the screens after the layout sprint.
 |---|---|---|
 | Design | Four review rounds, approved 2026-10-25 | Done |
 | 3 (speech core) | TTS wrapper, voice check and prompt, Darija speech, speech rate, speech recognizer core | Done, see below |
+| 3 (add-on) | Spoken-language setting: Darija (default) or standard Arabic | Done, see below |
 | Layout | Theme tokens, forced LTR, new top bar, speaker-beside-button component, unit settings, fields, catalogue photos, invoice table | Not started |
 | Placement | Speakers on every row/card/field/CTA; mic on customer name and product name | Not started (needs the layout sprint) |
 
@@ -99,13 +100,48 @@ data. The suite was run with `adb shell am instrument` on the APKs built by `ass
   explanation and system dialog on the first mic tap only, recognition of Moroccan Arabic names with the
   **offline ar-MA pack**, the hint when the pack is missing, and that the text stays editable.
 
+## Sprint 3 add-on: spoken language (Darija or standard Arabic)
+
+Requested by the owner after the speech core.
+
+### Delivered
+
+* `SpeechLanguage` setting (`darija` default, `standard`); Settings → الصوت → "لغة الكلام" with two choices
+  in the same style as the speech rate (no speakers in Settings). "تجربة الصوت" speaks its sample in the
+  chosen language.
+* One interface, `SpeechText` (amount, quantity, length, rate, row, item total, calculation card, method,
+  totals card, voice test), picked with `SpeechTexts.of(language)`:
+  * Darija = `DarijaSpeech` (unchanged sentences);
+  * standard Arabic = `StandardSpeech`, built on the existing `ArabicNumberWords` and `SpokenText`, plus
+    the missing sentences (rows, calculation card, rates, metres/centimetres with "متر واحد / متران /
+    أمتار", "سنتيمتر / سنتيمتران / سنتيمترات"). Method names come from one table per language.
+* Room schema **version 3** (`MIGRATION_2_3`, `app_settings.speechLanguage` default `darija`); the v2
+  schema is unchanged. Backups carry the language; older backups and unknown values restore as Darija.
+
+### Tests
+
+| Test | Where | Result |
+|---|---|---|
+| Standard Arabic prices, quantities, measurements, row, calculation and totals sentences; language switch; backup default | `domain` `StandardSpeechTest` (8 tests) | Pass (JVM) |
+| All domain tests | `./gradlew -p domain test` | Pass (188 tests) |
+| Build, lint | `assembleDebug`, `assembleDebugAndroidTest`, `lintDebug` | Pass |
+| Migration 2 → 3 keeps settings and adds Darija | `MigrationTest` (instrumented) | Pass (phone) |
+| All instrumented tests | Samsung SM-S931B, Android 16 | 49 pass, 1 skipped (Android 7–9 only) of 50. The first run failed the 2 migration tests only because the test APK was packaged before `3.json` existed; after rebuilding it, `MigrationTest` is OK (3 tests). |
+
+### Must be heard on a real phone
+
+* The **standard-Arabic reading** with the installed Arabic voice: numbers ("ألفان وخمسمائة وعشرون درهم"),
+  measurements ("متر واحد وعشرون سنتيمتر"), the calculation and totals sentences.
+* Known simplification inherited from `SpokenText`: the number before a noun is not put in construct state
+  ("مائتان درهم" rather than the formal "مائتا درهم"; "عشرون سنتيمتر" rather than "سنتيمتراً"). It is
+  understandable when spoken; fix in `SpokenText` / `StandardSpeech` if the owner wants formal grammar.
+* Switching the language in Settings and pressing "تجربة الصوت" in each language.
+
 ### Notes for the next sprints
 
-* `SpokenText` / `ArabicNumberWords` (standard Arabic) are no longer used by the app; their tests still
-  pass. Remove them in a cleanup once nothing needs them.
-* `Strings.AUDIO_TEST_SENTENCE` is no longer used (the voice test now speaks `DarijaTerms.VOICE_TEST`).
+* `Strings.AUDIO_TEST_SENTENCE` is no longer used (the voice test speaks `SpeechText.voiceTest` in the chosen language).
 * Placement must use `Speaker.say(...)` for taps and `Speaker.sayIfReady(...)` for automatic speech, and
-  `DarijaSpeech` for every sentence.
+  `SpeechTexts.of(settings.speechLanguage)` for every sentence (never `DarijaSpeech` directly).
 * Instrumented tests clear the app database: always target one device explicitly (`adb -s` /
   `ANDROID_SERIAL`), and never a phone with real invoices.
 * On this PC the emulator and Gradle do not fit in memory together: build first, stop Gradle

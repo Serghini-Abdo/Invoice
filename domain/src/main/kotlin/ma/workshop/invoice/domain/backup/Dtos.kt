@@ -15,6 +15,7 @@ import ma.workshop.invoice.domain.pricing.PricingFormula
 import ma.workshop.invoice.domain.pricing.RateBasis
 import ma.workshop.invoice.domain.settings.AppSettings
 import ma.workshop.invoice.domain.settings.ExportFormat
+import ma.workshop.invoice.domain.settings.SpeechLanguage
 import ma.workshop.invoice.domain.settings.SpeechRate
 import java.math.BigDecimal
 
@@ -36,6 +37,8 @@ data class SettingsDto(
     val nextInvoiceNumber: Long,
     /** Added in Day 2; backups made before it restore with the normal rate. */
     val speechRate: String = SpeechRate.NORMAL.id,
+    /** Added in Day 2; backups made before it restore in Darija. */
+    val speechLanguage: String = SpeechLanguage.DARIJA.id,
 )
 
 @Serializable
@@ -109,7 +112,7 @@ data class InvoiceDto(
 
 fun AppSettings.toDto() = SettingsDto(
     workshopName, workshopPhone, exportFormat.id, audioEnabled, speakItemTotals, speakInvoiceTotals,
-    thankYouMessage, nextInvoiceNumber, speechRate.id,
+    thankYouMessage, nextInvoiceNumber, speechRate.id, speechLanguage.id,
 )
 
 fun ProductDefinition.toDto() = ProductDto(
@@ -168,6 +171,7 @@ fun SettingsDto.toDomain(): AppSettings? {
         thankYouMessage, nextInvoiceNumber,
         // A rate written by a newer app is not a reason to refuse the whole backup.
         speechRate = SpeechRate.fromId(speechRate) ?: SpeechRate.NORMAL,
+        speechLanguage = SpeechLanguage.fromId(speechLanguage) ?: SpeechLanguage.DARIJA,
     )
 }
 

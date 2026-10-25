@@ -9,7 +9,7 @@ import kotlinx.coroutines.launch
 import ma.workshop.invoice.AppContainer
 import ma.workshop.invoice.domain.settings.AppSettings
 import ma.workshop.invoice.platform.SpeechStatus
-import ma.workshop.invoice.domain.speech.DarijaTerms
+import ma.workshop.invoice.domain.speech.SpeechTexts
 
 class SettingsViewModel(private val container: AppContainer) : ViewModel() {
 
@@ -27,7 +27,8 @@ class SettingsViewModel(private val container: AppContainer) : ViewModel() {
     }
 
     fun testVoice() {
-        container.speech.speak(DarijaTerms.VOICE_TEST, settings.value.speechRate)
+        val current = settings.value
+        container.speech.speak(SpeechTexts.of(current.speechLanguage).voiceTest, current.speechRate)
     }
 
     fun recheckVoice() {

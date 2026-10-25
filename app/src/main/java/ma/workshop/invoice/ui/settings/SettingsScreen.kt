@@ -43,6 +43,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import ma.workshop.invoice.domain.settings.AppSettings
 import ma.workshop.invoice.domain.settings.ExportFormat
+import ma.workshop.invoice.domain.settings.SpeechLanguage
 import ma.workshop.invoice.domain.settings.SpeechRate
 import ma.workshop.invoice.platform.SpeechProblem
 import ma.workshop.invoice.platform.SpeechStatus
@@ -98,9 +99,9 @@ internal fun FormatOption(title: String, hint: String, selected: Boolean, onClic
     }
 }
 
-/** One of the three speech-rate choices. The chosen one has a check mark and a thick border, not only a colour. */
+/** One choice of a small option group (speech rate, speech language). The chosen one has a check mark and a thick border, not only a colour. */
 @Composable
-private fun RateOption(label: String, selected: Boolean, enabled: Boolean, modifier: Modifier, onClick: () -> Unit) {
+private fun ChoiceOption(label: String, selected: Boolean, enabled: Boolean, modifier: Modifier, onClick: () -> Unit) {
     Surface(
         modifier = modifier
             .heightIn(min = 56.dp)
@@ -228,6 +229,17 @@ fun SettingsScreen(
             SectionCard {
                 Text(Strings.AUDIO, style = MaterialTheme.typography.titleLarge)
                 SwitchRow(Strings.AUDIO_ENABLED, settings.audioEnabled) { v -> onUpdate { it.copy(audioEnabled = v) } }
+                Text(Strings.SPEECH_LANGUAGE, style = MaterialTheme.typography.titleMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    for ((language, label) in listOf(
+                        SpeechLanguage.DARIJA to Strings.SPEECH_LANGUAGE_DARIJA,
+                        SpeechLanguage.STANDARD to Strings.SPEECH_LANGUAGE_STANDARD,
+                    )) {
+                        ChoiceOption(label, selected = settings.speechLanguage == language, enabled = settings.audioEnabled, modifier = Modifier.weight(1f)) {
+                            onUpdate { it.copy(speechLanguage = language) }
+                        }
+                    }
+                }
                 Text(Strings.SPEECH_RATE, style = MaterialTheme.typography.titleMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     for ((rate, label) in listOf(
@@ -235,7 +247,7 @@ fun SettingsScreen(
                         SpeechRate.NORMAL to Strings.SPEECH_RATE_NORMAL,
                         SpeechRate.FAST to Strings.SPEECH_RATE_FAST,
                     )) {
-                        RateOption(label, selected = settings.speechRate == rate, enabled = settings.audioEnabled, modifier = Modifier.weight(1f)) {
+                        ChoiceOption(label, selected = settings.speechRate == rate, enabled = settings.audioEnabled, modifier = Modifier.weight(1f)) {
                             onUpdate { it.copy(speechRate = rate) }
                         }
                     }
