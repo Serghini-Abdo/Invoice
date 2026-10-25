@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -120,7 +121,7 @@ class InvoiceFlowUiTest {
         keys("2")
         rule.onNodeWithTag("key-next").performClick()
         keys("6", "0", "0")
-        rule.onNodeWithContentDescription(Strings.INCREASE).performClick()
+        rule.onNodeWithContentDescription(Strings.INCREASE).performScrollTo().performClick()
         rule.onNodeWithTag("entry-continue").performClick()
         waitForText(Strings.CONFIRM_ITEM_TITLE)
         click(Strings.CONFIRM)
