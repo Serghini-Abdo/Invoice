@@ -55,9 +55,7 @@ class AppFolderStoreTest {
 
     @Test
     fun b_backupIsWrittenToTheAppFolderListedAndDeleted() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            
-        }
+        assumeTrue("needs the storage permission granted before the process started", publicFolderUsable)
         val name = uniqueName()
         val bytes = "{\"hello\":\"world\"}".toByteArray()
         val written = store.write(name, bytes)
@@ -81,9 +79,7 @@ class AppFolderStoreTest {
 
     @Test
     fun c_twoBackupsInTheSameMinuteDoNotOverwriteEachOther() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            
-        }
+        assumeTrue("needs the storage permission granted before the process started", publicFolderUsable)
         val now = System.currentTimeMillis()
         val first = BackupFiles.nameFor(now, ZoneOffset.UTC, store.existingNames())
         val a = store.write(first, "{\"n\":1}".toByteArray())
