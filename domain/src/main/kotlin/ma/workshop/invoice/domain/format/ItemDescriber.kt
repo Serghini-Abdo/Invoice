@@ -45,12 +45,18 @@ object ItemDescriber {
         return "${ArabicFormat.decimal(base, minDecimals = if (pricing.formula == PricingFormula.AREA) 2 else 0)} $unit"
     }
 
-    /** One compact line: "2,52 م² × 500 DH × 2" or "4 × 30 DH". */
+    /**
+     * One compact line: "2,52 م² × 500 DH × 2" or "4 × 30 DH".
+     *
+     * An invisible right-to-left mark follows the rate. Without it the Latin "DH" makes the bidi algorithm
+     * treat the quantity after it as part of the same left-to-right run, and a rate of 401 with a quantity
+     * of 1 would be displayed as "1 401", which reads like one thousand four hundred and one.
+     */
     fun calculation(pricing: ItemPricing): String {
         val rate = ArabicFormat.amount(pricing.unitRate)
         return when (pricing.formula) {
             PricingFormula.PER_ITEM -> "${pricing.quantity} × $rate"
-            else -> "${baseAmount(pricing)} × $rate × ${pricing.quantity}"
+            else -> "${baseAmount(pricing)} × $rate${ArabicFormat.RLM} × ${pricing.quantity}"
         }
     }
 

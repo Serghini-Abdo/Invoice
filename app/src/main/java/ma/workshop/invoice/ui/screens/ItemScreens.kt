@@ -161,8 +161,8 @@ fun ItemEntryScreen(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             if (show && !evaluation.isValid) StatusBanner(Strings.FILL_REQUIRED, BannerKind.Warning)
 
@@ -218,11 +218,14 @@ fun ItemEntryScreen(
         }
 
         Surface(shadowElevation = 12.dp, color = MaterialTheme.colorScheme.surface) {
+            // Plain lambdas on purpose, never `::onKey` / `::next`: Compose treats two references to the same
+            // local function as equal, so it would keep calling the first one, which still holds the
+            // original (empty) form, and every key press would wipe the other fields.
             NumericKeypad(
-                onKey = ::onKey,
-                modifier = Modifier.padding(12.dp),
+                onKey = { key -> onKey(key) },
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                 allowDecimal = active != ActiveField.QUANTITY,
-                onNext = ::next,
+                onNext = { next() },
                 nextLabel = if (active == order.last()) Strings.CONTINUE else Strings.NEXT,
             )
         }

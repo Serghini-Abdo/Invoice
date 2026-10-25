@@ -23,6 +23,9 @@ object ArabicFormat {
     const val NBSP = ' '
     const val CURRENCY = "DH"
 
+    /** Invisible right-to-left mark (U+200F); see [ItemDescriber.calculation] for why it is needed. */
+    const val RLM = '‏'
+
     private val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
     /** "1 260,5" style number: [minDecimals]..[maxDecimals] decimals, rounded half-up for display only. */

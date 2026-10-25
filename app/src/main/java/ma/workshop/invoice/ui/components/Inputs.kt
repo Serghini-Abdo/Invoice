@@ -8,12 +8,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -33,6 +36,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -53,6 +58,20 @@ import ma.workshop.invoice.ui.theme.TouchTarget
 /** "1.2" typed internally is shown the Moroccan way, with a comma. */
 fun displayNumber(text: String): String = text.replace('.', ',')
 
+/**
+ * Scrolls the enclosing scrollable so this element is visible whenever [selected] becomes true. On a small
+ * phone the keypad leaves room for only some of the fields, and the one being typed into must never hide.
+ */
+@Composable
+private fun Modifier.bringIntoViewWhen(selected: Boolean): Modifier {
+    val requester = remember { BringIntoViewRequester() }
+    LaunchedEffect(selected) { if (selected) requester.bringIntoView() }
+    return this.bringIntoViewRequester(requester)
+}
+
+private val KeyHeight = 50.dp
+private val KeyGap = 6.dp
+
 @Composable
 private fun KeyCap(
     modifier: Modifier,
@@ -64,18 +83,23 @@ private fun KeyCap(
     Surface(
         modifier = modifier
             .testTag(tag)
-            .height(54.dp)
             .clickable(role = Role.Button, onClickLabel = contentDescription, onClick = onClick),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.secondaryContainer,
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
     ) {
-        Box(contentAlignment = Alignment.Center) { content() }
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { content() }
     }
 }
 
 /**
- * Large on-screen numeric keypad: digits, decimal point, backspace, clear and "next field".
+ * Large on-screen numeric keypad, four rows high so the fields above stay visible on small phones:
+ *
+ *     7 8 9 | backspace
+ *     4 5 6 | next
+ *     1 2 3 | next
+ *     , 0 C | next
+ *
  * The digits keep the usual phone order (1-2-3 from the left) even in the right-to-left app.
  */
 @Composable
@@ -87,49 +111,50 @@ fun NumericKeypad(
     nextLabel: String = Strings.NEXT,
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-        Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            val rows = listOf(listOf(7, 8, 9), listOf(4, 5, 6), listOf(1, 2, 3))
-            for (row in rows) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    for (digit in row) {
-                        KeyCap(Modifier.weight(1f), "key-$digit", { onKey(KeypadKey.Digit(digit)) }, digit.toString()) {
-                            Text(digit.toString(), style = MaterialTheme.typography.headlineMedium)
+        Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(KeyGap)) {
+            Column(Modifier.weight(3f), verticalArrangement = Arrangement.spacedBy(KeyGap)) {
+                for (row in listOf(listOf(7, 8, 9), listOf(4, 5, 6), listOf(1, 2, 3))) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(KeyGap)) {
+                        for (digit in row) {
+                            KeyCap(Modifier.weight(1f).height(KeyHeight), "key-$digit", { onKey(KeypadKey.Digit(digit)) }, digit.toString()) {
+                                Text(digit.toString(), style = MaterialTheme.typography.headlineMedium)
+                            }
                         }
                     }
                 }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (allowDecimal) {
-                    KeyCap(Modifier.weight(1f), "key-decimal", { onKey(KeypadKey.Decimal) }, ",") {
-                        Text(",", style = MaterialTheme.typography.headlineMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(KeyGap)) {
+                    if (allowDecimal) {
+                        KeyCap(Modifier.weight(1f).height(KeyHeight), "key-decimal", { onKey(KeypadKey.Decimal) }, ",") {
+                            Text(",", style = MaterialTheme.typography.headlineMedium)
+                        }
+                    } else {
+                        Spacer(Modifier.weight(1f).height(KeyHeight))
                     }
-                } else {
-                    Spacer(Modifier.weight(1f))
-                }
-                KeyCap(Modifier.weight(1f), "key-0", { onKey(KeypadKey.Digit(0)) }, "0") {
-                    Text("0", style = MaterialTheme.typography.headlineMedium)
-                }
-                KeyCap(Modifier.weight(1f), "key-backspace", { onKey(KeypadKey.Backspace) }, Strings.CLEAR) {
-                    Icon(Icons.AutoMirrored.Filled.Backspace, contentDescription = null, modifier = Modifier.size(30.dp))
+                    KeyCap(Modifier.weight(1f).height(KeyHeight), "key-0", { onKey(KeypadKey.Digit(0)) }, "0") {
+                        Text("0", style = MaterialTheme.typography.headlineMedium)
+                    }
+                    KeyCap(Modifier.weight(1f).height(KeyHeight), "key-clear", { onKey(KeypadKey.Clear) }, Strings.CLEAR) {
+                        Text(Strings.CLEAR, style = MaterialTheme.typography.titleMedium)
+                    }
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                KeyCap(Modifier.weight(1f), "key-clear", { onKey(KeypadKey.Clear) }, Strings.CLEAR) {
-                    Text(Strings.CLEAR, style = MaterialTheme.typography.titleMedium)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(KeyGap)) {
+                KeyCap(Modifier.fillMaxWidth().height(KeyHeight), "key-backspace", { onKey(KeypadKey.Backspace) }, Strings.BACKSPACE) {
+                    Icon(Icons.AutoMirrored.Filled.Backspace, contentDescription = Strings.BACKSPACE, modifier = Modifier.size(28.dp))
                 }
                 if (onNext != null) {
                     Surface(
                         modifier = Modifier
-                            .weight(1f)
+                            .fillMaxWidth()
+                            .height(KeyHeight * 3 + KeyGap * 2)
                             .testTag("key-next")
-                            .height(54.dp)
                             .clickable(role = Role.Button, onClickLabel = nextLabel, onClick = onNext),
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(12.dp),
                         color = MaterialTheme.colorScheme.primary,
                         contentColor = androidx.compose.ui.graphics.Color.White,
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(nextLabel, style = MaterialTheme.typography.titleMedium)
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(nextLabel, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
                         }
                     }
                 }
@@ -151,12 +176,15 @@ fun FieldBox(
     tag: String? = null,
     trailing: @Composable (() -> Unit)? = null,
 ) {
-    Column(modifier = if (tag != null) modifier.testTag(tag) else modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(
+        modifier = (if (tag != null) modifier.testTag(tag) else modifier).bringIntoViewWhen(selected),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
         Text(label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 72.dp)
+                .heightIn(min = 58.dp)
                 .clickable(role = Role.Button, onClickLabel = label, onClick = onClick),
             shape = RoundedCornerShape(16.dp),
             color = MaterialTheme.colorScheme.surface,
@@ -170,14 +198,14 @@ fun FieldBox(
             ),
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                     Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = if (value.isEmpty()) placeholder else displayNumber(value),
-                            style = MaterialTheme.typography.headlineLarge,
+                            style = MaterialTheme.typography.headlineMedium,
                             color = if (value.isEmpty()) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface,
                             maxLines = 1,
                             overflow = TextOverflow.Clip,
@@ -187,7 +215,7 @@ fun FieldBox(
                                 Modifier
                                     .padding(start = 2.dp)
                                     .width(3.dp)
-                                    .height(34.dp)
+                                    .height(28.dp)
                                     .background(MaterialTheme.colorScheme.primary),
                             )
                         }
@@ -237,7 +265,7 @@ fun UnitToggle(selected: LengthUnit, onSelect: (LengthUnit) -> Unit, modifier: M
 private fun RoundAction(icon: ImageVector, description: String, enabled: Boolean, onClick: () -> Unit) {
     Surface(
         modifier = Modifier
-            .size(TouchTarget)
+            .size(50.dp)
             .clickable(enabled = enabled, role = Role.Button, onClickLabel = description, onClick = onClick),
         shape = CircleShape,
         color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
@@ -265,14 +293,14 @@ fun QuantityStepper(
     modifier: Modifier = Modifier,
     error: String? = null,
 ) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(modifier.bringIntoViewWhen(selected), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(Strings.QUANTITY, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             RoundAction(Icons.Filled.Remove, Strings.DECREASE, enabled = quantity > 1, onClick = onMinus)
             Surface(
                 modifier = Modifier
                     .weight(1f)
-                    .heightIn(min = 64.dp)
+                    .heightIn(min = 52.dp)
                     .clickable(role = Role.Button, onClickLabel = Strings.QUANTITY, onClick = onSelect),
                 shape = RoundedCornerShape(16.dp),
                 color = MaterialTheme.colorScheme.surface,
@@ -288,7 +316,7 @@ fun QuantityStepper(
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         text = text.ifEmpty { "0" },
-                        style = MaterialTheme.typography.headlineLarge,
+                        style = MaterialTheme.typography.headlineMedium,
                         textAlign = TextAlign.Center,
                     )
                 }

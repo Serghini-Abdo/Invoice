@@ -122,8 +122,8 @@ jobs:
             grep -B1 -A6 "<error" "$f" | cut -c1-1800 | head -40
           done
           echo "=============== END ==============="
-      - name: Publish screenshots (manual runs only)
-        if: always() && github.event_name == 'workflow_dispatch'
+      - name: Publish screenshots (branch ci-screenshots, overwritten on every run)
+        if: always() && github.event_name != 'pull_request'
         run: |
           out=app/build/outputs/connected_android_test_additional_output
           if [ -d "$out" ]; then
