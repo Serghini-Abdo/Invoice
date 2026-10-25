@@ -143,7 +143,7 @@ private fun DateButton(label: String, date: LocalDate?, modifier: Modifier, onCl
         Icon(Icons.Filled.CalendarMonth, contentDescription = null, modifier = Modifier.size(22.dp))
         Spacer(Modifier.width(6.dp))
         Text(
-            text = date?.let { "%02d/%02d/%d".format(it.dayOfMonth, it.monthValue, it.year) } ?: label,
+            text = date?.let { ArabicFormat.date(it) } ?: label,
             style = MaterialTheme.typography.titleSmall,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

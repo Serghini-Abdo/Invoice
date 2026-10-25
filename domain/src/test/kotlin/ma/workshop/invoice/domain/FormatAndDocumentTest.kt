@@ -55,6 +55,7 @@ class FormatAndDocumentTest {
         // 2026-10-25T12:00:00Z
         assertEquals("25/10/2026", ArabicFormat.date(1_792_929_600_000, zone))
         assertEquals("2026-10-25", ArabicFormat.fileDate(1_792_929_600_000, zone))
+        assertEquals("05/03/2026", ArabicFormat.date(LocalDate.of(2026, 3, 5)))
         assertEquals("0007", ArabicFormat.invoiceNumber(7))
         assertEquals("12345", ArabicFormat.invoiceNumber(12345))
     }

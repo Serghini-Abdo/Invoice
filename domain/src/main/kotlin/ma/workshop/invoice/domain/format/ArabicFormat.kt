@@ -59,6 +59,9 @@ object ArabicFormat {
     fun date(epochMillis: Long, zone: ZoneId): String =
         dateFormatter.format(Instant.ofEpochMilli(epochMillis).atZone(zone))
 
+    /** The same dd/MM/yyyy with Western digits, for a calendar date picked by the user. */
+    fun date(date: java.time.LocalDate): String = dateFormatter.format(date)
+
     fun fileDate(epochMillis: Long, zone: ZoneId): String =
         DateTimeFormatter.ISO_LOCAL_DATE.format(Instant.ofEpochMilli(epochMillis).atZone(zone))
 
