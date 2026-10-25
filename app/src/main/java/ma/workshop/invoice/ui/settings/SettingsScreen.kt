@@ -25,11 +25,9 @@ import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,7 +50,9 @@ import ma.workshop.invoice.ui.components.BannerKind
 import ma.workshop.invoice.ui.components.BigButton
 import ma.workshop.invoice.ui.components.ButtonKind
 import ma.workshop.invoice.ui.components.IconBadge
-import ma.workshop.invoice.ui.components.ScreenHeader
+import ma.workshop.invoice.ui.components.AppTextField
+import ma.workshop.invoice.ui.components.AppTopBar
+import ma.workshop.invoice.ui.components.ArabicText
 import ma.workshop.invoice.ui.components.SectionCard
 import ma.workshop.invoice.ui.components.StatusBanner
 import ma.workshop.invoice.ui.components.strictClickable
@@ -67,14 +67,15 @@ private fun NavCard(title: String, hint: String, icon: ImageVector, onClick: () 
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 2.dp,
     ) {
+        // Badge and words on the right; the forward arrow on the far left, pointing right.
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconBadge(icon, size = 64)
-            Spacer(Modifier.width(16.dp))
-            Column(Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleLarge)
-                Text(hint, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(28.dp))
+            Column(Modifier.weight(1f).padding(start = 8.dp), horizontalAlignment = Alignment.End) {
+                ArabicText(title, style = MaterialTheme.typography.titleLarge)
+                ArabicText(hint, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Spacer(Modifier.width(16.dp))
+            IconBadge(icon, size = 64)
         }
     }
 }
@@ -90,11 +91,11 @@ internal fun FormatOption(title: String, hint: String, selected: Boolean, onClic
         color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
     ) {
         Row(Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            RadioButton(selected = selected, onClick = null, modifier = Modifier.padding(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleMedium)
-                Text(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                ArabicText(title, style = MaterialTheme.typography.titleMedium)
+                if (hint.isNotEmpty()) ArabicText(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+            RadioButton(selected = selected, onClick = null, modifier = Modifier.padding(12.dp))
         }
     }
 }
@@ -111,15 +112,15 @@ private fun ChoiceOption(label: String, selected: Boolean, enabled: Boolean, mod
         border = if (selected) BorderStroke(3.dp, MaterialTheme.colorScheme.primary) else null,
     ) {
         Row(Modifier.padding(horizontal = 8.dp, vertical = 8.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-            if (selected) {
-                Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(4.dp))
-            }
-            Text(
+            ArabicText(
                 label,
                 style = MaterialTheme.typography.titleSmall,
                 color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
             )
+            if (selected) {
+                Spacer(Modifier.width(4.dp))
+                Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(20.dp))
+            }
         }
     }
 }
@@ -133,13 +134,14 @@ private fun SwitchRow(label: String, checked: Boolean, enabled: Boolean = true, 
             .strictClickable(enabled = enabled, role = Role.Switch) { onChange(!checked) },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
+        Switch(checked = checked, onCheckedChange = null, enabled = enabled)
+        Spacer(Modifier.width(12.dp))
+        ArabicText(
             label,
             style = MaterialTheme.typography.titleSmall,
             modifier = Modifier.weight(1f),
             color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
         )
-        Switch(checked = checked, onCheckedChange = null, enabled = enabled)
     }
 }
 
@@ -161,7 +163,7 @@ fun SettingsScreen(
     var thanks by rememberSaveable { mutableStateOf<String?>(null) }
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        ScreenHeader(Strings.SETTINGS_TITLE, onBack)
+        AppTopBar(Strings.SETTINGS_TITLE, onBack)
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -172,49 +174,43 @@ fun SettingsScreen(
             NavCard(Strings.PRODUCT_CATALOG, Strings.PRODUCT_CATALOG_HINT, Icons.Filled.Category, onOpenCatalog)
 
             SectionCard {
-                Text(Strings.WORKSHOP_INFO, style = MaterialTheme.typography.titleLarge)
-                OutlinedTextField(
+                ArabicText(Strings.WORKSHOP_INFO, style = MaterialTheme.typography.titleLarge)
+                AppTextField(
                     value = name ?: settings.workshopName,
                     onValueChange = {
                         name = it.take(60)
                         onUpdate { s -> s.copy(workshopName = it.take(60)) }
                     },
-                    label = { Text(Strings.WORKSHOP_NAME) },
+                    label = Strings.WORKSHOP_NAME,
                     textStyle = MaterialTheme.typography.bodyLarge,
-                    singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+                    tag = "workshop-name",
                 )
-                OutlinedTextField(
+                AppTextField(
                     value = phone ?: settings.workshopPhone,
                     onValueChange = { v ->
                         val clean = v.filter { it.isDigit() || it == '+' || it == ' ' }.take(20)
                         phone = clean
                         onUpdate { s -> s.copy(workshopPhone = clean) }
                     },
-                    label = { Text(Strings.WORKSHOP_PHONE) },
+                    label = Strings.WORKSHOP_PHONE,
                     textStyle = MaterialTheme.typography.bodyLarge,
-                    singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+                    tag = "workshop-phone",
                 )
-                OutlinedTextField(
+                AppTextField(
                     value = thanks ?: settings.thankYouMessage,
                     onValueChange = {
                         thanks = it.take(80)
                         onUpdate { s -> s.copy(thankYouMessage = it.take(80)) }
                     },
-                    label = { Text(Strings.THANK_YOU_MESSAGE) },
+                    label = Strings.THANK_YOU_MESSAGE,
                     textStyle = MaterialTheme.typography.bodyLarge,
-                    singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
+                    tag = "workshop-thanks",
                 )
             }
 
             SectionCard {
-                Text(Strings.EXPORT_FORMAT, style = MaterialTheme.typography.titleLarge)
+                ArabicText(Strings.EXPORT_FORMAT, style = MaterialTheme.typography.titleLarge)
                 FormatOption(Strings.FORMAT_PNG, Strings.FORMAT_PNG_HINT, settings.exportFormat == ExportFormat.PNG) {
                     onUpdate { it.copy(exportFormat = ExportFormat.PNG) }
                 }
@@ -227,26 +223,27 @@ fun SettingsScreen(
             }
 
             SectionCard {
-                Text(Strings.AUDIO, style = MaterialTheme.typography.titleLarge)
+                ArabicText(Strings.AUDIO, style = MaterialTheme.typography.titleLarge)
                 SwitchRow(Strings.AUDIO_ENABLED, settings.audioEnabled) { v -> onUpdate { it.copy(audioEnabled = v) } }
-                Text(Strings.SPEECH_LANGUAGE, style = MaterialTheme.typography.titleMedium)
+                ArabicText(Strings.SPEECH_LANGUAGE, style = MaterialTheme.typography.titleMedium)
+                // Choices read from the right: the first (default) one is on the right.
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     for ((language, label) in listOf(
                         SpeechLanguage.DARIJA to Strings.SPEECH_LANGUAGE_DARIJA,
                         SpeechLanguage.STANDARD to Strings.SPEECH_LANGUAGE_STANDARD,
-                    )) {
+                    ).reversed()) {
                         ChoiceOption(label, selected = settings.speechLanguage == language, enabled = settings.audioEnabled, modifier = Modifier.weight(1f)) {
                             onUpdate { it.copy(speechLanguage = language) }
                         }
                     }
                 }
-                Text(Strings.SPEECH_RATE, style = MaterialTheme.typography.titleMedium)
+                ArabicText(Strings.SPEECH_RATE, style = MaterialTheme.typography.titleMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     for ((rate, label) in listOf(
                         SpeechRate.SLOW to Strings.SPEECH_RATE_SLOW,
                         SpeechRate.NORMAL to Strings.SPEECH_RATE_NORMAL,
                         SpeechRate.FAST to Strings.SPEECH_RATE_FAST,
-                    )) {
+                    ).reversed()) {
                         ChoiceOption(label, selected = settings.speechRate == rate, enabled = settings.audioEnabled, modifier = Modifier.weight(1f)) {
                             onUpdate { it.copy(speechRate = rate) }
                         }

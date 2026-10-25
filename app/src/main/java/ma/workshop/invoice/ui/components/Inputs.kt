@@ -25,7 +25,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -33,24 +32,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import ma.workshop.invoice.domain.input.KeypadKey
 import ma.workshop.invoice.domain.pricing.LengthUnit
 import ma.workshop.invoice.ui.Strings
-import ma.workshop.invoice.ui.theme.AppColors
+import ma.workshop.invoice.ui.theme.appPalette
 import ma.workshop.invoice.ui.theme.TouchTarget
 
 /** "1.2" typed internally is shown the Moroccan way, with a comma. */
@@ -98,7 +93,7 @@ private fun KeyCap(
  *     1 2 3 | next
  *     , 0 C | next
  *
- * The digits keep the usual phone order (1-2-3 from the left) even in the right-to-left app.
+ * The digits keep the usual phone order (1-2-3 from the left), as the whole layout is left-to-right.
  */
 @Composable
 fun NumericKeypad(
@@ -108,7 +103,7 @@ fun NumericKeypad(
     onNext: (() -> Unit)? = null,
     nextLabel: String = Strings.NEXT,
 ) {
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+    run {
         Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(KeyGap)) {
             Column(Modifier.weight(3f), verticalArrangement = Arrangement.spacedBy(KeyGap)) {
                 for (row in listOf(listOf(7, 8, 9), listOf(4, 5, 6), listOf(1, 2, 3))) {
@@ -132,7 +127,7 @@ fun NumericKeypad(
                         Text("0", style = MaterialTheme.typography.headlineMedium)
                     }
                     KeyCap(Modifier.weight(1f).height(KeyHeight), "key-clear", { onKey(KeypadKey.Clear) }, Strings.CLEAR) {
-                        Text(Strings.CLEAR, style = MaterialTheme.typography.titleMedium)
+                        ArabicText(Strings.CLEAR, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
                     }
                 }
             }
@@ -149,10 +144,10 @@ fun NumericKeypad(
                             .strictClickable(role = Role.Button, onClickLabel = nextLabel, onClick = onNext),
                         shape = RoundedCornerShape(12.dp),
                         color = MaterialTheme.colorScheme.primary,
-                        contentColor = androidx.compose.ui.graphics.Color.White,
+                        contentColor = MaterialTheme.appPalette.onColor,
                     ) {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text(nextLabel, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+                            ArabicText(nextLabel, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
                         }
                     }
                 }
@@ -177,8 +172,9 @@ fun FieldBox(
     Column(
         modifier = (if (tag != null) modifier.testTag(tag) else modifier).bringIntoViewWhen(selected),
         verticalArrangement = Arrangement.spacedBy(2.dp),
+        horizontalAlignment = Alignment.End,
     ) {
-        Text(label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        ArabicText(label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.appPalette.grayStrong)
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
@@ -189,9 +185,9 @@ fun FieldBox(
             border = BorderStroke(
                 width = if (selected || error != null) 3.dp else 1.dp,
                 color = when {
-                    error != null -> AppColors.Red
+                    error != null -> MaterialTheme.appPalette.error
                     selected -> MaterialTheme.colorScheme.primary
-                    else -> MaterialTheme.colorScheme.outline
+                    else -> MaterialTheme.colorScheme.outlineVariant
                 },
             ),
         ) {
@@ -199,8 +195,10 @@ fun FieldBox(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                    Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                // The unit (or its switch) on the left, the number on the right, digits in typing order.
+                trailing?.invoke()
+                run {
+                    Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
                         Text(
                             text = if (value.isEmpty()) placeholder else displayNumber(value),
                             style = MaterialTheme.typography.headlineMedium,
@@ -219,24 +217,17 @@ fun FieldBox(
                         }
                     }
                 }
-                trailing?.invoke()
             }
         }
-        if (error != null) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.Warning, contentDescription = null, tint = AppColors.Red, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(6.dp))
-                Text(error, color = AppColors.Red, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
-            }
-        }
+        if (error != null) FieldError(error)
     }
 }
 
-/** Metres / centimetres switch shown beside every dimension. */
+/** Metres / centimetres switch shown beside every dimension. Metres stay on the right. */
 @Composable
 fun UnitToggle(selected: LengthUnit, onSelect: (LengthUnit) -> Unit, modifier: Modifier = Modifier) {
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-        for (unit in LengthUnit.entries) {
+        for (unit in LengthUnit.entries.reversed()) {
             val isSelected = unit == selected
             val label = if (unit == LengthUnit.METER) Strings.METER_UNIT else Strings.CM_UNIT
             Surface(
@@ -245,14 +236,14 @@ fun UnitToggle(selected: LengthUnit, onSelect: (LengthUnit) -> Unit, modifier: M
                     .strictClickable(role = Role.RadioButton, onClickLabel = label) { onSelect(unit) },
                 shape = RoundedCornerShape(12.dp),
                 color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = if (isSelected) androidx.compose.ui.graphics.Color.White else MaterialTheme.colorScheme.onSecondaryContainer,
+                contentColor = if (isSelected) MaterialTheme.appPalette.onColor else MaterialTheme.colorScheme.onSecondaryContainer,
             ) {
                 Row(Modifier.padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    ArabicText(label, style = MaterialTheme.typography.titleMedium)
                     if (isSelected) {
-                        Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(Modifier.width(4.dp))
+                        Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(20.dp))
                     }
-                    Text(label, style = MaterialTheme.typography.titleMedium)
                 }
             }
         }
@@ -267,7 +258,7 @@ private fun RoundAction(icon: ImageVector, description: String, enabled: Boolean
             .strictClickable(enabled = enabled, role = Role.Button, onClickLabel = description, onClick = onClick),
         shape = CircleShape,
         color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-        contentColor = androidx.compose.ui.graphics.Color.White,
+        contentColor = MaterialTheme.appPalette.onColor,
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(icon, contentDescription = description, modifier = Modifier.size(32.dp))
@@ -291,8 +282,8 @@ fun QuantityStepper(
     modifier: Modifier = Modifier,
     error: String? = null,
 ) {
-    Column(modifier.bringIntoViewWhen(selected), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(Strings.QUANTITY, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Column(modifier.bringIntoViewWhen(selected), verticalArrangement = Arrangement.spacedBy(2.dp), horizontalAlignment = Alignment.End) {
+        ArabicText(Strings.QUANTITY, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.appPalette.grayStrong)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             RoundAction(Icons.Filled.Remove, Strings.DECREASE, enabled = quantity > 1, onClick = onMinus)
             Surface(
@@ -305,9 +296,9 @@ fun QuantityStepper(
                 border = BorderStroke(
                     width = if (selected || error != null) 3.dp else 1.dp,
                     color = when {
-                        error != null -> AppColors.Red
+                        error != null -> MaterialTheme.appPalette.error
                         selected -> MaterialTheme.colorScheme.primary
-                        else -> MaterialTheme.colorScheme.outline
+                        else -> MaterialTheme.colorScheme.outlineVariant
                     },
                 ),
             ) {
@@ -321,13 +312,7 @@ fun QuantityStepper(
             }
             RoundAction(Icons.Filled.Add, Strings.INCREASE, enabled = quantity < maxQuantity, onClick = onPlus)
         }
-        if (error != null) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.Warning, contentDescription = null, tint = AppColors.Red, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.width(6.dp))
-                Text(error, color = AppColors.Red, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
-            }
-        }
+        if (error != null) FieldError(error)
     }
 }
 
@@ -372,7 +357,7 @@ fun ProductCard(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 IllustrationImage(illustration, Modifier.size(112.dp))
-                Text(
+                ArabicText(
                     text = name,
                     style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.Center,
@@ -383,7 +368,8 @@ fun ProductCard(
                         .padding(top = 6.dp),
                 )
             }
-            Row(Modifier.fillMaxWidth().padding(horizontal = 6.dp), horizontalArrangement = Arrangement.End) {
+            // Bottom-left, inside the card, its own target.
+            Row(Modifier.fillMaxWidth().padding(horizontal = 6.dp), horizontalArrangement = Arrangement.Start) {
                 SpeakerButton(onClick = onSpeak, available = speechAvailable)
             }
         }
@@ -402,13 +388,13 @@ fun AudioToggle(enabled: Boolean, onToggle: () -> Unit, modifier: Modifier = Mod
         color = if (enabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
     ) {
         Row(Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            ArabicText(if (enabled) Strings.SOUND_ON else Strings.SOUND_OFF, style = MaterialTheme.typography.titleSmall)
+            Spacer(Modifier.width(6.dp))
             Icon(
                 imageVector = if (enabled) Icons.Filled.VolumeUp else Icons.Filled.VolumeOff,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
             )
-            Spacer(Modifier.width(6.dp))
-            Text(if (enabled) Strings.SOUND_ON else Strings.SOUND_OFF, style = MaterialTheme.typography.titleSmall)
         }
     }
 }

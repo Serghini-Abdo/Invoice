@@ -122,6 +122,8 @@ object DarijaSpeech : SpeechText {
 
     override val voiceTest: String = DarijaTerms.VOICE_TEST
 
+    override val addProduct: String = DarijaTerms.ADD_PRODUCT
+
     /** A decimal read as words, for places that show a bare number. */
     fun number(value: BigDecimal): String = DarijaNumbers.decimal(value)
 }

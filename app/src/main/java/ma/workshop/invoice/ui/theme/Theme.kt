@@ -7,6 +7,9 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -17,22 +20,46 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ma.workshop.invoice.R
+import ma.workshop.invoice.domain.palette.Palette
 
-object AppColors {
-    val Rust = Color(0xFFB8541A)
-    val RustDark = Color(0xFF8A3B0F)
-    val RustLight = Color(0xFFFFE3D2)
-    val Steel = Color(0xFF37474F)
-    val SteelMid = Color(0xFF607D8B)
-    val SteelPale = Color(0xFFE3E9EC)
-    val Paper = Color(0xFFFAF7F2)
-    val Green = Color(0xFF1B6B3A)
-    val GreenPale = Color(0xFFE3F4E8)
-    val Red = Color(0xFFB3261E)
-    val RedPale = Color(0xFFFCE4E1)
-    val Amber = Color(0xFF8A5A00)
-    val AmberPale = Color(0xFFFFF0CC)
-}
+/**
+ * Colours that have a meaning beyond the Material roles. Read them with [MaterialTheme.appPalette]; no screen
+ * uses a raw colour. Every value comes from the shared domain [Palette], like the printed invoice's.
+ */
+@Immutable
+data class AppPalette(
+    /** Green means "paid" and nothing else among amounts. */
+    val paid: Color = Color(Palette.PRIMARY),
+    val paidContainer: Color = Color(Palette.PRIMARY_CONTAINER),
+    /** The yellow of the "+ إضافة منتوج" button and, later, the balance band. Always with dark text. */
+    val balance: Color = Color(Palette.SECONDARY),
+    val balancePressed: Color = Color(Palette.SECONDARY_PRESSED),
+    val balanceBorder: Color = Color(Palette.SECONDARY_BORDER),
+    val onBalance: Color = Color(Palette.INK),
+    val error: Color = Color(Palette.ERROR),
+    val errorContainer: Color = Color(Palette.ERROR_CONTAINER),
+    val onErrorContainer: Color = Color(Palette.ON_ERROR_CONTAINER),
+    val gray: Color = Color(Palette.GRAY),
+    /** Gray for small text on the surface (gray on surface is only 4.4 : 1). */
+    val grayStrong: Color = Color(Palette.GRAY_STRONG),
+    val surface: Color = Color(Palette.SURFACE),
+    val ink: Color = Color(Palette.INK),
+    /** Text and icons on a green, red or gray fill. Never on yellow. */
+    val onColor: Color = Color(Palette.ON_COLOR),
+    /** Information banners: neutral, so they never read as "paid". */
+    val info: Color = Color(Palette.GRAY_STRONG),
+    val infoContainer: Color = Color(Palette.OUTLINE_SOFT),
+    /** Warnings: dark yellow-brown text on pale yellow. */
+    val warning: Color = Color(Palette.SECONDARY_BORDER),
+    val onWarningContainer: Color = Color(0xFF6B4F00),
+    val warningContainer: Color = Color(Palette.SECONDARY_CONTAINER),
+)
+
+private val LocalAppPalette = staticCompositionLocalOf { AppPalette() }
+
+/** The app's own colour roles, next to [MaterialTheme.colorScheme]. */
+val MaterialTheme.appPalette: AppPalette
+    @Composable @ReadOnlyComposable get() = LocalAppPalette.current
 
 val CairoFamily = FontFamily(
     Font(R.font.cairo_regular, FontWeight.Normal),
@@ -40,30 +67,30 @@ val CairoFamily = FontFamily(
 )
 
 private val lightColors = lightColorScheme(
-    primary = AppColors.Rust,
-    onPrimary = Color.White,
-    primaryContainer = AppColors.RustLight,
-    onPrimaryContainer = AppColors.RustDark,
-    secondary = AppColors.Steel,
-    onSecondary = Color.White,
-    secondaryContainer = AppColors.SteelPale,
-    onSecondaryContainer = AppColors.Steel,
-    tertiary = AppColors.Green,
-    onTertiary = Color.White,
-    tertiaryContainer = AppColors.GreenPale,
-    onTertiaryContainer = AppColors.Green,
-    background = AppColors.Paper,
-    onBackground = Color(0xFF1B1B1B),
-    surface = Color.White,
-    onSurface = Color(0xFF1B1B1B),
-    surfaceVariant = Color(0xFFEFE9E2),
-    onSurfaceVariant = Color(0xFF4A4F54),
-    outline = Color(0xFF7A8085),
-    outlineVariant = Color(0xFFCFC8BF),
-    error = AppColors.Red,
-    onError = Color.White,
-    errorContainer = AppColors.RedPale,
-    onErrorContainer = AppColors.Red,
+    primary = Color(Palette.PRIMARY),
+    onPrimary = Color(Palette.ON_COLOR),
+    primaryContainer = Color(Palette.PRIMARY_CONTAINER),
+    onPrimaryContainer = Color(Palette.ON_PRIMARY_CONTAINER),
+    secondary = Color(Palette.SECONDARY),
+    onSecondary = Color(Palette.INK),
+    secondaryContainer = Color(Palette.OUTLINE_SOFT),
+    onSecondaryContainer = Color(Palette.INK),
+    tertiary = Color(Palette.PRIMARY),
+    onTertiary = Color(Palette.ON_COLOR),
+    tertiaryContainer = Color(Palette.PRIMARY_CONTAINER),
+    onTertiaryContainer = Color(Palette.ON_PRIMARY_CONTAINER),
+    background = Color(Palette.SURFACE),
+    onBackground = Color(Palette.INK),
+    surface = Color(Palette.CARD),
+    onSurface = Color(Palette.INK),
+    surfaceVariant = Color(Palette.SURFACE),
+    onSurfaceVariant = Color(Palette.GRAY_STRONG),
+    outline = Color(Palette.GRAY),
+    outlineVariant = Color(Palette.OUTLINE),
+    error = Color(Palette.ERROR),
+    onError = Color(Palette.ON_COLOR),
+    errorContainer = Color(Palette.ERROR_CONTAINER),
+    onErrorContainer = Color(Palette.ON_ERROR_CONTAINER),
 )
 
 private fun text(size: Int, bold: Boolean = false) = TextStyle(
@@ -98,10 +125,14 @@ private val shapes = Shapes(
     large = RoundedCornerShape(24.dp),
 )
 
-/** The whole app is Arabic: layout is forced right-to-left regardless of the phone's language. */
+/**
+ * The layout is forced left-to-right whatever the phone's language: back on the left, forward arrows
+ * pointing right, digits in phone order. Arabic text keeps its own direction and right alignment through
+ * [ma.workshop.invoice.ui.components.ArabicText]. The printed invoice stays right-to-left (its renderer).
+ */
 @Composable
 fun InvoiceTheme(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr, LocalAppPalette provides AppPalette()) {
         MaterialTheme(colorScheme = lightColors, typography = typography, shapes = shapes, content = content)
     }
 }

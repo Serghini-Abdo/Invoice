@@ -33,6 +33,7 @@ object StandardTerms {
     const val METHOD_PERIMETER = "بالمتر الطولي"
     const val METHOD_PIECE = "بالقطعة"
     const val VOICE_TEST = "هذا هو صوت التطبيق. ألف ومائتان وستون درهم"
+    const val ADD_PRODUCT = "إضافة منتوج"
 }
 
 /**
@@ -94,6 +95,8 @@ object StandardSpeech : SpeechText {
     override fun paymentSummary(payment: PaymentSummary): String = SpokenText.invoiceSummary(payment)
 
     override val voiceTest: String = StandardTerms.VOICE_TEST
+
+    override val addProduct: String = StandardTerms.ADD_PRODUCT
 
     // ---- numbers and measurements ----
 

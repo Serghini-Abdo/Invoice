@@ -27,7 +27,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,7 +46,8 @@ import ma.workshop.invoice.ui.components.BannerKind
 import ma.workshop.invoice.ui.components.BigButton
 import ma.workshop.invoice.ui.components.ButtonKind
 import ma.workshop.invoice.ui.components.ConfirmDialog
-import ma.workshop.invoice.ui.components.ScreenHeader
+import ma.workshop.invoice.ui.components.AppTopBar
+import ma.workshop.invoice.ui.components.ArabicText
 import ma.workshop.invoice.ui.components.SectionCard
 import ma.workshop.invoice.ui.components.StatusBanner
 import ma.workshop.invoice.ui.components.strictClickable
@@ -72,13 +72,13 @@ private fun DestinationRow(
         color = if (checked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
     ) {
         Row(Modifier.padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(32.dp))
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleMedium)
-                Text(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
             Switch(checked = checked, onCheckedChange = null, enabled = enabled)
+            Column(Modifier.weight(1f).padding(start = 8.dp), horizontalAlignment = Alignment.End) {
+                ArabicText(title, style = MaterialTheme.typography.titleMedium)
+                ArabicText(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Spacer(Modifier.width(12.dp))
+            Icon(icon, contentDescription = null, modifier = Modifier.size(32.dp))
         }
     }
 }
@@ -87,7 +87,7 @@ private fun DestinationRow(
 @Composable
 private fun StatusRow(destination: BackupDestination, status: DestinationStatus) {
     val zone = ZoneId.systemDefault()
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.End) {
         AmountRow(
             destination.label(),
             status.lastSuccessAt?.let { ArabicFormat.dateTime(it, zone) } ?: Strings.STATUS_NEVER,
@@ -96,7 +96,7 @@ private fun StatusRow(destination: BackupDestination, status: DestinationStatus)
         if (failure != null) {
             StatusBanner("${Strings.STATUS_ERROR}: ${failure.message()}. ${failure.advice()}", if (failure.needsUser) BannerKind.Error else BannerKind.Warning)
             if (status.lastDetail.isNotEmpty()) {
-                Text(
+                ArabicText(
                     "${Strings.STATUS_CODE}: ${status.lastDetail}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -126,18 +126,19 @@ fun BackupScreen(
     onBack: () -> Unit,
 ) {
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        ScreenHeader(Strings.BACKUP_TITLE, onBack)
+        AppTopBar(Strings.BACKUP_TITLE, onBack)
         Column(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
+            horizontalAlignment = Alignment.End,
         ) {
             state.messages.forEach { message ->
                 StatusBanner(message.text, message.kind)
                 if (message.detail.isNotEmpty()) {
-                    Text("${Strings.STATUS_CODE}: ${message.detail}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    ArabicText("${Strings.STATUS_CODE}: ${message.detail}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             alerts.forEach { StatusBanner(it.text(), if (it.kind == ma.workshop.invoice.domain.backup.AlertKind.NEEDS_ACTION) BannerKind.Error else BannerKind.Warning) }
@@ -148,21 +149,21 @@ fun BackupScreen(
 
             if (state.working) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    CircularProgressIndicator(Modifier.size(28.dp))
+                    ArabicText(Strings.WORKING, style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.width(12.dp))
-                    Text(Strings.WORKING, style = MaterialTheme.typography.titleMedium)
+                    CircularProgressIndicator(Modifier.size(28.dp))
                 }
             }
 
             SectionCard {
-                Text(Strings.AUTO_BACKUP_TITLE, style = MaterialTheme.typography.titleLarge)
+                ArabicText(Strings.AUTO_BACKUP_TITLE, style = MaterialTheme.typography.titleLarge)
                 FormatOption(Strings.FREQ_OFF, Strings.FREQ_OFF_HINT, plan.frequency == BackupFrequency.OFF) { onSetFrequency(BackupFrequency.OFF) }
                 FormatOption(Strings.FREQ_DAILY, "", plan.frequency == BackupFrequency.DAILY) { onSetFrequency(BackupFrequency.DAILY) }
                 FormatOption(Strings.FREQ_WEEKLY, "", plan.frequency == BackupFrequency.WEEKLY) { onSetFrequency(BackupFrequency.WEEKLY) }
             }
 
             SectionCard {
-                Text(Strings.DESTINATIONS_TITLE, style = MaterialTheme.typography.titleLarge)
+                ArabicText(Strings.DESTINATIONS_TITLE, style = MaterialTheme.typography.titleLarge)
                 DestinationRow(
                     Strings.DEST_PHONE,
                     Strings.DEST_PHONE_HINT,
@@ -179,12 +180,12 @@ fun BackupScreen(
                     enabled = !state.working && !(plan.drive && !plan.local),
                     onChange = { onSetDrive(it) },
                 )
-                if (plan.local != plan.drive) Text(Strings.DEST_KEEP_ONE, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (plan.local != plan.drive) ArabicText(Strings.DEST_KEEP_ONE, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 BigButton(Strings.BACKUP_NOW, Icons.Filled.Backup, onBackUpNow, enabled = !state.working)
             }
 
             SectionCard {
-                Text(Strings.STATUS_TITLE, style = MaterialTheme.typography.titleLarge)
+                ArabicText(Strings.STATUS_TITLE, style = MaterialTheme.typography.titleLarge)
                 StatusRow(BackupDestination.LOCAL, status.local)
                 if (plan.drive || status.drive.lastSuccessAt != null || status.drive.lastFailure != null) {
                     StatusRow(BackupDestination.DRIVE, status.drive)
@@ -193,9 +194,9 @@ fun BackupScreen(
             }
 
             SectionCard {
-                Text(Strings.BACKUP_FILE_TITLE, style = MaterialTheme.typography.titleLarge)
+                ArabicText(Strings.BACKUP_FILE_TITLE, style = MaterialTheme.typography.titleLarge)
                 BigButton(Strings.FILE_IMPORT, Icons.Filled.FileUpload, onFileImport, enabled = !state.working, kind = ButtonKind.Secondary)
-                Text(Strings.FILE_IMPORT_HINT, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                ArabicText(Strings.FILE_IMPORT_HINT, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 BigButton(Strings.DRIVE_RESTORE, Icons.Filled.CloudDownload, onDriveRestore, enabled = !state.working, kind = ButtonKind.Secondary)
                 BigButton(Strings.FILE_EXPORT, Icons.Filled.FileDownload, onFileExport, enabled = !state.working, kind = ButtonKind.Secondary)
             }

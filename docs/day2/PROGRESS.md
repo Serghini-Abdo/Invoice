@@ -13,7 +13,7 @@ on the screens after the layout sprint.
 | Design | Four review rounds, approved 2026-10-25 | Done |
 | 3 (speech core) | TTS wrapper, voice check and prompt, Darija speech, speech rate, speech recognizer core | Done, see below |
 | 3 (add-on) | Spoken-language setting: Darija (default) or standard Arabic | Done, see below |
-| 4 (foundations) | Theme tokens, forced LTR, Arabic text and field components, top bar, speaker tile, Add button | Not started |
+| 4 (foundations) | Theme tokens, forced LTR, Arabic text and field components, top bar, speaker tile, Add button | Done, see below |
 | 5 (units, fields, photos) | cm/m and unit-label settings, invoice unit, field icons, photo import, backup with images | Not started |
 | 6 (invoice output) | Table option A, PDF headers and footer, totals colours, one PNG or point to PDF | Not started |
 | 7 (placement) | Speakers on every row/card/field/CTA; mic on customer name and product name | Not started (needs 4 to 6) |
@@ -151,6 +151,110 @@ Requested by the owner after the speech core.
   `ANDROID_SERIAL`), and never a phone with real invoices.
 * On this PC the emulator and Gradle do not fit in memory together: build first, stop Gradle
   (`./gradlew --stop`), then start the emulator; or install the APKs and run `adb shell am instrument`.
+
+## Sprint 4: foundations
+
+Branch `day2/sprint-4` (from `day2/sprint-3`).
+
+### Delivered
+
+* **One palette** (`domain/palette/Palette`): every colour of DECISIONS.md as ARGB. The screen theme
+  (`ui/theme/Theme.kt`) builds the Material `ColorScheme` and a small `AppPalette` (`MaterialTheme.appPalette`:
+  paid green, balance yellow + pressed + edge, error, gray, gray-strong, surface, ink, banner colours) from it,
+  and the printed invoice's `InvoiceColors` now points at the same table. `AppColors` is gone; no screen uses
+  `AppColors.*` or `Color.White` any more.
+  * Green means paid only: unpaid balances, item totals and invoice totals on screens are ink; the paid
+    balance and the "خالص" badge stay green. On the **printed invoice** the unpaid balance is ink too, and the
+    workshop name, muted text, dividers and panels use the new palette (rust is gone). The rest of the invoice
+    layout is unchanged (sprint 6).
+  * Buttons: primary/success green with white, danger red with white, secondary white with a gray edge and
+    ink text, accent yellow with ink text and a `#A67C00` edge. Home cards: green, yellow (dark text, dark
+    edge), white (gray edge), as in the mock-up.
+* **Forced LTR**: `MainActivity` and `InvoiceTheme` use `LayoutDirection.Ltr`. `ArabicText` (in
+  `ui/components/Foundations.kt`) is a right-to-left paragraph, right-aligned; every screen text uses it.
+  Every row was re-ordered so labels stay on the right and amounts on the left; icons sit on the right of
+  their words. Choices read from the right (speech language, speech rate, metre/cm, picture grid). The renderer
+  of the printed invoice is unchanged (still RTL).
+  * One RTL island on purpose: the product-catalogue grid keeps today's order (first product top-right,
+    decided); each card inside is LTR again. The category chips use `reverseLayout`.
+* **`AppTextField`**: label above on the right (optional small hint such as "(اختياري)"), box below with
+  right-aligned text (a phone number keeps its digit order), optional illustration beside it on the right,
+  optional `trailing` slot inside the box on the left (for the mic in sprint 7), error line with icon. It
+  replaces all 9 `OutlinedTextField`s (customer name/phone, product name, category, workshop name/phone/
+  thank-you, history search). No illustrations are passed yet (field icons are sprint 5).
+* **Arrows**: forward arrows point right, on the right of the label ("→ متابعة"); back arrow on the left.
+* **`AppTopBar`** replaces `ScreenHeader` on every screen: back left (56 dp), title right with an optional
+  speaker slot, optional centred 44 dp picture (item details and item confirmation) with the title limited
+  to the right half and ending with "…". The mute chip of confirmation and review moved to `AppSubBar`, a
+  slim line under the bar. On the confirmation screen the large picture moved into the bar (as in the mock-up).
+* **`SpokenButton` / `SpeakerTile`**: `| speaker | button |`, the tile copies the button's colours, border,
+  radius and height, 4 dp gap, at least 48 × 48 dp, own target that only speaks; stays usable (and speaks)
+  when its button is disabled. Used only by the add button for now (placement is sprint 7).
+* **"+ إضافة منتوج"** (`AddProductButton`): yellow `#F2B705`, ink text, `#A67C00` edge, 64 dp, plus in a dark
+  circle on the right of the label, pressed state darker (`#D9A404`) and shrinking slightly. Shown in both the
+  empty and the filled item list. Its tile speaks the new `SpeechText.addProduct` ("زيد منتوج" in Darija,
+  "إضافة منتوج" in standard Arabic) through `Speaker.say`.
+* `strictClickable` / `StrictButton` accept an interaction source (for the pressed state) and a content
+  description (for icon-only buttons such as the tile).
+
+### Tests
+
+| Test | Where | Result |
+|---|---|---|
+| Add-product sentence in both languages | `domain` `StandardSpeechTest` | Pass (JVM) |
+| All domain tests | `./gradlew -p domain test` | Pass (189 tests) |
+| Build, lint | `assembleDebug`, `assembleDebugAndroidTest`, `lintDebug` | Pass (lint: 0 errors, 62 warnings, none in changed code: Gradle versions, KTX, launcher icon) |
+| Back arrow left, title right, home cards and Continue large | `LayoutAndBackUiTest` (rewritten for LTR) | Pass (phone) |
+| Field labels and typed text right-aligned (Arabic name, phone number) | `LayoutAndBackUiTest` (new) | Pass (phone) |
+| Yellow add button ≥ 64 dp; tile left of it, 4 dp gap, same height, ≥ 48 dp; a tile tap never opens the catalogue | `LayoutAndBackUiTest` (new) | Pass (phone) |
+| Centred picture in the item-details bar, title in the right half; mute chip in the sub-bar on the left on confirmation | `LayoutAndBackUiTest` (new) | Pass (phone) |
+| Catalogue first product top-right, speakers ≥ 48 dp, speaker tap and finger slide never select, keypad, system Back | `LayoutAndBackUiTest` (kept) | Pass (phone) |
+| Export: payment summary found on PNG / last PNG / last PDF page | `ExportInstrumentedTest` | Pass (phone), see note |
+| All instrumented tests | Samsung SM-S931B, Android 16 | **OK (53 tests)**: 52 pass, 1 skipped (`AppFolderStoreTest.a_…`, Android 7–9 only) |
+
+Test changes besides `LayoutAndBackUiTest`:
+
+* The add button's visible label is now "إضافة منتوج" (the plus is an icon), so the locator in
+  `InvoiceFlowUiTest`, `ScreenshotTourTest` and `SpeechUiTest` changed from `"+ إضافة منتوج"` to
+  `Strings.ADD_PRODUCT`. The flows themselves are unchanged.
+* `ExportInstrumentedTest` found the payment summary by the old rust balance colour, which no longer exists
+  (unpaid balance = ink). It now looks for the summary box itself: the tallest block in the invoice panel
+  colour (the column-title strip has the same fill but is one line high), and also checks that page 1 of the
+  long PDF has no summary. The first run of the suite failed only these 2 tests for that reason.
+
+### Verified on a device vs. must be checked by hand
+
+The suite ran on the owner's Samsung SM-S931B (Android 16, test data only) with the owner's approval,
+targeted with `adb -s`, after building and stopping Gradle.
+
+**Verified automatically:** LTR placement of the back arrow, titles, field labels, typed text, the add
+button and its tile, the centred picture and the sub-bar; touch-target sizes; speaker taps never act;
+every existing flow, export, backup, migration and speech test.
+
+**Must be checked by eye on the phone (not covered by tests):**
+
+* Colours on every screen against the mock-ups: the yellow add button and the yellow history card (dark text,
+  dark edge), the white settings card, white secondary buttons with a gray edge, banners (info gray, warning
+  pale yellow, error pale red, success pale green).
+* The add button's **pressed state** (darker yellow, slight shrink) is visible under a real finger.
+* Arrow directions and icon sides: "→ متابعة", icons on the right of every button label and banner, the
+  forward arrow at the left of the Settings cards pointing right.
+* Arabic text that starts with digits or Latin (amounts "2 520,00 DH", "DH / م²", the customer line
+  "أحمد • 0612 …", invoice numbers, dates) reads in the right order and sits on the right.
+* Long product names in the item-details bar end with "…" before the centred picture.
+* Dialogs (save, delete, leave, restore, voice missing, mic listening): title and text on the right,
+  cancel on the left and confirm on the right; the Material date picker in history.
+* The printed invoice (PNG and PDF) with the new colours: workshop name green, unpaid balance ink.
+* The add button's speaker tile with the voice on: it says "زيد منتوج" (Darija) / "إضافة منتوج" (standard).
+
+### Notes for the next sprints
+
+* Use `ArabicText` for every new screen text, `AppTextField` for text input, `AppTopBar` for headers,
+  `SpokenButton` for labelled buttons and colours only from `MaterialTheme.colorScheme` / `appPalette`.
+* In LTR a `Column` aligns children left: give content columns `horizontalAlignment = Alignment.End`
+  (`SectionCard` already does) and put the right-hand element last in a `Row`.
+* The empty item list card is still a button (it opens the catalogue); the mock-up makes it a message with
+  its own speaker: change it with the speaker placement in sprint 7.
 
 ## Next sprints, step by step
 

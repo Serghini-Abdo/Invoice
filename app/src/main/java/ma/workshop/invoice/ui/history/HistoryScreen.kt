@@ -29,9 +29,7 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,11 +46,13 @@ import ma.workshop.invoice.domain.format.ArabicFormat
 import ma.workshop.invoice.domain.invoice.HistoryQuery
 import ma.workshop.invoice.domain.invoice.InvoiceSummary
 import ma.workshop.invoice.ui.Strings
-import ma.workshop.invoice.ui.components.ScreenHeader
+import ma.workshop.invoice.ui.components.AppTextField
+import ma.workshop.invoice.ui.components.AppTopBar
+import ma.workshop.invoice.ui.components.ArabicText
 import ma.workshop.invoice.ui.components.StrictButton
 import ma.workshop.invoice.ui.components.StrictIconButton
 import ma.workshop.invoice.ui.components.strictClickable
-import ma.workshop.invoice.ui.theme.AppColors
+import ma.workshop.invoice.ui.theme.appPalette
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -73,15 +73,16 @@ fun HistoryScreen(
     val zone = remember { ZoneId.systemDefault() }
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        ScreenHeader(Strings.HISTORY_TITLE, onBack)
+        AppTopBar(Strings.HISTORY_TITLE, onBack)
 
         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
+            AppTextField(
                 value = query.text,
                 onValueChange = { onQueryChange(query.copy(text = it)) },
-                placeholder = { Text(Strings.SEARCH_HINT, style = MaterialTheme.typography.bodyMedium) },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                trailingIcon = {
+                label = null,
+                placeholder = Strings.SEARCH_HINT,
+                icon = Icons.Filled.Search,
+                trailing = {
                     if (query.text.isNotEmpty()) {
                         StrictIconButton(
                             onClick = { onQueryChange(query.copy(text = "")) },
@@ -93,13 +94,10 @@ fun HistoryScreen(
                     }
                 },
                 textStyle = MaterialTheme.typography.bodyLarge,
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth().heightIn(min = 60.dp),
+                tag = "history-search",
             )
+            // "From" on the right, "to" beside it, the clear button on the left.
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                DateButton(Strings.DATE_FROM, query.fromDate, Modifier.weight(1f)) { pickingFrom = true }
-                DateButton(Strings.DATE_TO, query.toDate, Modifier.weight(1f)) { pickingTo = true }
                 if (!query.isEmpty) {
                     StrictIconButton(
                         onClick = { onQueryChange(HistoryQuery()) },
@@ -109,12 +107,14 @@ fun HistoryScreen(
                         Icon(Icons.Filled.Clear, contentDescription = Strings.CLEAR_FILTERS, modifier = Modifier.size(28.dp))
                     }
                 }
+                DateButton(Strings.DATE_TO, query.toDate, Modifier.weight(1f)) { pickingTo = true }
+                DateButton(Strings.DATE_FROM, query.fromDate, Modifier.weight(1f)) { pickingFrom = true }
             }
         }
 
         if (invoices.isEmpty()) {
             Box(Modifier.weight(1f).fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) {
-                Text(
+                ArabicText(
                     if (totalCount == 0) Strings.NO_INVOICES else Strings.NO_RESULTS,
                     style = MaterialTheme.typography.titleLarge,
                     textAlign = TextAlign.Center,
@@ -151,14 +151,15 @@ private fun DateButton(label: String, date: LocalDate?, modifier: Modifier, onCl
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
     ) {
-        Icon(Icons.Filled.CalendarMonth, contentDescription = null, modifier = Modifier.size(22.dp))
-        Spacer(Modifier.width(6.dp))
-        Text(
+        ArabicText(
             text = date?.let { ArabicFormat.date(it) } ?: label,
             style = MaterialTheme.typography.titleSmall,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false),
         )
+        Spacer(Modifier.width(6.dp))
+        Icon(Icons.Filled.CalendarMonth, contentDescription = null, modifier = Modifier.size(22.dp))
     }
 }
 
@@ -178,11 +179,11 @@ private fun DateDialog(initial: LocalDate?, onPick: (LocalDate?) -> Unit, onDism
                     onDismiss()
                 },
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-            ) { Text(Strings.CONFIRM, style = MaterialTheme.typography.titleMedium) }
+            ) { ArabicText(Strings.CONFIRM, style = MaterialTheme.typography.titleMedium) }
         },
         dismissButton = {
             StrictButton(onClick = onDismiss, contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)) {
-                Text(Strings.CANCEL, style = MaterialTheme.typography.titleMedium)
+                ArabicText(Strings.CANCEL, style = MaterialTheme.typography.titleMedium)
             }
         },
     ) {
@@ -200,42 +201,43 @@ fun InvoiceSummaryCard(invoice: InvoiceSummary, zone: ZoneId, onClick: () -> Uni
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
+        // Amounts on the left, the invoice and customer on the right.
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
+            Column(horizontalAlignment = Alignment.Start) {
+                ArabicText(ArabicFormat.amount(invoice.total), style = MaterialTheme.typography.titleLarge)
+                if (invoice.remaining.isZero) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        ArabicText(Strings.FULLY_PAID, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.appPalette.paid)
+                        Spacer(Modifier.width(4.dp))
+                        Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.appPalette.paid, modifier = Modifier.size(20.dp))
+                    }
+                } else {
+                    ArabicText(
+                        "${Strings.REMAINING}: ${ArabicFormat.amount(invoice.remaining)}",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            }
+            Spacer(Modifier.width(8.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp), horizontalAlignment = Alignment.End) {
+                ArabicText(
                     "${Strings.INVOICE_NUMBER} ${ArabicFormat.invoiceNumber(invoice.number)}",
                     style = MaterialTheme.typography.titleMedium,
                 )
-                Text(
+                ArabicText(
                     invoice.customerName.ifBlank { Strings.ANONYMOUS_CUSTOMER },
                     style = MaterialTheme.typography.bodyLarge,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(
+                ArabicText(
                     "${ArabicFormat.date(invoice.createdAt, zone)}  •  ${invoice.itemCount} ${Strings.ITEMS_COUNT}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 if (invoice.revision > 1) {
-                    Text(Strings.EDITED, style = MaterialTheme.typography.labelMedium, color = AppColors.Amber)
-                }
-            }
-            Spacer(Modifier.width(8.dp))
-            Column(horizontalAlignment = Alignment.End) {
-                Text(ArabicFormat.amount(invoice.total), style = MaterialTheme.typography.titleLarge)
-                if (invoice.remaining.isZero) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = AppColors.Green, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text(Strings.FULLY_PAID, style = MaterialTheme.typography.titleSmall, color = AppColors.Green)
-                    }
-                } else {
-                    Text(
-                        "${Strings.REMAINING}: ${ArabicFormat.amount(invoice.remaining)}",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
+                    ArabicText(Strings.EDITED, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.appPalette.onWarningContainer)
                 }
             }
         }

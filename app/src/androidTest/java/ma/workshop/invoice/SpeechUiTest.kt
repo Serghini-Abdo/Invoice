@@ -119,8 +119,8 @@ class VoiceOffFlowTest {
             rule.onNodeWithText(Strings.NEW_INVOICE).performClick()
             rule.waitForTextOrExplain(Strings.CONTINUE)
             rule.onNodeWithText(Strings.CONTINUE).performClick()
-            rule.waitForTextOrExplain("+ ${Strings.ADD_PRODUCT}")
-            rule.onNodeWithText("+ ${Strings.ADD_PRODUCT}").performClick()
+            rule.waitForTextOrExplain(Strings.ADD_PRODUCT)
+            rule.onNodeWithText(Strings.ADD_PRODUCT).performClick()
             rule.waitForTextOrExplain("باب حديد")
 
             // The speakers on the cards: no voice prompt, no navigation.

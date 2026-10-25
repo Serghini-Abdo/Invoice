@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,14 +46,15 @@ import ma.workshop.invoice.ui.components.BigButton
 import ma.workshop.invoice.ui.components.ButtonKind
 import ma.workshop.invoice.ui.components.ConfirmDialog
 import ma.workshop.invoice.ui.components.IllustrationImage
-import ma.workshop.invoice.ui.components.ScreenHeader
+import ma.workshop.invoice.ui.components.AppTopBar
+import ma.workshop.invoice.ui.components.ArabicText
 import ma.workshop.invoice.ui.components.SectionCard
 import ma.workshop.invoice.ui.components.StatusBanner
 import ma.workshop.invoice.ui.components.StrictIconButton
 import ma.workshop.invoice.ui.screens.ExportPanel
 import ma.workshop.invoice.ui.screens.ExportUi
 import ma.workshop.invoice.ui.screens.ShareChoice
-import ma.workshop.invoice.ui.theme.AppColors
+import ma.workshop.invoice.ui.theme.appPalette
 import java.time.ZoneId
 
 fun Change.arabic(): String = when (type) {
@@ -82,14 +82,14 @@ fun InvoiceDetailScreen(
     val zone = ZoneId.systemDefault()
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        ScreenHeader(Strings.INVOICE_DETAILS, onBack)
+        AppTopBar(Strings.INVOICE_DETAILS, onBack)
         when (state) {
             DetailState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             DetailState.NotFound -> Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-                Text(Strings.INVOICE_NOT_FOUND, style = MaterialTheme.typography.titleLarge)
+                ArabicText(Strings.INVOICE_NOT_FOUND, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
             }
             DetailState.Unreadable -> Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-                Text(Strings.INVOICE_UNREADABLE, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
+                ArabicText(Strings.INVOICE_UNREADABLE, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
             }
             is DetailState.Ready -> {
                 val invoice = state.invoice
@@ -141,15 +141,15 @@ fun InvoiceDetailScreen(
 @Composable
 private fun InvoiceHeaderCard(invoice: Invoice, zone: ZoneId) {
     SectionCard {
-        Text("${Strings.INVOICE_NUMBER} ${ArabicFormat.invoiceNumber(invoice.number)}", style = MaterialTheme.typography.headlineSmall)
-        Text(ArabicFormat.date(invoice.createdAt, zone), style = MaterialTheme.typography.bodyLarge)
-        if (invoice.customer.name.isNotBlank()) Text("${ArabicTerms.CUSTOMER}: ${invoice.customer.name}", style = MaterialTheme.typography.bodyLarge)
-        if (invoice.customer.phone.isNotBlank()) Text("${ArabicTerms.PHONE}: ${invoice.customer.phone}", style = MaterialTheme.typography.bodyLarge)
+        ArabicText("${Strings.INVOICE_NUMBER} ${ArabicFormat.invoiceNumber(invoice.number)}", style = MaterialTheme.typography.headlineSmall)
+        ArabicText(ArabicFormat.date(invoice.createdAt, zone), style = MaterialTheme.typography.bodyLarge)
+        if (invoice.customer.name.isNotBlank()) ArabicText("${ArabicTerms.CUSTOMER}: ${invoice.customer.name}", style = MaterialTheme.typography.bodyLarge)
+        if (invoice.customer.phone.isNotBlank()) ArabicText("${ArabicTerms.PHONE}: ${invoice.customer.phone}", style = MaterialTheme.typography.bodyLarge)
         if (invoice.isEdited) {
-            Text(
+            ArabicText(
                 "${ArabicTerms.UPDATED} ${ArabicFormat.date(invoice.updatedAt, zone)}  (${Strings.REVISION} ${invoice.revision - 1})",
                 style = MaterialTheme.typography.titleSmall,
-                color = AppColors.Amber,
+                color = MaterialTheme.appPalette.onWarningContainer,
             )
         }
     }
@@ -159,19 +159,20 @@ private fun InvoiceHeaderCard(invoice: Invoice, zone: ZoneId) {
 private fun ReadOnlyItem(item: ma.workshop.invoice.domain.invoice.InvoiceItem) {
     SectionCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IllustrationImage(item.illustration, Modifier.size(64.dp))
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(item.productName, style = MaterialTheme.typography.titleMedium)
-                ItemDescriber.measures(item.pricing)?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
-                Text("${ArabicTerms.QUANTITY}: ${item.pricing.quantity}", style = MaterialTheme.typography.bodyMedium)
-                Text(
+            ArabicText(ArabicFormat.amount(item.pricing.total), style = MaterialTheme.typography.titleLarge)
+            Spacer(Modifier.width(8.dp))
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                ArabicText(item.productName, style = MaterialTheme.typography.titleMedium)
+                ItemDescriber.measures(item.pricing)?.let { ArabicText(it, style = MaterialTheme.typography.bodyMedium) }
+                ArabicText("${ArabicTerms.QUANTITY}: ${item.pricing.quantity}", style = MaterialTheme.typography.bodyMedium)
+                ArabicText(
                     ItemDescriber.calculation(item.pricing),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Text(ArabicFormat.amount(item.pricing.total), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(12.dp))
+            IllustrationImage(item.illustration, Modifier.size(64.dp))
         }
     }
 }
@@ -186,7 +187,7 @@ private fun PaymentCard(invoice: Invoice) {
             Strings.REMAINING,
             ArabicFormat.amount(payment.remaining),
             emphasized = true,
-            valueColor = if (payment.isFullyPaid) AppColors.Green else MaterialTheme.colorScheme.primary,
+            valueColor = if (payment.isFullyPaid) MaterialTheme.appPalette.paid else MaterialTheme.colorScheme.onSurface,
         )
         if (payment.isFullyPaid) StatusBanner(Strings.FULLY_PAID_LONG, BannerKind.Success)
     }
@@ -200,7 +201,6 @@ private fun RevisionLog(revisions: List<InvoiceRevision>, zone: ZoneId) {
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(Strings.REVISION_LOG, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
             StrictIconButton(
                 onClick = { expanded = !expanded },
                 contentDescription = Strings.REVISION_LOG,
@@ -212,18 +212,19 @@ private fun RevisionLog(revisions: List<InvoiceRevision>, zone: ZoneId) {
                     modifier = Modifier.size(32.dp),
                 )
             }
+            ArabicText(Strings.REVISION_LOG, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
         }
         if (expanded) {
             for (revision in revisions) {
-                Column(Modifier.padding(vertical = 6.dp)) {
-                    Text(
+                Column(Modifier.padding(vertical = 6.dp), horizontalAlignment = Alignment.End) {
+                    ArabicText(
                         "${Strings.REVISION} ${revision.revision - 1}  •  ${ArabicFormat.date(revision.changedAt, zone)}",
                         style = MaterialTheme.typography.titleSmall,
                     )
                     for (change in revision.changes) {
-                        Text("• ${change.arabic()}", style = MaterialTheme.typography.bodyMedium)
+                        ArabicText("• ${change.arabic()}", style = MaterialTheme.typography.bodyMedium)
                     }
-                    Text(
+                    ArabicText(
                         "${ArabicTerms.TOTAL}: ${ArabicFormat.amount(revision.previousTotal)} ← ${ArabicFormat.amount(revision.newTotal)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -70,7 +70,7 @@ class ScreenshotTourTest {
         Shots.saveScaled(name, rule.onRoot().captureToImage().asAndroidBitmap())
     }
 
-    private fun addButton() = "+ ${Strings.ADD_PRODUCT}"
+    private fun addButton() = Strings.ADD_PRODUCT
 
     private fun addItem(product: String, width: String, height: String, rate: String, plusClicks: Int = 0, centimetres: Boolean = false) {
         rule.onNodeWithText(addButton()).performClick()

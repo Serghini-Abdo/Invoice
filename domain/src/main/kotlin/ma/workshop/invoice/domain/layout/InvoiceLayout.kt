@@ -3,6 +3,7 @@ package ma.workshop.invoice.domain.layout
 import ma.workshop.invoice.domain.format.ArabicTerms
 import ma.workshop.invoice.domain.format.DocumentRow
 import ma.workshop.invoice.domain.format.InvoiceDocument
+import ma.workshop.invoice.domain.palette.Palette
 
 /** Text styles of the invoice. Sizes are layout units (1 unit = 1 dp on the on-screen preview). */
 enum class TextStyle(val size: Float, val bold: Boolean) {
@@ -71,15 +72,16 @@ data class LayoutSpec(
     val thumbnail: Float = 64f,
 )
 
+/** The printed invoice's colours, all taken from the shared [Palette] so screens and paper match. */
 object InvoiceColors {
-    const val INK = 0xFF1B1B1BL
-    const val MUTED = 0xFF546E7AL
-    const val ACCENT = 0xFFB8541AL
-    const val DIVIDER = 0xFFCFD8DCL
-    const val PANEL = 0xFFF5F7F8L
-    const val PAID = 0xFF1B6B3AL
-    const val PAID_BG = 0xFFE3F4E8L
-    const val WHITE = 0xFFFFFFFFL
+    const val INK = Palette.INK
+    const val MUTED = Palette.GRAY_STRONG
+    const val ACCENT = Palette.PRIMARY
+    const val DIVIDER = Palette.OUTLINE_SOFT
+    const val PANEL = Palette.SURFACE
+    const val PAID = Palette.PRIMARY
+    const val PAID_BG = Palette.PRIMARY_CONTAINER
+    const val WHITE = Palette.CARD
 }
 
 /**
@@ -280,7 +282,7 @@ class InvoiceLayoutEngine(private val measurer: TextMeasurer) {
         val lines = listOf(
             Line(ArabicTerms.TOTAL, doc.total, TextStyle.HEADING, TextStyle.TOTAL, InvoiceColors.INK),
             Line(ArabicTerms.DEPOSIT, doc.deposit, TextStyle.HEADING, TextStyle.TOTAL, InvoiceColors.INK),
-            Line(ArabicTerms.REMAINING, doc.remaining, TextStyle.HEADING, TextStyle.TOTAL, if (doc.isFullyPaid) InvoiceColors.PAID else InvoiceColors.ACCENT),
+            Line(ArabicTerms.REMAINING, doc.remaining, TextStyle.HEADING, TextStyle.TOTAL, if (doc.isFullyPaid) InvoiceColors.PAID else InvoiceColors.INK),
         )
         val lineHeights = lines.map {
             maxOf(

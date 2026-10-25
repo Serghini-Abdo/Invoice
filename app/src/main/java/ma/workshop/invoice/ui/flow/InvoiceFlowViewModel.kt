@@ -224,6 +224,8 @@ class InvoiceFlowViewModel(
     /** The speaker on a product card: speaks the name only; it never selects the product. */
     fun speakProductName(name: String): SpeakResult = container.speaker.say(name, settings.value)
 
+    fun speakAddProduct(): SpeakResult = container.speaker.say(speechText().addProduct, settings.value)
+
     fun replayItemTotal(): SpeakResult {
         val text = itemTotalText() ?: return SpeakResult.UNAVAILABLE
         return container.speaker.say(text, settings.value)
