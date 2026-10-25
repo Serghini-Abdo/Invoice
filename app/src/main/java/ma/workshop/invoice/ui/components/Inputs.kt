@@ -363,3 +363,26 @@ fun ProductCard(
         }
     }
 }
+
+/** Quick mute switch for screens that speak. Icon and word both change, so it never relies on colour. */
+@Composable
+fun AudioToggle(enabled: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier
+            .heightIn(min = 48.dp)
+            .testTag("audio-toggle")
+            .clickable(role = Role.Switch, onClickLabel = if (enabled) Strings.MUTE else Strings.AUDIO_ENABLED, onClick = onToggle),
+        shape = RoundedCornerShape(12.dp),
+        color = if (enabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Row(Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = if (enabled) Icons.Filled.VolumeUp else Icons.Filled.VolumeOff,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(if (enabled) Strings.SOUND_ON else Strings.SOUND_OFF, style = MaterialTheme.typography.titleSmall)
+        }
+    }
+}

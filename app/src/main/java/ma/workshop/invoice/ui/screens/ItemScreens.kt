@@ -41,6 +41,7 @@ import ma.workshop.invoice.domain.pricing.ItemEntryForm
 import ma.workshop.invoice.domain.pricing.PricingLimits
 import ma.workshop.invoice.ui.Strings
 import ma.workshop.invoice.ui.arabic
+import ma.workshop.invoice.ui.components.AudioToggle
 import ma.workshop.invoice.ui.components.BannerKind
 import ma.workshop.invoice.ui.components.BigButton
 import ma.workshop.invoice.ui.components.ButtonKind
@@ -233,6 +234,8 @@ fun ItemEntryScreen(
 fun ItemConfirmScreen(
     pending: PendingItem,
     speechAvailable: Boolean,
+    audioEnabled: Boolean,
+    onToggleAudio: () -> Unit,
     onSpeakTotal: () -> Unit,
     onReplay: () -> Unit,
     onConfirm: () -> Unit,
@@ -244,7 +247,7 @@ fun ItemConfirmScreen(
     LaunchedEffect(pricing) { if (pricing != null) onSpeakTotal() }
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        ScreenHeader(Strings.CONFIRM_ITEM_TITLE, onBack)
+        ScreenHeader(Strings.CONFIRM_ITEM_TITLE, onBack, actions = { AudioToggle(audioEnabled, onToggleAudio) })
         if (pricing == null) return@Column
 
         Column(

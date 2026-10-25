@@ -129,6 +129,8 @@ fun InvoiceFlowRoute(
                 ItemConfirmScreen(
                     pending = pending,
                     speechAvailable = speechAvailable,
+                    audioEnabled = settings.audioEnabled,
+                    onToggleAudio = vm::toggleAudio,
                     onSpeakTotal = { vm.autoSpeakItemTotal() },
                     onReplay = { speakFeedback(vm.replayItemTotal()) },
                     onConfirm = { vm.onEvent(FlowEvent.ItemConfirmed) },
@@ -139,6 +141,8 @@ fun InvoiceFlowRoute(
             FlowStep.Review -> ReviewScreen(
                 state = current,
                 speechAvailable = speechAvailable,
+                audioEnabled = settings.audioEnabled,
+                onToggleAudio = vm::toggleAudio,
                 onSpeakSummary = { vm.autoSpeakInvoiceSummary() },
                 onReplay = { speakFeedback(vm.replayInvoiceSummary()) },
                 onDepositChange = { vm.onEvent(FlowEvent.DepositEdited(it)) },
