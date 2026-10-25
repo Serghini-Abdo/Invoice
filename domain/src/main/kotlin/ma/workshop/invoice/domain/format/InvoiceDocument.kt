@@ -78,7 +78,11 @@ object InvoiceDocumentBuilder {
         )
     }
 
-    /** ASCII-only, sortable and descriptive: invoice-0007-2026-10-25.pdf */
+    /** ASCII-only, sortable and descriptive base name: invoice-0007-2026-10-25 */
+    fun baseFileName(invoice: Invoice, zone: ZoneId): String =
+        "invoice-${ArabicFormat.invoiceNumber(invoice.number)}-${ArabicFormat.fileDate(invoice.createdAt, zone)}"
+
+    /** invoice-0007-2026-10-25.pdf */
     fun fileName(invoice: Invoice, extension: String, zone: ZoneId): String =
-        "invoice-${ArabicFormat.invoiceNumber(invoice.number)}-${ArabicFormat.fileDate(invoice.createdAt, zone)}.$extension"
+        "${baseFileName(invoice, zone)}.$extension"
 }
