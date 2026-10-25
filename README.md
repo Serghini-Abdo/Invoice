@@ -112,3 +112,30 @@ Design decisions worth knowing:
 
 Data model and migration strategy: [docs/data-and-migrations.md](docs/data-and-migrations.md).
 
+## Known limitations
+
+These are real, current limits, not future plans:
+
+* **Google Drive backup/restore has not been run against a real Google account.** It needs an OAuth
+  client (see [docs/google-drive-setup.md](docs/google-drive-setup.md)), Google Play Services and internet,
+  none of which exist in automated tests. The parts that make a restore *safe* (strict validation,
+  staged confirmation, safety copy, atomic transaction) are tested without Drive, and the identical
+  restore path is exercised through the file backup.
+* **Arabic speech depends on the phone.** The app uses whatever Arabic text-to-speech voice is installed
+  (Moroccan Arabic if present). Darija pronunciation is *not* promised or verified; spoken amounts use
+  standard Arabic number words. CI emulators have no Arabic voice, so speech output itself is only verified
+  to degrade correctly (clear "unavailable" state, everything still on screen), not to sound right.
+* **Tested on one emulator configuration** (Android 11 / API 30, x86_64, Pixel 5 profile) in CI, not on
+  physical phones or other Android versions. Touch-target sizes and right-to-left placement are asserted
+  in density-independent pixels by automated UI tests rather than checked by hand on hardware.
+* **Product pictures are the 16 built-in illustrations** (the owner can add any number of products, each
+  using one of them). Taking or importing photos of products is not implemented.
+* **Phones are locked to portrait.** Tablets may rotate; on a tablet in landscape the item-entry screen is
+  usable but compact (it scrolls).
+* **Only the three required pricing formulas exist** (area, perimeter, per piece). A product priced per
+  linear metre of a single length can use the perimeter formula only with two dimensions.
+* **The app is Arabic-only** by design; there is no language switch.
+* **Android Auto Backup is switched off** (`allowBackup=false`) so invoice data only leaves the phone
+  through the explicit backup actions.
+* **Release builds are not code-shrunk** (`isMinifyEnabled=false`) and are unsigned unless you provide a
+  keystore through the environment variables above.
