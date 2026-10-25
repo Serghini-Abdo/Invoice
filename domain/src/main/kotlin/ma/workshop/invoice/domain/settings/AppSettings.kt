@@ -1,5 +1,6 @@
 package ma.workshop.invoice.domain.settings
 
+import ma.workshop.invoice.domain.pricing.LengthUnit
 /** How a finished invoice is exported. */
 enum class ExportFormat(val id: String) {
     /** Image, best for WhatsApp. */
@@ -28,6 +29,16 @@ enum class SpeechRate(val id: String, val multiplier: Float) {
 }
 
 /** The language the app speaks in. Screens and printed invoices are not affected. */
+/** Unit labels on screens and invoices: Arabic (سم / م) or Latin (cm / m). Labels only; digits never change. */
+enum class UnitLabelScript(val id: String) {
+    ARABIC("arabic"),
+    LATIN("latin");
+
+    companion object {
+        fun fromId(id: String): UnitLabelScript? = entries.firstOrNull { it.id == id }
+    }
+}
+
 enum class SpeechLanguage(val id: String) {
     DARIJA("darija"),
     STANDARD("standard");
@@ -55,6 +66,9 @@ data class AppSettings(
     val speechLanguage: SpeechLanguage = SpeechLanguage.DARIJA,
     /** Show the round speaker icons and speaker tiles beside buttons, titles and table rows. Off by default. */
     val showSpeakers: Boolean = false,
+    /** The one length unit the item entry uses for both dimensions (the per-item switch is gone). */
+    val lengthUnit: LengthUnit = LengthUnit.METER,
+    val unitLabelScript: UnitLabelScript = UnitLabelScript.ARABIC,
 ) {
     companion object {
         const val DEFAULT_THANK_YOU = "شكراً لثقتكم"

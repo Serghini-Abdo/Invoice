@@ -1,6 +1,9 @@
 package ma.workshop.invoice.ui
 
+import ma.workshop.invoice.domain.format.ArabicFormat
+import ma.workshop.invoice.domain.pricing.LengthUnit
 import ma.workshop.invoice.domain.pricing.PricingFormula
+import ma.workshop.invoice.domain.settings.UnitLabelScript
 import ma.workshop.invoice.domain.pricing.Problem
 
 /** Arabic wording for validation problems (shown next to the field, with a warning icon). */
@@ -20,9 +23,9 @@ fun PricingFormula.rateLabel(): String = when (this) {
     PricingFormula.PER_ITEM -> Strings.RATE_PIECE
 }
 
-fun PricingFormula.rateUnit(): String = when (this) {
-    PricingFormula.AREA -> Strings.RATE_AREA_UNIT
-    PricingFormula.PERIMETER -> Strings.RATE_PERIMETER_UNIT
+fun PricingFormula.rateUnit(script: UnitLabelScript = UnitLabelScript.ARABIC): String = when (this) {
+    PricingFormula.AREA -> "DH / ${ArabicFormat.squareMeter(script)}"
+    PricingFormula.PERIMETER -> "DH / ${ArabicFormat.unit(LengthUnit.METER, script)}"
     PricingFormula.PER_ITEM -> Strings.RATE_PIECE_UNIT
 }
 

@@ -168,6 +168,7 @@ fun FieldBox(
     error: String? = null,
     tag: String? = null,
     trailing: @Composable (() -> Unit)? = null,
+    picture: @Composable (() -> Unit)? = null,
 ) {
     Column(
         modifier = (if (tag != null) modifier.testTag(tag) else modifier).bringIntoViewWhen(selected),
@@ -175,9 +176,10 @@ fun FieldBox(
         horizontalAlignment = Alignment.End,
     ) {
         ArabicText(label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.appPalette.grayStrong)
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Surface(
             modifier = Modifier
-                .fillMaxWidth()
+                .weight(1f)
                 .heightIn(min = 58.dp)
                 .strictClickable(role = Role.Button, onClickLabel = label, onClick = onClick),
             shape = RoundedCornerShape(16.dp),
@@ -219,34 +221,9 @@ fun FieldBox(
                 }
             }
         }
-        if (error != null) FieldError(error)
-    }
-}
-
-/** Metres / centimetres switch shown beside every dimension. Metres stay on the right. */
-@Composable
-fun UnitToggle(selected: LengthUnit, onSelect: (LengthUnit) -> Unit, modifier: Modifier = Modifier) {
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-        for (unit in LengthUnit.entries.reversed()) {
-            val isSelected = unit == selected
-            val label = if (unit == LengthUnit.METER) Strings.METER_UNIT else Strings.CM_UNIT
-            Surface(
-                modifier = Modifier
-                    .height(48.dp)
-                    .strictClickable(role = Role.RadioButton, onClickLabel = label) { onSelect(unit) },
-                shape = RoundedCornerShape(12.dp),
-                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = if (isSelected) MaterialTheme.appPalette.onColor else MaterialTheme.colorScheme.onSecondaryContainer,
-            ) {
-                Row(Modifier.padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-                    ArabicText(label, style = MaterialTheme.typography.titleMedium)
-                    if (isSelected) {
-                        Spacer(Modifier.width(4.dp))
-                        Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(20.dp))
-                    }
-                }
-            }
+        picture?.invoke()
         }
+        if (error != null) FieldError(error)
     }
 }
 
@@ -281,6 +258,7 @@ fun QuantityStepper(
     maxQuantity: Int,
     modifier: Modifier = Modifier,
     error: String? = null,
+    picture: @Composable (() -> Unit)? = null,
 ) {
     Column(modifier.bringIntoViewWhen(selected), verticalArrangement = Arrangement.spacedBy(2.dp), horizontalAlignment = Alignment.End) {
         ArabicText(Strings.QUANTITY, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.appPalette.grayStrong)
@@ -311,6 +289,7 @@ fun QuantityStepper(
                 }
             }
             RoundAction(Icons.Filled.Add, Strings.INCREASE, enabled = quantity < maxQuantity, onClick = onPlus)
+            picture?.invoke()
         }
         if (error != null) FieldError(error)
     }

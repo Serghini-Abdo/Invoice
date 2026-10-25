@@ -2,6 +2,7 @@ package ma.workshop.invoice.domain.format
 
 import ma.workshop.invoice.domain.invoice.Invoice
 import ma.workshop.invoice.domain.invoice.InvoiceItem
+import ma.workshop.invoice.domain.settings.UnitLabelScript
 import ma.workshop.invoice.domain.settings.AppSettings
 import java.time.ZoneId
 
@@ -53,7 +54,7 @@ data class InvoiceDocument(
 object InvoiceDocumentBuilder {
 
     fun build(invoice: Invoice, settings: AppSettings, zone: ZoneId): InvoiceDocument {
-        val rows = invoice.items.mapIndexed { index, item -> row(index + 1, item) }
+        val rows = invoice.items.mapIndexed { index, item -> row(index + 1, item, settings.unitLabelScript) }
         val payment = invoice.payment
         return InvoiceDocument(
             title = ArabicTerms.INVOICE,
@@ -75,17 +76,17 @@ object InvoiceDocumentBuilder {
     }
 
     /** One table row. The paper and the on-screen table (item list, review, detail) both draw this. */
-    fun row(position: Int, item: InvoiceItem): DocumentRow {
+    fun row(position: Int, item: InvoiceItem, script: UnitLabelScript = UnitLabelScript.ARABIC): DocumentRow {
         val pricing = item.pricing
         return DocumentRow(
             position = position,
             illustration = item.illustration,
             name = item.productName,
-            measures = ItemDescriber.measures(pricing),
+            measures = ItemDescriber.measures(pricing, script),
             quantity = pricing.quantity,
-            rate = ItemDescriber.rate(pricing),
-            calculation = ItemDescriber.calculation(pricing),
-            formula = ItemDescriber.formula(pricing),
+            rate = ItemDescriber.rate(pricing, script),
+            calculation = ItemDescriber.calculation(pricing, script),
+            formula = ItemDescriber.formula(pricing, script),
             total = ArabicFormat.amount(pricing.total),
             totalNumber = ArabicFormat.amountNumber(pricing.total),
         )

@@ -372,6 +372,26 @@ page, PDF fallback for a too-long invoice, every earlier test.
 * Tests: `SpeakerToggleUiTest` (hidden by default; on: title speaker + Continue tile, tap does not navigate;
   never in Settings). Full instrumented suite on the Samsung SM-S931B: **OK (65 tests)** (the first attempt failed only because the phone was locked).
 
+### Units and field pictures (sprint 6, steps 1-5)
+
+* **Settings → الوحدات:** `lengthUnit` (m default / cm) and `unitLabelScript` (Arabic سم / م default, Latin cm / m), no
+  speakers. Room **v5** (`MIGRATION_4_5`, `5.json`, `MigrationTest` case); backups carry both with defaults.
+* **One unit per invoice:** the m / cm switch is gone from item entry and the "default unit" card from product edit
+  (`UnitToggle` deleted). The entry shows only the unit label where the switch was. A new item takes the unit of the
+  invoice's first measured item, else the Settings unit; reopening an item keeps the unit it was typed in, so old mixed
+  invoices stay as typed. **Deviation:** the unit is derived from the first item, not stored in a new
+  `invoices.lengthUnit` column (a per-piece-only invoice then follows the current Settings unit). Add the column if
+  that edge matters.
+* **Labels follow the script** on entry, confirmation, item list, review, detail, and the printed PNG/PDF (also
+  re-exports of old invoices): `ItemDescriber` / `InvoiceDocumentBuilder` take the script, `LocalUnitScript` carries it
+  to screens. Latin parts are wrapped in LRI…PDI isolates; digits never change.
+* **Field pictures** (soft green box beside the field, label above it): ↔ width, ↕ height, DH coin (price and the
+  review deposit), stacked boxes for quantity, person and phone for the customer.
+* Tests: `UnitScriptTest` (JVM), `MigrationTest`, `UnitsUiTest` (device). `ScreenshotTourTest` now types its cm item as
+  metres (one unit per invoice) and the field-width test allows for the picture. Full suite: **OK (69 tests)**.
+* By hand: the Latin labels in the PDF/PNG (order of "120 × 85 cm" and "2,52 m² × 500 DH"), the pictures' look and
+  alignment, and the unit label position on the entry screen.
+
 ### Notes for the next sprints
 
 * Latin unit labels and photos will reach the table through `DocumentRow` / `IllustrationImage` (sprint 6).

@@ -64,6 +64,8 @@ import ma.workshop.invoice.ui.components.ConfirmDialog
 import ma.workshop.invoice.ui.components.FieldBox
 import ma.workshop.invoice.ui.components.InvoiceTable
 import ma.workshop.invoice.ui.components.LocalSpeakers
+import ma.workshop.invoice.ui.components.LocalUnitScript
+import ma.workshop.invoice.ui.components.CoinPicture
 import ma.workshop.invoice.ui.components.PaidBadge
 import ma.workshop.invoice.ui.components.TablePicture
 import ma.workshop.invoice.ui.components.NumericKeypad
@@ -116,7 +118,7 @@ fun ReviewScreen(
 
             Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
                 InvoiceTable(
-                    rows = state.items.mapIndexed { index, item -> InvoiceDocumentBuilder.row(index + 1, item) },
+                    rows = state.items.mapIndexed { index, item -> InvoiceDocumentBuilder.row(index + 1, item, LocalUnitScript.current) },
                     picture = TablePicture.Review,
                     speakTexts = LocalSpeakers.current.let { ui -> if (ui.show) state.items.map { ui.texts.itemLine(it.productName, it.pricing) } else null },
                     modifier = Modifier.padding(6.dp),
@@ -133,6 +135,7 @@ fun ReviewScreen(
                 FieldBox(
                     label = Strings.DEPOSIT,
                     tag = "deposit-field",
+                    picture = { CoinPicture() },
                     value = state.depositText,
                     selected = keypadOpen,
                     onClick = {

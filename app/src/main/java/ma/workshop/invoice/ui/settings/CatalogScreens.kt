@@ -62,7 +62,6 @@ import ma.workshop.invoice.ui.components.AppTopBar
 import ma.workshop.invoice.ui.components.ArabicText
 import ma.workshop.invoice.ui.components.SectionCard
 import ma.workshop.invoice.ui.components.StatusBanner
-import ma.workshop.invoice.ui.components.UnitToggle
 import ma.workshop.invoice.ui.components.strictClickable
 import ma.workshop.invoice.ui.methodName
 import ma.workshop.invoice.ui.theme.appPalette
@@ -262,13 +261,6 @@ fun ProductEditScreen(
                         }
                         if (!state.isNew) {
                             ArabicText(Strings.FORMULA_LOCKED_NOTE, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-
-                    if (form.formula.needsDimensions) {
-                        SectionCard {
-                            ArabicText(Strings.DEFAULT_UNIT, style = MaterialTheme.typography.titleMedium)
-                            UnitToggle(form.defaultUnit, { unit -> onEdit { it.copy(defaultUnit = unit) } })
                         }
                     }
 

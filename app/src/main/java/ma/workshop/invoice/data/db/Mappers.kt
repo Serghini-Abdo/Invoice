@@ -14,6 +14,7 @@ import ma.workshop.invoice.domain.pricing.LengthUnit
 import ma.workshop.invoice.domain.pricing.PricingFormula
 import ma.workshop.invoice.domain.settings.AppSettings
 import ma.workshop.invoice.domain.settings.ExportFormat
+import ma.workshop.invoice.domain.settings.UnitLabelScript
 import ma.workshop.invoice.domain.settings.SpeechLanguage
 import ma.workshop.invoice.domain.settings.SpeechRate
 import java.math.BigDecimal
@@ -181,6 +182,8 @@ fun SettingsEntity.toDomain() = AppSettings(
     speechRate = SpeechRate.fromId(speechRate) ?: SpeechRate.NORMAL,
     speechLanguage = SpeechLanguage.fromId(speechLanguage) ?: SpeechLanguage.DARIJA,
     showSpeakers = showSpeakers,
+    lengthUnit = LengthUnit.fromId(lengthUnit) ?: LengthUnit.METER,
+    unitLabelScript = UnitLabelScript.fromId(unitLabelScript) ?: UnitLabelScript.ARABIC,
 )
 
 fun AppSettings.toEntity(catalogSeeded: Boolean) = SettingsEntity(
@@ -197,4 +200,6 @@ fun AppSettings.toEntity(catalogSeeded: Boolean) = SettingsEntity(
     speechRate = speechRate.id,
     speechLanguage = speechLanguage.id,
     showSpeakers = showSpeakers,
+    lengthUnit = lengthUnit.id,
+    unitLabelScript = unitLabelScript.id,
 )

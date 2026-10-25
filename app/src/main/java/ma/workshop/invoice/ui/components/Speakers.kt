@@ -43,3 +43,6 @@ fun RoundSpeaker(text: String, modifier: Modifier = Modifier) {
         Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(26.dp))
     }
 }
+
+/** The unit-label script chosen in Settings (Arabic سم / م or Latin cm / m), for every screen that writes units. */
+val LocalUnitScript = androidx.compose.runtime.staticCompositionLocalOf { ma.workshop.invoice.domain.settings.UnitLabelScript.ARABIC }

@@ -136,7 +136,13 @@ class InvoiceFlowViewModel(
             val copy = container.photos.copyFor(pending.product.illustration)
             current = current.copy(pending = pending.copy(product = pending.product.copy(illustration = copy)))
         }
-        val transition = flow.reduce(current, event)
+        // One unit for the whole invoice: the unit of its first measured item, else the one chosen in Settings.
+        val chosen = event
+        val effective = if (chosen is FlowEvent.ProductChosen) {
+            val unit = current.items.firstNotNullOfOrNull { it.pricing.width?.unit ?: it.pricing.height?.unit } ?: settings.value.lengthUnit
+            FlowEvent.ProductChosen(chosen.product.copy(defaultUnit = unit))
+        } else event
+        val transition = flow.reduce(current, effective)
         _state.value = transition.state
         when (val effect = transition.effect) {
             is FlowEffect.Save -> save(effect.draft)

@@ -15,6 +15,7 @@ import ma.workshop.invoice.domain.pricing.PricingFormula
 import ma.workshop.invoice.domain.pricing.RateBasis
 import ma.workshop.invoice.domain.settings.AppSettings
 import ma.workshop.invoice.domain.settings.ExportFormat
+import ma.workshop.invoice.domain.settings.UnitLabelScript
 import ma.workshop.invoice.domain.settings.SpeechLanguage
 import ma.workshop.invoice.domain.settings.SpeechRate
 import java.math.BigDecimal
@@ -41,6 +42,9 @@ data class SettingsDto(
     val speechLanguage: String = SpeechLanguage.DARIJA.id,
     /** Added in Day 2; older backups restore with the speaker icons hidden. */
     val showSpeakers: Boolean = false,
+    /** Added in Day 2; older backups restore with metres and Arabic unit labels. */
+    val lengthUnit: String = LengthUnit.METER.id,
+    val unitLabelScript: String = UnitLabelScript.ARABIC.id,
 )
 
 @Serializable
@@ -115,6 +119,7 @@ data class InvoiceDto(
 fun AppSettings.toDto() = SettingsDto(
     workshopName, workshopPhone, exportFormat.id, audioEnabled, speakItemTotals, speakInvoiceTotals,
     thankYouMessage, nextInvoiceNumber, speechRate.id, speechLanguage.id, showSpeakers,
+    lengthUnit.id, unitLabelScript.id,
 )
 
 fun ProductDefinition.toDto() = ProductDto(
@@ -175,6 +180,8 @@ fun SettingsDto.toDomain(): AppSettings? {
         speechRate = SpeechRate.fromId(speechRate) ?: SpeechRate.NORMAL,
         speechLanguage = SpeechLanguage.fromId(speechLanguage) ?: SpeechLanguage.DARIJA,
         showSpeakers = showSpeakers,
+        lengthUnit = LengthUnit.fromId(lengthUnit) ?: LengthUnit.METER,
+        unitLabelScript = UnitLabelScript.fromId(unitLabelScript) ?: UnitLabelScript.ARABIC,
     )
 }
 

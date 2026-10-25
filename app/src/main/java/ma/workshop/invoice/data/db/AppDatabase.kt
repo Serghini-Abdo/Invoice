@@ -23,7 +23,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SettingsEntity::class,
         DraftEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -56,7 +56,15 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+        /** Day 2: the one length unit and the unit-label script. Existing installs keep metres and Arabic labels. */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE app_settings ADD COLUMN lengthUnit TEXT NOT NULL DEFAULT 'm'")
+                db.execSQL("ALTER TABLE app_settings ADD COLUMN unitLabelScript TEXT NOT NULL DEFAULT 'arabic'")
+            }
+        }
+
+        val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
 
         fun build(context: Context): AppDatabase =
             Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, NAME)

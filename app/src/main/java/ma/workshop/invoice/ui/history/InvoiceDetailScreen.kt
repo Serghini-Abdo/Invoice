@@ -49,6 +49,7 @@ import ma.workshop.invoice.ui.components.ButtonKind
 import ma.workshop.invoice.ui.components.ConfirmDialog
 import ma.workshop.invoice.ui.components.InvoiceTable
 import ma.workshop.invoice.ui.components.LocalSpeakers
+import ma.workshop.invoice.ui.components.LocalUnitScript
 import ma.workshop.invoice.ui.components.TablePicture
 import ma.workshop.invoice.ui.components.AppTopBar
 import ma.workshop.invoice.ui.components.ArabicText
@@ -109,7 +110,7 @@ fun InvoiceDetailScreen(
                     // The same compact table as the paper.
                     Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
                         InvoiceTable(
-                            rows = invoice.items.mapIndexed { index, item -> InvoiceDocumentBuilder.row(index + 1, item) },
+                            rows = invoice.items.mapIndexed { index, item -> InvoiceDocumentBuilder.row(index + 1, item, LocalUnitScript.current) },
                             picture = TablePicture.Detail,
                             speakTexts = LocalSpeakers.current.let { ui -> if (ui.show) invoice.items.map { ui.texts.itemLine(it.productName, it.pricing) } else null },
                             modifier = Modifier.padding(6.dp),

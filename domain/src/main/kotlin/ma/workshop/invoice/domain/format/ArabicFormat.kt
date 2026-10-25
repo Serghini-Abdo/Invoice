@@ -4,6 +4,7 @@ import ma.workshop.invoice.domain.money.Money
 import ma.workshop.invoice.domain.pricing.Length
 import ma.workshop.invoice.domain.pricing.LengthUnit
 import ma.workshop.invoice.domain.util.canonical
+import ma.workshop.invoice.domain.settings.UnitLabelScript
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
@@ -81,10 +82,23 @@ object ArabicFormat {
         LengthUnit.CENTIMETER -> decimal(length.value, minDecimals = 0, maxDecimals = 3)
     }
 
-    fun unit(unit: LengthUnit): String = when (unit) {
-        LengthUnit.METER -> ArabicTerms.METER
-        LengthUnit.CENTIMETER -> ArabicTerms.CENTIMETER
+    fun unit(unit: LengthUnit, script: UnitLabelScript = UnitLabelScript.ARABIC): String = when (script) {
+        UnitLabelScript.ARABIC -> if (unit == LengthUnit.METER) ArabicTerms.METER else ArabicTerms.CENTIMETER
+        UnitLabelScript.LATIN -> if (unit == LengthUnit.METER) ArabicTerms.METER_LATIN else ArabicTerms.CENTIMETER_LATIN
     }
+
+    fun squareMeter(script: UnitLabelScript = UnitLabelScript.ARABIC): String =
+        if (script == UnitLabelScript.ARABIC) ArabicTerms.SQUARE_METER else ArabicTerms.SQUARE_METER_LATIN
+
+    /**
+     * Latin unit labels inside right-to-left text must be a left-to-right isolate, or "120 cm × 85 cm" reorders.
+     * Arabic labels need nothing.
+     */
+    fun isolate(text: String, script: UnitLabelScript): String =
+        if (script == UnitLabelScript.LATIN) "$LRI$text$PDI" else text
+
+    const val LRI = '\u2066'
+    const val PDI = '\u2069'
 
     private fun group(digits: String): String {
         if (digits.length <= 3) return digits
@@ -127,6 +141,9 @@ object ArabicTerms {
     const val DIRHAM = "درهم"
     const val CENTIME = "سنتيم"
     const val PAGE = "صفحة"
+    const val METER_LATIN = "m"
+    const val CENTIMETER_LATIN = "cm"
+    const val SQUARE_METER_LATIN = "m²"
 
     /** Column titles of the invoice table; the currency is written once, here, not in every row. */
     const val AMOUNT_HEADER = "المبلغ (DH)"
