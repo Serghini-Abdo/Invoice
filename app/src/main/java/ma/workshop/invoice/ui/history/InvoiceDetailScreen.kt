@@ -21,7 +21,9 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,7 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ma.workshop.invoice.domain.format.ArabicFormat
 import ma.workshop.invoice.domain.format.ArabicTerms
-import ma.workshop.invoice.domain.format.ItemDescriber
+import ma.workshop.invoice.domain.format.InvoiceDocumentBuilder
 import ma.workshop.invoice.domain.invoice.Change
 import ma.workshop.invoice.domain.invoice.ChangeType
 import ma.workshop.invoice.domain.invoice.Invoice
@@ -45,7 +47,8 @@ import ma.workshop.invoice.ui.components.BannerKind
 import ma.workshop.invoice.ui.components.BigButton
 import ma.workshop.invoice.ui.components.ButtonKind
 import ma.workshop.invoice.ui.components.ConfirmDialog
-import ma.workshop.invoice.ui.components.IllustrationImage
+import ma.workshop.invoice.ui.components.InvoiceTable
+import ma.workshop.invoice.ui.components.TablePicture
 import ma.workshop.invoice.ui.components.AppTopBar
 import ma.workshop.invoice.ui.components.ArabicText
 import ma.workshop.invoice.ui.components.SectionCard
@@ -102,7 +105,14 @@ fun InvoiceDetailScreen(
                 ) {
                     if (deleteFailed) StatusBanner(Strings.DELETE_FAILED, BannerKind.Error)
                     InvoiceHeaderCard(invoice, zone)
-                    for (item in invoice.items) ReadOnlyItem(item)
+                    // The same compact table as the paper.
+                    Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
+                        InvoiceTable(
+                            rows = invoice.items.mapIndexed { index, item -> InvoiceDocumentBuilder.row(index + 1, item) },
+                            picture = TablePicture.Detail,
+                            modifier = Modifier.padding(6.dp),
+                        )
+                    }
                     PaymentCard(invoice)
                     if (state.revisions.isNotEmpty()) RevisionLog(state.revisions, zone)
 
@@ -151,28 +161,6 @@ private fun InvoiceHeaderCard(invoice: Invoice, zone: ZoneId) {
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.appPalette.onWarningContainer,
             )
-        }
-    }
-}
-
-@Composable
-private fun ReadOnlyItem(item: ma.workshop.invoice.domain.invoice.InvoiceItem) {
-    SectionCard {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            ArabicText(ArabicFormat.amount(item.pricing.total), style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.width(8.dp))
-            Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-                ArabicText(item.productName, style = MaterialTheme.typography.titleMedium)
-                ItemDescriber.measures(item.pricing)?.let { ArabicText(it, style = MaterialTheme.typography.bodyMedium) }
-                ArabicText("${ArabicTerms.QUANTITY}: ${item.pricing.quantity}", style = MaterialTheme.typography.bodyMedium)
-                ArabicText(
-                    ItemDescriber.calculation(item.pricing),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Spacer(Modifier.width(12.dp))
-            IllustrationImage(item.illustration, Modifier.size(64.dp))
         }
     }
 }

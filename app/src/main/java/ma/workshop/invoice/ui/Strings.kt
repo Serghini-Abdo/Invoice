@@ -101,6 +101,7 @@ object Strings {
     const val EXPORT_PREPARING = "جارٍ تجهيز الفاتورة..."
     const val SHARE_UNAVAILABLE = "لا يوجد تطبيق للمشاركة"
     const val PREVIEW = "معاينة الفاتورة"
+    const val INVOICE_TOO_LONG_FOR_IMAGE = "هذه الفاتورة طويلة على صورة واحدة. شاركها كملف PDF"
     const val PREPARE_SHARE = "معاينة ومشاركة الفاتورة"
 
     // draft / exit

@@ -128,10 +128,15 @@ class FormatAndDocumentTest {
         assertEquals(1, door.quantity)
         assertEquals("500${nb}DH / م²", door.rate)
         assertEquals("1${nb}260${nb}DH", door.total)
+        // The table writes the currency once, in its column title, and keeps the quantity out of the formula cell.
+        assertEquals("1${nb}260", door.totalNumber)
+        assertEquals("2,52 م² × 500${nb}DH", door.formula)
         val hinges = doc.rows[1]
         assertNull(hinges.measures)
         assertEquals(4, hinges.quantity)
         assertEquals("120${nb}DH", hinges.total)
+        assertEquals("120", hinges.totalNumber)
+        assertEquals("30${nb}DH / قطعة", hinges.formula)
 
         assertEquals("1${nb}380${nb}DH", doc.total)
         assertEquals("500${nb}DH", doc.deposit)

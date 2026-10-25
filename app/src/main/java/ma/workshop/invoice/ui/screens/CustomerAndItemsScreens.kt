@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -43,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -51,8 +53,7 @@ import androidx.compose.ui.unit.dp
 import ma.workshop.invoice.domain.flow.FlowIssue
 import ma.workshop.invoice.domain.flow.FlowState
 import ma.workshop.invoice.domain.format.ArabicFormat
-import ma.workshop.invoice.domain.format.ArabicTerms
-import ma.workshop.invoice.domain.format.ItemDescriber
+import ma.workshop.invoice.domain.format.InvoiceDocumentBuilder
 import ma.workshop.invoice.domain.invoice.CustomerInfo
 import ma.workshop.invoice.domain.invoice.InvoiceItem
 import ma.workshop.invoice.domain.invoice.ProductDefinition
@@ -63,6 +64,9 @@ import ma.workshop.invoice.ui.components.BigButton
 import ma.workshop.invoice.ui.components.ButtonKind
 import ma.workshop.invoice.ui.components.ConfirmDialog
 import ma.workshop.invoice.ui.components.IllustrationImage
+import ma.workshop.invoice.ui.components.InvoiceTableHeader
+import ma.workshop.invoice.ui.components.InvoiceTableRow
+import ma.workshop.invoice.ui.components.TablePicture
 import ma.workshop.invoice.ui.components.ProductCard
 import ma.workshop.invoice.ui.components.AddProductButton
 import ma.workshop.invoice.ui.components.AppTextField
@@ -134,37 +138,20 @@ fun CustomerScreen(
     }
 }
 
-/** One invoice item with its thumbnail, key measurements and total, plus edit and remove. */
+/**
+ * One invoice item as a row of the compact invoice table (36 dp picture), with its actions below:
+ * | حذف | تعديل | (delete on the left, edit on the right).
+ */
 @Composable
-fun ItemCard(item: InvoiceItem, onEdit: () -> Unit, onRemove: () -> Unit, modifier: Modifier = Modifier) {
+fun ItemCard(item: InvoiceItem, onEdit: () -> Unit, onRemove: () -> Unit, modifier: Modifier = Modifier, position: Int = 1) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
-        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            // Amount on the left, product on the right, as on the printed invoice.
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                ArabicText(
-                    ArabicFormat.amount(item.pricing.total),
-                    style = MaterialTheme.typography.titleLarge,
-                )
-                Spacer(Modifier.width(8.dp))
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-                    ArabicText(item.productName, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    ItemDescriber.measures(item.pricing)?.let {
-                        ArabicText(it, style = MaterialTheme.typography.bodyMedium)
-                    }
-                    ArabicText(
-                        "${ArabicTerms.QUANTITY}: ${item.pricing.quantity}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                Spacer(Modifier.width(12.dp))
-                IllustrationImage(item.illustration, Modifier.size(64.dp))
-            }
+        Column(Modifier.padding(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            InvoiceTableRow(InvoiceDocumentBuilder.row(position, item), TablePicture.ItemList)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 SmallAction(Strings.DELETE, Icons.Filled.Delete, onRemove, Modifier.weight(1f), danger = true)
                 SmallAction(Strings.EDIT, Icons.Filled.Edit, onEdit, Modifier.weight(1f))
@@ -281,8 +268,9 @@ fun ItemListScreen(
                         }
                     }
                 }
-                items(state.items, key = { it.id }) { item ->
-                    ItemCard(item, onEdit = { onEditItem(item.id) }, onRemove = { onRemoveItem(item.id) })
+                item(key = "table-title") { InvoiceTableHeader(Modifier.testTag("invoice-table")) }
+                itemsIndexed(state.items, key = { _, item -> item.id }) { index, item ->
+                    ItemCard(item, onEdit = { onEditItem(item.id) }, onRemove = { onRemoveItem(item.id) }, position = index + 1)
                 }
             }
         }

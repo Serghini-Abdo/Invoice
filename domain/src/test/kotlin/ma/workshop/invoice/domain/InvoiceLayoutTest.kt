@@ -4,10 +4,13 @@ import ma.workshop.invoice.domain.format.DocumentRow
 import ma.workshop.invoice.domain.format.InvoiceDocument
 import ma.workshop.invoice.domain.layout.DrawOp
 import ma.workshop.invoice.domain.layout.HAlign
+import ma.workshop.invoice.domain.layout.InvoiceColors
 import ma.workshop.invoice.domain.layout.InvoiceLayout
 import ma.workshop.invoice.domain.layout.InvoiceLayoutEngine
 import ma.workshop.invoice.domain.layout.LayoutPage
 import ma.workshop.invoice.domain.layout.LayoutSpec
+import ma.workshop.invoice.domain.layout.PngLimits
+import ma.workshop.invoice.domain.layout.TableColumns
 import ma.workshop.invoice.domain.layout.TextMeasurer
 import ma.workshop.invoice.domain.layout.TextStyle
 import kotlin.math.ceil
@@ -42,9 +45,10 @@ class InvoiceLayoutTest {
 
     private val engine = InvoiceLayoutEngine(FakeMeasurer)
 
-    private fun row(i: Int, name: String = "باب حديد") = DocumentRow(
-        position = i, illustration = "door", name = name, measures = "1,20 × 2,10 م", quantity = 1,
-        rate = "500 DH / م²", calculation = "2,52 م² × 500 DH × 1", total = "1 260 DH",
+    private fun row(i: Int, name: String = "باب حديد", quantity: Int = 1) = DocumentRow(
+        position = i, illustration = "door", name = name, measures = "1,20 × 2,10 م", quantity = quantity,
+        rate = "500 DH / م²", calculation = "2,52 م² × 500 DH × $quantity", formula = "2,52 م² × 500 DH",
+        total = "1 260 DH", totalNumber = "1 260",
     )
 
     private fun doc(
@@ -63,7 +67,10 @@ class InvoiceLayoutTest {
     )
 
     private val phone = LayoutSpec(width = 360f)
-    private val a4 = LayoutSpec(width = 520f, pageHeight = 520f * 842f / 595f)
+
+    /** A4 as the renderer lays it out: a 34-unit thumbnail prints at 26 pt, so the page is 595 / (26 / 34) units wide. */
+    private val a4Width = 595f * 34f / 26f
+    private val a4 = LayoutSpec(width = a4Width, pageHeight = a4Width * 842f / 595f, margin = 28f)
 
     private fun texts(page: LayoutPage) = page.ops.filterIsInstance<DrawOp.Text>()
     private fun images(page: LayoutPage) = page.ops.filterIsInstance<DrawOp.Image>()
@@ -101,13 +108,89 @@ class InvoiceLayoutTest {
         assertInsidePages(layout)
     }
 
+    // ---- table option A ----
+
     @Test
-    fun `thumbnails are small fixed size squares aligned with their row`() {
+    fun `table columns run price, formula, quantity, name from left to right`() {
+        val layout = engine.layout(doc(rows = 1), phone)
+        val page = texts(layout.pages[0])
+        val price = page.first { it.text == "1 260" }
+        val formula = page.first { it.text == "2,52 م² × 500 DH" }
+        val measures = page.first { it.text == "1,20 × 2,10 م" }
+        val quantity = page.first { it.text == "1" && it.style == TextStyle.SMALL_BOLD }
+        val name = page.first { it.text == "باب حديد" }
+        val thumb = images(layout.pages[0]).single()
+
+        assertTrue(price.x + price.width <= formula.x + 0.01f, "price column is left of the formula column")
+        assertTrue(formula.x + formula.width <= quantity.x + 0.01f, "formula column is left of the quantity column")
+        assertTrue(quantity.x + quantity.width <= name.x + 0.01f, "quantity column is left of the name column")
+        assertTrue(name.x + name.width <= thumb.x + 0.01f, "the name sits left of its picture")
+        assertEquals(formula.x, measures.x, "measures and calculation share one cell")
+        assertEquals(HAlign.LEFT, price.align)
+        assertEquals(HAlign.RIGHT, formula.align)
+        assertEquals(HAlign.RIGHT, name.align)
+    }
+
+    @Test
+    fun `the unit price is inside the formula cell and the quantity has its own centred column with margins`() {
+        val layout = engine.layout(doc(rows = 3).copy(rows = (1..3).map { row(it, quantity = it + 1) }), phone)
+        val page = texts(layout.pages[0])
+        val formulas = page.filter { it.text.contains("500 DH") && it.style == TextStyle.SMALL }
+        assertEquals(3, formulas.size)
+        assertTrue(formulas.all { it.text == "2,52 م² × 500 DH" }, "no quantity inside the formula cell")
+
+        val columns = TableColumns(phone.width - 2 * phone.margin)
+        val quantities = page.filter { it.style == TextStyle.SMALL_BOLD && it.text in setOf("2", "3", "4") }
+        assertEquals(3, quantities.size)
+        for (q in quantities) {
+            assertEquals(HAlign.CENTER, q.align)
+            assertEquals(columns.quantity - 2 * TableColumns.QUANTITY_MARGIN, q.width, 0.01f, "own margins on both sides")
+        }
+        assertEquals(1, quantities.map { it.x }.toSet().size, "one column")
+    }
+
+    @Test
+    fun `the currency is written once in the column title and rows show the bare number`() {
+        val layout = engine.layout(doc(rows = 2), phone)
+        val page = texts(layout.pages[0])
+        assertTrue(page.any { it.text == "المبلغ (DH)" })
+        assertEquals(2, page.count { it.text == "1 260" })
+        assertFalse(page.any { it.text == "1 260 DH" }, "rows do not repeat the currency")
+        assertTrue(page.any { it.text == "القياس والحساب" })
+        assertTrue(page.any { it.text == "الكمية" })
+    }
+
+    @Test
+    fun `a long formula wraps inside its cell and grows the row`() {
+        val long = row(1).copy(formula = "12,3456 م² × 1 250,50 DH أطول من خانة الحساب بكثير جداً")
+        val normal = engine.layout(doc(rows = 1), phone).pages[0].height
+        val wrapped = engine.layout(doc(rows = 1).copy(rows = listOf(long)), phone)
+        assertTrue(wrapped.pages[0].height > normal)
+        assertInsidePages(wrapped)
+        val cell = TableColumns(phone.width - 2 * phone.margin)
+        val text = texts(wrapped.pages[0]).first { it.text == long.formula }
+        assertTrue(text.width < cell.formula)
+    }
+
+    @Test
+    fun `the table has no divider lines`() {
+        val layout = engine.layout(doc(rows = 6), phone)
+        // the only line on the page is the rule under the workshop name
+        assertEquals(1, layout.pages[0].ops.filterIsInstance<DrawOp.Line>().size)
+        val a4Layout = engine.layout(doc(rows = 60), a4)
+        for ((index, page) in a4Layout.pages.withIndex()) {
+            val lines = page.ops.filterIsInstance<DrawOp.Line>().size
+            assertEquals(1, lines, "page ${index + 1}: only the header or slim-line rule")
+        }
+    }
+
+    @Test
+    fun `thumbnails are 34 unit squares aligned with their row`() {
         val layout = engine.layout(doc(rows = 5), phone)
         val thumbs = images(layout.pages[0])
         assertEquals(5, thumbs.size)
-        assertTrue(thumbs.all { it.size == 64f }, "all thumbnails must have the same size")
-        assertTrue(thumbs.all { it.size in 60f..80f }, "thumbnail size must stay within the 60-80 dp guideline")
+        assertTrue(thumbs.all { it.size == 34f }, "all thumbnails must have the same size")
+        assertTrue(thumbs.all { it.size in 32f..40f }, "thumbnail size must stay within the 32-40 range")
         val xs = thumbs.map { it.x }.toSet()
         assertEquals(1, xs.size, "thumbnails must share one alignment")
         assertTrue(thumbs.all { it.x + it.size <= phone.width - phone.margin + 0.01f })
@@ -120,13 +203,26 @@ class InvoiceLayoutTest {
         }
     }
 
+    // ---- totals ----
+
     @Test
-    fun `the payment summary stays highly readable and is the largest text`() {
+    fun `the deposit is green and smaller than the total and the balance sits in a yellow band at the total size`() {
         val layout = engine.layout(doc(), phone)
-        val totalValues = texts(layout.pages[0]).filter { it.style == TextStyle.TOTAL }
-        assertEquals(listOf("1 380 DH", "500 DH", "880 DH"), totalValues.map { it.text })
+        val page = layout.pages[0]
+        val totals = texts(page).filter { it.style == TextStyle.TOTAL }
+        assertEquals(listOf("1 380 DH", "880 DH"), totals.map { it.text })
+        val deposit = texts(page).single { it.style == TextStyle.DEPOSIT }
+        assertEquals("500 DH", deposit.text)
+        assertEquals(InvoiceColors.PAID, deposit.color)
+        assertTrue(TextStyle.DEPOSIT.size < TextStyle.TOTAL.size)
         assertTrue(TextStyle.TOTAL.size > TextStyle.BODY_BOLD.size)
-        assertTrue(totalValues.all { it.align == HAlign.LEFT })
+        assertTrue((totals + deposit).all { it.align == HAlign.LEFT })
+
+        val band = page.ops.filterIsInstance<DrawOp.Rect>().single { it.fill == InvoiceColors.BALANCE_BAND }
+        val balance = totals.last()
+        assertTrue(balance.y >= band.y && balance.y < band.y + band.height, "the balance is drawn inside the band")
+        assertEquals(InvoiceColors.INK, balance.color, "dark text on yellow")
+        assertEquals(InvoiceColors.INK, totals.first().color)
     }
 
     @Test
@@ -155,8 +251,10 @@ class InvoiceLayoutTest {
         assertTrue(wrapped.pages[0].height > normal)
         assertInsidePages(wrapped)
         val name = texts(wrapped.pages[0]).first { it.text == long }
-        assertTrue(name.width < phone.width - 2 * phone.margin - 64f)
+        assertTrue(name.width < TableColumns(phone.width - 2 * phone.margin).name - 34f)
     }
+
+    // ---- one tall PNG ----
 
     // Scenario 17: long invoices export without clipping
     @Test
@@ -169,26 +267,102 @@ class InvoiceLayoutTest {
     }
 
     @Test
+    fun `the png limit switches between one image and the pdf pointer at 8000 pixels`() {
+        assertFalse(PngLimits.isTooLong(8_000f / PngLimits.SCALE))
+        assertTrue(PngLimits.isTooLong(8_000f / PngLimits.SCALE + 1f))
+
+        val short = engine.layout(doc(rows = 30), phone).pages[0].height
+        val long = engine.layout(doc(rows = 90), phone).pages[0].height
+        assertFalse(PngLimits.isTooLong(short), "30 items fit one image")
+        assertTrue(PngLimits.isTooLong(long), "90 items do not")
+        // a single row is about 42 units tall, so the limit falls near 55 items, as in the mock-up
+        val rowHeight = (long - short) / 60f
+        assertTrue(rowHeight in 40f..50f, "row height is $rowHeight")
+        val items = (2_667f / rowHeight).toInt()
+        assertTrue(items in 50..65, "limit at about $items items")
+    }
+
+    // ---- PDF pages ----
+
+    @Test
     fun `a long invoice paginates without clipping or splitting rows`() {
         val layout = engine.layout(doc(rows = 120), a4)
         assertTrue(layout.pages.size > 2, "expected several pages, got ${layout.pages.size}")
-        assertInsidePages(layout)
+        assertInsidePages(layout, a4.margin)
         assertTrue(layout.pages.all { it.height == a4.pageHeight })
 
-        // every row appears exactly once, in order, with its thumbnail and total on the same page
+        // every row appears exactly once, in order, with its picture and total on the same page
         assertEquals(120, layout.pages.sumOf { images(it).size })
         for (page in layout.pages) {
             val thumbs = images(page)
-            val totals = texts(page).filter { it.text == "1 260 DH" }
-            assertEquals(thumbs.size, totals.size, "a row's thumbnail and total must not be separated")
+            val totals = texts(page).filter { it.text == "1 260" }
+            assertEquals(thumbs.size, totals.size, "a row's picture and total must not be separated")
         }
     }
 
     @Test
-    fun `the summary is never split or stranded and the table header repeats`() {
+    fun `rows per page are about 18 to 20 for a 45 item invoice`() {
+        val layout = engine.layout(doc(rows = 45), a4)
+        val perPage = layout.pages.map { images(it).size }
+        assertEquals(45, perPage.sum())
+        assertTrue(perPage.size in 3..4, "pages: $perPage")
+        assertTrue(perPage.first() in 14..22, "page 1 has ${perPage.first()} rows")
+        assertTrue(perPage[1] > perPage.first(), "page 2 has more rows than page 1 (slim line instead of the full header)")
+    }
+
+    @Test
+    fun `the full header is on page 1 only and later pages start with one slim line above the table title`() {
+        val layout = engine.layout(doc(rows = 60), a4)
+        assertTrue(layout.pages.size >= 3)
+        val first = texts(layout.pages[0])
+        assertTrue(first.any { it.text == "0522000000" }, "phone is in the full header")
+        assertTrue(first.any { it.text == "الزبون: أحمد" })
+        assertTrue(first.any { it.style == TextStyle.TITLE })
+
+        for ((i, page) in layout.pages.withIndex().drop(1)) {
+            val t = texts(page)
+            assertFalse(t.any { it.style == TextStyle.TITLE }, "page ${i + 1}: no workshop title block")
+            assertFalse(t.any { it.text == "0522000000" || it.text.startsWith("الزبون") }, "page ${i + 1}: no customer block")
+            val slim = t.single { it.text == "ورشة الأمل للحدادة · فاتورة رقم 0007" }
+            assertEquals(HAlign.RIGHT, slim.align)
+            val date = t.single { it.text == "25/10/2026" }
+            assertEquals(HAlign.LEFT, date.align)
+            val title = t.first { it.text == "المنتوج" }
+            assertTrue(slim.y < title.y, "page ${i + 1}: the slim line is above the column titles")
+            assertEquals(a4.margin, slim.y, 0.01f, "the slim line is the first thing on the page")
+        }
+        // the date and invoice number occur once on page 1 as part of the full header, not as a slim line
+        assertFalse(first.any { it.text == "ورشة الأمل للحدادة · فاتورة رقم 0007" })
+    }
+
+    @Test
+    fun `every page has the footer page x of n`() {
+        for (rows in listOf(0, 1, 10, 45, 120)) {
+            val layout = engine.layout(doc(rows = rows), a4)
+            val count = layout.pages.size
+            for ((i, page) in layout.pages.withIndex()) {
+                val footer = texts(page).filter { it.text.startsWith("صفحة") }
+                assertEquals(1, footer.size, "$rows rows, page ${i + 1}")
+                assertEquals("صفحة ${i + 1} / $count", footer.single().text)
+                assertEquals(HAlign.CENTER, footer.single().align)
+                val others = page.ops.filter { it !== footer.single() }
+                val footerTop = footer.single().y
+                // nothing but the footer sits in the footer strip
+                for (op in others) {
+                    val (_, _, _, bottom) = opBounds(op) { FakeMeasurer.measureHeight(it.text, it.style, it.width) }
+                    assertTrue(bottom <= footerTop + 0.01f, "$rows rows, page ${i + 1}: $op overlaps the footer")
+                }
+            }
+        }
+        // the png has no footer
+        assertFalse(allTexts(engine.layout(doc(rows = 10), phone)).any { it.text.startsWith("صفحة") })
+    }
+
+    @Test
+    fun `total deposit and balance are on the last page only, with at least the last row`() {
         for (rows in listOf(1, 5, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 40, 57)) {
             val layout = engine.layout(doc(rows = rows), a4)
-            assertInsidePages(layout)
+            assertInsidePages(layout, a4.margin)
 
             val summaryPages = layout.pages.withIndex().filter { (_, page) ->
                 texts(page).any { it.style == TextStyle.TOTAL }
@@ -196,8 +370,13 @@ class InvoiceLayoutTest {
             assertEquals(listOf(layout.pages.lastIndex), summaryPages, "summary must be on the last page ($rows rows)")
 
             val last = layout.pages.last()
-            assertEquals(3, texts(last).count { it.style == TextStyle.TOTAL }, "total, deposit and remaining together ($rows rows)")
+            assertEquals(2, texts(last).count { it.style == TextStyle.TOTAL }, "total and balance ($rows rows)")
+            assertEquals(1, texts(last).count { it.style == TextStyle.DEPOSIT }, "deposit ($rows rows)")
             assertTrue(images(last).isNotEmpty(), "summary must share its page with an item row ($rows rows)")
+            for (page in layout.pages.dropLast(1)) {
+                assertTrue(texts(page).none { it.style == TextStyle.DEPOSIT }, "no deposit before the last page ($rows rows)")
+                assertTrue(page.ops.filterIsInstance<DrawOp.Rect>().none { it.fill == InvoiceColors.BALANCE_BAND })
+            }
 
             for ((i, page) in layout.pages.withIndex()) {
                 if (i > 0) {
@@ -211,14 +390,16 @@ class InvoiceLayoutTest {
     fun `an invoice with no rows still lays out`() {
         val layout = engine.layout(doc(rows = 0), a4)
         assertEquals(1, layout.pages.size)
-        assertInsidePages(layout)
+        assertInsidePages(layout, a4.margin)
     }
 
     @Test
-    fun `pdf scaling keeps thumbnails proportionate`() {
-        // 520 layout units onto A4 (595 pt) is a scale of 1.144, so a 64 unit thumbnail prints at ~73 pt (2.6 cm)
+    fun `pdf scaling prints a thumbnail at 26 points`() {
+        // 34 layout units onto A4 (595 pt): 26 pt is about 9 mm
         val scale = 595f / a4.width
         val printedPoints = a4.thumbnail * scale
-        assertTrue(printedPoints in 60f..90f, "printed thumbnail is $printedPoints pt")
+        assertEquals(26f, printedPoints, 0.1f)
+        // and 12-unit table text prints at about 9 pt
+        assertTrue(TextStyle.SMALL.size * scale in 8.5f..9.5f)
     }
 }

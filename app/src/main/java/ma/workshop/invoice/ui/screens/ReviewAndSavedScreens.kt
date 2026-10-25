@@ -41,11 +41,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ma.workshop.invoice.domain.flow.FlowIssue
 import ma.workshop.invoice.domain.flow.FlowState
 import ma.workshop.invoice.domain.format.ArabicFormat
+import ma.workshop.invoice.domain.format.InvoiceDocumentBuilder
 import ma.workshop.invoice.domain.input.KeypadEditor
 import ma.workshop.invoice.domain.input.KeypadKey
 import ma.workshop.invoice.domain.money.Money
@@ -60,7 +62,9 @@ import ma.workshop.invoice.ui.components.BigButton
 import ma.workshop.invoice.ui.components.ButtonKind
 import ma.workshop.invoice.ui.components.ConfirmDialog
 import ma.workshop.invoice.ui.components.FieldBox
-import ma.workshop.invoice.ui.components.IllustrationImage
+import ma.workshop.invoice.ui.components.InvoiceTable
+import ma.workshop.invoice.ui.components.PaidBadge
+import ma.workshop.invoice.ui.components.TablePicture
 import ma.workshop.invoice.ui.components.NumericKeypad
 import ma.workshop.invoice.ui.components.AppSubBar
 import ma.workshop.invoice.ui.components.AppTopBar
@@ -109,23 +113,12 @@ fun ReviewScreen(
         ) {
             if (state.issue == FlowIssue.SAVE_FAILED) StatusBanner(Strings.SAVE_FAILED, BannerKind.Error)
 
-            for (item in state.items) {
-                Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
-                    Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                        ArabicText(ArabicFormat.amount(item.pricing.total), style = MaterialTheme.typography.titleMedium)
-                        Spacer(Modifier.width(8.dp))
-                        Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-                            ArabicText(item.productName, style = MaterialTheme.typography.titleSmall)
-                            ArabicText(
-                                "${ma.workshop.invoice.domain.format.ArabicTerms.QUANTITY}: ${item.pricing.quantity}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Spacer(Modifier.width(10.dp))
-                        IllustrationImage(item.illustration, Modifier.size(48.dp))
-                    }
-                }
+            Surface(shape = RoundedCornerShape(14.dp), color = MaterialTheme.colorScheme.surface, shadowElevation = 1.dp) {
+                InvoiceTable(
+                    rows = state.items.mapIndexed { index, item -> InvoiceDocumentBuilder.row(index + 1, item) },
+                    picture = TablePicture.Review,
+                    modifier = Modifier.padding(6.dp),
+                )
             }
 
             SectionCard {
@@ -137,6 +130,7 @@ fun ReviewScreen(
                 }
                 FieldBox(
                     label = Strings.DEPOSIT,
+                    tag = "deposit-field",
                     value = state.depositText,
                     selected = keypadOpen,
                     onClick = {
@@ -148,16 +142,28 @@ fun ReviewScreen(
                         Text("DH", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     },
                 )
-                AmountRow(
-                    label = Strings.REMAINING,
-                    value = remaining?.let { ArabicFormat.amount(it) } ?: "-",
-                    emphasized = true,
-                    // Green only when paid; an open balance is bold ink.
-                    valueColor = if (fullyPaid) MaterialTheme.appPalette.paid else MaterialTheme.colorScheme.onSurface,
-                )
+                if (fullyPaid) {
+                    // Paid: "0 DH" in green with the "خالص" badge on the same line. An open balance is bold ink.
+                    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        PaidBadge()
+                        Spacer(Modifier.width(10.dp))
+                        ArabicText(
+                            ArabicFormat.amount(remaining!!),
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.appPalette.paid,
+                            modifier = Modifier.testTag("balance-value"),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        ArabicText(Strings.REMAINING, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                    }
+                } else {
+                    AmountRow(
+                        label = Strings.REMAINING,
+                        value = remaining?.let { ArabicFormat.amount(it) } ?: "-",
+                        emphasized = true,
+                    )
+                }
             }
-
-            if (fullyPaid) StatusBanner(Strings.FULLY_PAID_LONG, BannerKind.Success)
         }
 
         Surface(shadowElevation = 12.dp, color = MaterialTheme.colorScheme.surface) {
@@ -218,6 +224,8 @@ data class ExportUi(
     val preview: ImageBitmap? = null,
     /** Set after the share sheet was opened or when no app can handle it. Never says "sent". */
     val message: String? = null,
+    /** One image would be taller than 8,000 px: the image button gives way to a message and the PDF buttons. */
+    val pngTooLong: Boolean = false,
 )
 
 /** Preview of the generated invoice and the share buttons for the chosen export format. */
@@ -244,7 +252,12 @@ fun ExportPanel(
             ExportStatus.READY -> {
                 // The share buttons come first so they are on screen the moment the invoice is saved;
                 // the preview follows and can be scrolled in full.
-                when (format) {
+                when {
+                    export.pngTooLong -> {
+                        StatusBanner(Strings.INVOICE_TOO_LONG_FOR_IMAGE, BannerKind.Warning)
+                        BigButton(Strings.SHARE_PDF, Icons.Filled.PictureAsPdf, { onShare(ShareChoice.PDF) }, kind = ButtonKind.Success)
+                    }
+                    else -> when (format) {
                     ExportFormat.PNG -> BigButton(Strings.SHARE_IMAGE, Icons.Filled.Share, { onShare(ShareChoice.PNG) }, kind = ButtonKind.Success)
                     ExportFormat.PDF -> BigButton(Strings.SHARE_PDF, Icons.Filled.Share, { onShare(ShareChoice.PDF) }, kind = ButtonKind.Success)
                     ExportFormat.BOTH -> {
@@ -252,8 +265,9 @@ fun ExportPanel(
                         BigButton(Strings.SHARE_PDF, Icons.Filled.PictureAsPdf, { onShare(ShareChoice.PDF) }, kind = ButtonKind.Success)
                         BigButton(Strings.SHARE_BOTH, Icons.Filled.Share, { onShare(ShareChoice.BOTH) }, kind = ButtonKind.Secondary)
                     }
+                    }
                 }
-                if (onPrint != null && format != ExportFormat.PNG) {
+                if (onPrint != null && (format != ExportFormat.PNG || export.pngTooLong)) {
                     BigButton(Strings.PRINT, Icons.Filled.Print, onPrint, kind = ButtonKind.Secondary)
                 }
                 ArabicText(Strings.SHARE_HINT, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -304,10 +318,10 @@ fun SavedScreen(
             ExportPanel(format, export, onShare, onRetry, onPrint = onPrint)
         }
         Surface(shadowElevation = 12.dp, color = MaterialTheme.colorScheme.surface) {
-            Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                // "New invoice" is the longer label, so it gets the larger share and stays on one line.
-                BigButton(Strings.HOME, Icons.Filled.Home, onHome, Modifier.weight(0.85f), kind = ButtonKind.Secondary)
-                BigButton(Strings.NEW_INVOICE, Icons.Filled.Add, onNewInvoice, Modifier.weight(1.15f))
+            // Stacked, each full width: the new invoice first, the home screen under it.
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                BigButton(Strings.NEW_INVOICE, Icons.Filled.Add, onNewInvoice, Modifier.fillMaxWidth().testTag("saved-new-invoice"))
+                BigButton(Strings.HOME, Icons.Filled.Home, onHome, Modifier.fillMaxWidth().testTag("saved-home"), kind = ButtonKind.Secondary)
             }
         }
     }

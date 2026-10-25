@@ -188,7 +188,7 @@ class InvoiceFlowViewModel(
             try {
                 val files = container.exporter.export(invoice, container.settings.get())
                 exportFiles = files
-                _export.value = ExportUi(ExportStatus.READY, preview = files.preview?.asImageBitmap())
+                _export.value = ExportUi(ExportStatus.READY, preview = files.preview?.asImageBitmap(), pngTooLong = files.pngTooLong)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -204,9 +204,9 @@ class InvoiceFlowViewModel(
     fun share(context: Context, choice: ShareChoice) {
         val files = exportFiles ?: return
         val toShare = when (choice) {
-            ShareChoice.PNG -> files.png
+            ShareChoice.PNG -> listOfNotNull(files.png)
             ShareChoice.PDF -> listOfNotNull(files.pdf)
-            ShareChoice.BOTH -> files.png + listOfNotNull(files.pdf)
+            ShareChoice.BOTH -> listOfNotNull(files.png, files.pdf)
         }
         val opened = ShareHelper.share(context, toShare)
         _export.value = _export.value.copy(message = if (opened) null else Strings.SHARE_UNAVAILABLE)

@@ -126,4 +126,9 @@ object ArabicTerms {
     const val SQUARE_METER = "م²"
     const val DIRHAM = "درهم"
     const val CENTIME = "سنتيم"
+    const val PAGE = "صفحة"
+
+    /** Column titles of the invoice table; the currency is written once, here, not in every row. */
+    const val AMOUNT_HEADER = "المبلغ (DH)"
+    const val MEASURE_AND_CALCULATION = "القياس والحساب"
 }
