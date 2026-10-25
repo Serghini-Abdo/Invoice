@@ -54,6 +54,10 @@ jobs:
         with:
           name: app-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+      - name: Print Room schema (to be committed under app/schemas)
+        if: success()
+        run: |
+          for f in app/schemas/*/*.json; do echo "=== $f ==="; cat "$f"; done
       - name: Failure summary
         if: failure()
         run: |
@@ -64,3 +68,49 @@ jobs:
           echo "=============== LINT ==============="
           grep -E "Error:|error:" build.log | head -20 || true
           if [ -f app/build/reports/lint-results-debug.txt ]; then head -80 app/build/reports/lint-results-debug.txt; fi
+
+  instrumented:
+    name: Emulator tests (Room, export, UI workflow)
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Accept SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+      - name: Run instrumented tests on an emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          target: google_apis
+          profile: pixel_5
+          disable-animations: true
+          script: ./gradlew :app:connectedDebugAndroidTest --console=plain
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: instrumented-reports
+          path: |
+            app/build/reports/androidTests
+            app/build/outputs/androidTest-results
+      - name: Instrumented test summary
+        if: always()
+        run: |
+          echo "=============== INSTRUMENTED TEST RESULTS ==============="
+          for f in $(find app/build/outputs/androidTest-results -name "*.xml" 2>/dev/null); do
+            echo "--- $f"
+            grep -o '<testsuite [^>]*' "$f" | sed 's/xmlns[^ ]*//' | head -3
+            grep -B1 -A12 "<failure" "$f" | head -80
+            grep -B1 -A12 "<error" "$f" | head -40
+          done
+          echo "=============== END ==============="
