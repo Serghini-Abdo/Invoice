@@ -42,6 +42,32 @@ class AppFolderStoreTest {
 
     private fun uniqueName() = BackupFiles.nameFor(System.currentTimeMillis(), ZoneOffset.UTC, store.existingNames())
 
+    /**
+     * Why the public folder is not writable, seen from inside this process: ids and groups, which storage view is
+     * mounted, and the permissions of the folders on the way. Only used in failure messages (CI log).
+     */
+    private fun storageDiagnostics(): String {
+        fun lines(path: String, keep: (String) -> Boolean = { true }) =
+            runCatching { File(path).readLines().filter(keep).joinToString("\n    ") }.getOrElse { "unreadable: $it" }
+        fun shell(command: String) = runCatching {
+            val process = Runtime.getRuntime().exec(arrayOf("sh", "-c", "$command 2>&1"))
+            process.inputStream.bufferedReader().readText().trim().also { process.waitFor() }
+        }.getOrElse { "failed: $it" }
+        @Suppress("DEPRECATION")
+        val documents = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+        return buildString {
+            appendLine()
+            appendLine("diagnostics (inside the app process):")
+            appendLine("  pid/uid: ${android.os.Process.myPid()}/${android.os.Process.myUid()}, permission granted=$granted")
+            appendLine("  /proc/self/status ids: " + lines("/proc/self/status") { it.startsWith("Uid") || it.startsWith("Gid") || it.startsWith("Groups") })
+            appendLine("  mounts of the storage view:\n    " + lines("/proc/self/mountinfo") { "emulated" in it || "sdcard" in it || "/storage" in it })
+            appendLine("  documents dir=$documents exists=${documents.isDirectory} canWrite=${documents.canWrite()} parent canWrite=${documents.parentFile?.canWrite()}")
+            appendLine("  ls -ld:\n    " + shell("ls -ld /sdcard /storage/emulated/0 '${documents.absolutePath}' '${documents.absolutePath}/${AppFolderBackupStore.FOLDER_NAME}'"))
+            appendLine("  id: " + shell("id"))
+            append("  can create a plain file in Documents: " + runCatching { File(documents, ".probe-${System.nanoTime()}").also { it.createNewFile(); it.delete() }.let { "yes" } }.getOrElse { it.toString() })
+        }
+    }
+
     @Test
     fun a_withoutStoragePermissionOnOldAndroidTheCopyStaysInsideTheApp() {
         assumeTrue("only Android 7 to 9 need the permission", Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
@@ -60,7 +86,7 @@ class AppFolderStoreTest {
         val bytes = "{\"hello\":\"world\"}".toByteArray()
         val written = store.write(name, bytes)
 
-        assertFalse("written to the public folder, but fell back because: ${written.fallbackReason}", written.inPrivateFolder)
+        assertFalse("written to the public folder, but fell back because: ${written.fallbackReason}${if (written.inPrivateFolder) storageDiagnostics() else ""}", written.inPrivateFolder)
         assertTrue(store.list(inPrivateFolder = false).any { it.name == name })
         assertTrue(name in store.existingNames())
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
