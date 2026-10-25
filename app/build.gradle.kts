@@ -44,6 +44,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // java.time (dates, zones) is used throughout; this keeps it working on Android 7 (API 24, 25).
+        isCoreLibraryDesugaringEnabled = true
     }
 
     buildFeatures {
@@ -75,6 +77,7 @@ ksp {
 
 dependencies {
     implementation(project(":domain"))
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
