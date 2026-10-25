@@ -58,13 +58,14 @@ class InvoiceLayoutTest {
         customer: Boolean = true,
         name: String = "باب حديد",
         thankYou: String? = "شكراً لثقتكم",
+        hasDeposit: Boolean = true,
     ) = InvoiceDocument(
         title = "فاتورة", workshopName = "ورشة الأمل للحدادة", workshopPhone = "0522000000",
         number = "0007", date = "25/10/2026", updatedNote = null,
         customerName = if (customer) "أحمد" else null, customerPhone = if (customer) "0612345678" else null,
         rows = (1..rows).map { row(it, name) },
         total = "1 380 DH", deposit = "500 DH", remaining = if (paid) "0 DH" else "880 DH",
-        isFullyPaid = paid, thankYou = thankYou,
+        hasDeposit = hasDeposit, isFullyPaid = paid, thankYou = thankYou,
     )
 
     private val phone = LayoutSpec(width = 360f)
@@ -214,6 +215,31 @@ class InvoiceLayoutTest {
         val word = texts(page).single { it.text == "الباقي" }
         assertEquals(InvoiceColors.INK, word.color, "the word stays ink")
         assertEquals(InvoiceColors.INK, totals.first().color)
+    }
+
+    @Test
+    fun `without a deposit only the total is shown`() {
+        val layout = engine.layout(doc(hasDeposit = false), phone)
+        val text = allTexts(layout).map { it.text }
+        assertTrue("1 380 DH" in text)
+        assertFalse("التسبيق" in text)
+        assertFalse("الباقي" in text)
+        assertFalse("500 DH" in text)
+        assertFalse("880 DH" in text)
+        assertTrue(texts(layout.pages[0]).none { it.style == TextStyle.DEPOSIT })
+        assertTrue("شكراً لثقتكم" in text, "the thank-you line stays")
+        assertInsidePages(layout)
+        assertTrue(layout.pages[0].height < engine.layout(doc(), phone).pages[0].height)
+
+        // with a deposit the three lines are back
+        val withDeposit = allTexts(engine.layout(doc(), phone)).map { it.text }
+        assertTrue("التسبيق" in withDeposit && "الباقي" in withDeposit)
+
+        // on paper the total is still on the last page with the last row
+        val pdf = engine.layout(doc(rows = 40, hasDeposit = false), a4)
+        assertEquals(listOf(pdf.pages.lastIndex), pdf.pages.withIndex().filter { (_, p) -> texts(p).any { it.style == TextStyle.TOTAL } }.map { it.index })
+        assertTrue(rowCount(pdf.pages.last()) > 0)
+        assertInsidePages(pdf, a4.margin)
     }
 
     @Test
