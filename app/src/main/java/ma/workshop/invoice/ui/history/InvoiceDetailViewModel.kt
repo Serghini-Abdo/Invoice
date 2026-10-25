@@ -51,9 +51,13 @@ class InvoiceDetailViewModel(private val container: AppContainer, private val in
 
     private var files: ExportFiles? = null
 
-    init {
+    /**
+     * (Re)loads the invoice. Called whenever the screen resumes, so coming back from editing shows the
+     * edited invoice. An already shown invoice stays visible while the reload runs.
+     */
+    fun refresh() {
         viewModelScope.launch {
-            _state.value = try {
+            val loaded = try {
                 val invoice = container.invoices.get(invoiceId)
                 if (invoice == null) DetailState.NotFound else DetailState.Ready(invoice, container.invoices.revisions(invoiceId))
             } catch (e: CancellationException) {
@@ -61,6 +65,13 @@ class InvoiceDetailViewModel(private val container: AppContainer, private val in
             } catch (e: Exception) {
                 DetailState.Unreadable
             }
+            val previous = _state.value
+            if (previous is DetailState.Ready && loaded is DetailState.Ready && previous.invoice != loaded.invoice) {
+                // The files generated for the old content are out of date.
+                files = null
+                _export.value = null
+            }
+            _state.value = loaded
         }
     }
 
