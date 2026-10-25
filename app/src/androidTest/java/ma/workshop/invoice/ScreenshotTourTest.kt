@@ -70,11 +70,16 @@ class ScreenshotTourTest {
 
     private fun addButton() = "+ ${Strings.ADD_PRODUCT}"
 
-    private fun addItem(product: String, width: String, height: String, rate: String, plusClicks: Int = 0) {
+    private fun addItem(product: String, width: String, height: String, rate: String, plusClicks: Int = 0, centimetres: Boolean = false) {
         rule.onNodeWithText(addButton()).performClick()
         waitForText(Strings.CHOOSE_PRODUCT)
         rule.onNodeWithText(product).performClick()
         waitForText(Strings.WIDTH)
+        if (centimetres) {
+            // the first "cm" chip belongs to the width, the second to the height
+            rule.onAllNodesWithText(Strings.CM_UNIT)[0].performClick()
+            rule.onAllNodesWithText(Strings.CM_UNIT)[1].performClick()
+        }
         for (c in width) keys(if (c == '.') "decimal" else c.toString())
         rule.onNodeWithTag("key-next").performClick()
         for (c in height) keys(if (c == '.') "decimal" else c.toString())
@@ -116,7 +121,7 @@ class ScreenshotTourTest {
         click(Strings.CONFIRM)
 
         waitForText(addButton())
-        addItem("إطار حديد", "150", "200", "80", plusClicks = 2)
+        addItem("إطار حديد", "150", "200", "80", plusClicks = 2, centimetres = true)
         click(Strings.CONFIRM)
         waitForText(addButton())
         shot("08-items-list")

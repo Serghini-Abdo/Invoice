@@ -261,26 +261,11 @@ fun ItemConfirmScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            IllustrationImage(pending.product.illustration, Modifier.size(128.dp))
+            IllustrationImage(pending.product.illustration, Modifier.size(96.dp))
             Text(pending.product.name, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
 
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 2.dp,
-            ) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(Strings.CALCULATION, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    for (line in ItemDescriber.breakdown(pricing)) {
-                        Column {
-                            Text(line.label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(line.value, style = MaterialTheme.typography.titleMedium)
-                        }
-                    }
-                }
-            }
-
+            // The total comes first: it is what the owner came here to check (and hear), so it never
+            // needs scrolling to find. The step-by-step calculation follows below it.
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
@@ -296,6 +281,23 @@ fun ItemConfirmScreen(
                         )
                     }
                     SpeakerButton(onClick = onReplay, available = speechAvailable, description = Strings.REPLAY)
+                }
+            }
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 2.dp,
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(Strings.CALCULATION, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    for (line in ItemDescriber.breakdown(pricing)) {
+                        Column {
+                            Text(line.label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(line.value, style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
                 }
             }
         }
