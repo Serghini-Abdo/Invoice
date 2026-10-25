@@ -1,0 +1,1254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 2 Design Review</title>
+<style>
+:root{
+  /* ---- proposed theme tokens (Day 2) ---- */
+  --primary:#2E7D32; --primary-light:#66BB6A; --primary-container:#E8F5E9; --on-primary:#FFFFFF;
+  --secondary:#F2B705; --secondary-pressed:#D9A404; --secondary-border:#A67C00; --secondary-container:#FFF6D6; --on-secondary:#1B1B1B;
+  --error:#D32F2F; --error-container:#FDECEC; --on-error:#FFFFFF;
+  --gray:#6B7280; --gray-strong:#4B5563; --outline:#9CA3AF; --outline-soft:#E5E7EB;
+  --surface:#F3F4F6; --card:#FFFFFF; --ink:#1B1B1B;
+  /* ---- current theme (Theme.kt AppColors) ---- */
+  --c-rust:#B8541A; --c-rust-dark:#8A3B0F; --c-rust-light:#FFE3D2; --c-steel:#37474F; --c-steel-mid:#607D8B;
+  --c-steel-pale:#E3E9EC; --c-paper:#FAF7F2; --c-green:#1B6B3A; --c-green-pale:#E3F4E8; --c-red:#B3261E;
+  --c-red-pale:#FCE4E1; --c-amber:#8A5A00; --c-amber-pale:#FFF0CC; --c-outline:#7A8085; --c-variant:#EFE9E2;
+}
+*{box-sizing:border-box}
+html{background:#E9ECEF}
+body{margin:0;background:#E9ECEF;color:#111827;font-family:"Segoe UI",Tahoma,"Noto Sans Arabic","Geeza Pro",Arial,sans-serif;line-height:1.45;font-size:15px}
+.doc{max-width:1260px;margin:0 auto;padding:24px 16px 96px}
+h1{font-size:28px;margin:0 0 4px}
+h2{font-size:22px;margin:0 0 10px;padding-top:4px}
+h3{font-size:17px;margin:18px 0 8px}
+p{margin:6px 0}
+code{background:#F1F3F5;border-radius:4px;padding:0 4px;font-size:13px}
+section{background:#fff;border-radius:14px;padding:20px 22px;margin:18px 0;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.sub{color:#4B5563}
+.toc{columns:2;column-gap:28px;padding-left:18px;margin:8px 0}
+.toc li{margin:2px 0}
+table.t{border-collapse:collapse;width:100%;font-size:14px;margin:8px 0}
+table.t th,table.t td{border:1px solid #E5E7EB;padding:6px 8px;text-align:left;vertical-align:top}
+table.t th{background:#F9FAFB;font-weight:600}
+.ok{color:#1B6B3A;font-weight:600}.bad{color:#B3261E;font-weight:600}.warn{color:#8A5A00;font-weight:600}
+.tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;padding:1px 7px;border-radius:9px;vertical-align:middle;direction:ltr}
+.tag.new{background:#E8F5E9;color:#1B5E20}.tag.chg{background:#FFF6D6;color:#6B4E00}.tag.unl{background:#E0E7FF;color:#3730A3}.tag.q{background:#FDECEC;color:#9B1C1C}.tag.dec{background:#DCFCE7;color:#14532D}
+.ar{direction:rtl;text-align:right}
+.ltr{direction:ltr}
+.grow{flex:1;min-width:0}
+.callout{border-left:4px solid var(--primary);background:#F6FBF6;padding:10px 14px;border-radius:6px;margin:10px 0}
+.callout.q{border-color:#D32F2F;background:#FFF7F7}
+.callout.w{border-color:#F2B705;background:#FFFBEB}
+ol.find>li,ul.find>li{margin:6px 0}
+
+/* ---------- comparison layout ---------- */
+.pair{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;margin-top:10px}
+.frame{display:flex;flex-direction:column;gap:6px;flex:none}
+.flabel{font:700 12px/1.2 "Segoe UI",Arial,sans-serif;letter-spacing:.06em;color:#6B7280}
+.flabel.c::before{content:"CURRENT · ";color:#B8541A}
+.flabel.p::before{content:"PROPOSED · ";color:#2E7D32}
+.notes{flex:1;min-width:280px;font-size:14px}
+.notes ul{padding-left:18px;margin:4px 0}
+.notes li{margin:3px 0}
+
+/* ---------- phone frame (360 x 800 dp, 1 CSS px = 1 dp) ---------- */
+.phone{width:380px;height:820px;padding:10px;border-radius:42px;background:#111;flex:none}
+.scr{width:360px;height:800px;border-radius:32px;overflow:hidden;position:relative;display:flex;flex-direction:column;font-size:18px;line-height:1.4;color:var(--ink)}
+.sb{height:24px;flex:none;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font:600 12px/1 Arial,sans-serif;direction:ltr}
+.body{flex:1;overflow:hidden;position:relative}
+.body.fade::after{content:"";position:absolute;left:0;right:0;bottom:0;height:36px;background:linear-gradient(transparent,var(--bg))}
+.bottom{flex:none;padding:12px 14px;display:flex;flex-direction:column;gap:10px;box-shadow:0 -6px 12px rgba(0,0,0,.08);position:relative;z-index:2}
+svg{width:24px;height:24px;flex:none}
+.s16{width:16px;height:16px}.s20{width:20px;height:20px}.s22{width:22px;height:22px}.s26{width:26px;height:26px}.s28{width:28px;height:28px}.s32{width:32px;height:32px}
+.s36{width:36px;height:36px}.s40{width:40px;height:40px}.s44{width:44px;height:44px}.s52{width:52px;height:52px}.s64{width:64px;height:64px}.s72{width:72px;height:72px}.s96{width:96px;height:96px}.s112{width:112px;height:112px}.s120{width:120px;height:120px}
+
+/* ===== CURRENT theme ===== */
+.cur{--bg:var(--c-paper);background:var(--c-paper)}
+.cur .sb{background:var(--c-paper)}
+.c-head{height:68px;flex:none;display:flex;align-items:center;gap:6px;background:#fff;padding:0 8px}
+.c-head .bk{width:56px;height:56px;display:grid;place-items:center}
+.c-head .bk svg{transform:scaleX(-1);width:32px;height:32px}
+.c-head b{font-size:24px;flex:1}
+.c-btn{min-height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:20px;padding:8px 12px}
+.c-btn.p{background:var(--c-rust);color:#fff}.c-btn.s{border:2px solid var(--c-rust);color:var(--c-rust);background:#fff}
+.c-btn.ok{background:var(--c-green);color:#fff}.c-btn.d{background:var(--c-red);color:#fff}.c-btn.dis{background:#E8E3DD;color:#A9A59F}
+.c-btn svg.fw{transform:scaleX(-1)}
+.c-card{background:#fff;border-radius:18px;box-shadow:0 1px 3px rgba(0,0,0,.12);padding:12px}
+.c-banner{display:flex;gap:12px;align-items:center;border-radius:12px;padding:14px;font-weight:700;font-size:17px}
+.c-banner.i{background:var(--c-steel-pale);color:var(--c-steel)}.c-banner.w{background:var(--c-amber-pale);color:var(--c-amber)}
+.c-field{border:1px solid var(--c-outline);border-radius:16px;min-height:80px;padding:8px 16px;background:#fff;position:relative}
+.c-field small{position:absolute;top:-11px;right:14px;background:var(--c-paper);padding:0 4px;font-size:15px;color:#4A4F54}
+.c-field span{font-size:24px;display:block;padding-top:14px}
+.c-fbox{display:flex;align-items:center;gap:8px;border:1px solid var(--c-outline);border-radius:16px;min-height:58px;padding:4px 12px;background:#fff}
+.c-fbox.sel{border:3px solid var(--c-rust)}
+.c-fbox .n{flex:1;direction:ltr;text-align:left;font-size:28px;font-weight:700}
+.c-lbl{font-size:18px;font-weight:700;color:#4A4F54}
+.c-tog{display:flex;gap:6px}.c-tog i{font-style:normal;height:44px;padding:0 12px;border-radius:12px;display:flex;align-items:center;gap:3px;font-weight:700;background:var(--c-steel-pale);color:var(--c-steel)}
+.c-tog i.on{background:var(--c-rust);color:#fff}
+.c-spk{width:56px;height:56px;display:grid;place-items:center;color:var(--c-rust)}
+.c-audio{height:44px;border-radius:12px;background:var(--c-rust-light);display:flex;align-items:center;gap:6px;padding:0 10px;font-size:16px;font-weight:700}
+.c-round{width:50px;height:50px;border-radius:50%;background:var(--c-rust);color:#fff;display:grid;place-items:center}
+.c-keys{display:grid;grid-template-columns:repeat(3,1fr) 1fr;gap:6px;direction:ltr;padding:8px 12px}
+.c-keys i{font-style:normal;height:50px;border-radius:12px;background:var(--c-steel-pale);color:var(--c-steel);display:grid;place-items:center;font-size:26px;font-weight:700}
+.c-keys i.nx{grid-row:span 3;height:auto;background:var(--c-rust);color:#fff;font-size:19px}
+
+/* ===== PROPOSED theme ===== */
+.pro{--bg:var(--surface);background:var(--surface)}
+.pro .sb{background:#fff}
+.tb{height:64px;flex:none;position:relative;display:flex;align-items:center;background:#fff;border-bottom:1px solid var(--outline-soft);padding:0 4px}
+.tb .bk{width:56px;height:56px;display:grid;place-items:center;flex:none}
+.tb .bk svg{width:30px;height:30px}
+.tb .ctr{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:10px;background:var(--surface);display:grid;place-items:center}
+.tb .ttl{margin-left:auto;display:flex;align-items:center;gap:0;max-width:calc(100% - 64px);min-width:0}
+.tb.icon .ttl{max-width:calc(50% - 26px)}
+.tb .ttl span{direction:rtl;font-weight:700;font-size:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:10px}
+.tb.icon .ttl span{font-size:19px;padding-right:6px}
+.tb.icon .ttl .spk{width:40px}
+/* round speaker = reads CONTENT (title, label, line, total) */
+.spk{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:var(--primary);flex:none;position:relative}
+.spk::after{content:"";position:absolute;inset:6px;border-radius:50%;background:var(--primary-container);z-index:0}
+.spk svg{position:relative;z-index:1;width:24px;height:24px}
+.spk.sm::after{inset:9px}.spk.sm svg{width:20px;height:20px}
+.spk.off{color:var(--gray)}.spk.off::after{background:#E5E7EB}
+/* square speaker tile = reads the BUTTON beside it; always left of the button, never inside */
+.bw{display:flex;gap:4px;align-items:stretch;direction:ltr}
+.bw>.btn,.bw>.grow{flex:1;min-width:0}
+.spt{width:52px;min-height:48px;border-radius:16px;border:2px solid var(--primary);background:#fff;color:var(--primary);display:grid;place-items:center;flex:none}
+/* the tile copies the look of the button it belongs to */
+.spt.p{background:var(--primary);border-color:var(--primary);color:#fff}
+.spt.y{background:var(--secondary);border-color:var(--secondary-border);color:var(--on-secondary)}
+.spt.o{background:#fff;border-color:var(--gray);color:var(--ink)}
+.spt.d{background:var(--error);border-color:var(--error);color:#fff}
+.spt.dis{background:#E5E7EB;border-color:#E5E7EB;color:#6B7280}
+.spt.sel{background:var(--primary-container);border-color:var(--primary);color:var(--primary)}
+.spt.sg{background:#E5E7EB;border-color:#E5E7EB;color:var(--ink)}
+.spt.sd{background:var(--error-container);border-color:var(--error-container);color:#9B1C1C}
+.spt.c{background:var(--primary-container);border-color:var(--primary-container);color:#1B5E20}
+.spt.w{background:#fff;border:0;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.spt svg{width:28px;height:28px}
+.spt.s{width:48px;height:48px;min-height:48px;border-radius:12px;border-width:1.5px;align-self:center}
+.spt.s svg{width:22px;height:22px}
+.spt.off{border-color:var(--gray);color:var(--gray)}
+.g2{display:grid;grid-template-columns:48px 1fr 48px 1fr;column-gap:4px;align-items:stretch;direction:ltr}
+.g2>.spt:nth-child(3){margin-left:10px}
+.g2>.spt.s{height:auto;align-self:stretch}
+.g2n{display:grid;grid-template-columns:1fr 1fr;gap:8px;direction:ltr}
+.g2>.btn{min-height:52px;font-size:17px;padding:4px 6px}
+.mic{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;color:var(--gray-strong);background:var(--surface);flex:none}
+.btn{min-height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:20px;padding:8px 14px;direction:rtl}
+.btn.p{background:var(--primary);color:var(--on-primary)}
+.btn.y{background:var(--secondary);color:var(--on-secondary);border:2px solid var(--secondary-border)}
+.btn.y.pressed{background:var(--secondary-pressed);transform:scale(.98);box-shadow:inset 0 3px 0 rgba(0,0,0,.18)}
+.btn.o{background:#fff;color:var(--ink);border:2px solid var(--gray)}
+.btn.d{background:var(--error);color:#fff}
+.btn.dis{background:#E5E7EB;color:#6B7280}
+.btn.sel{background:var(--primary-container);color:#1B5E20;border:3px solid var(--primary)}
+.btn .plus{width:38px;height:38px;border-radius:50%;background:var(--on-secondary);color:var(--secondary);display:grid;place-items:center}
+.btn .plus svg{width:26px;height:26px;stroke-width:3}
+.card{background:#fff;border-radius:16px;box-shadow:0 1px 2px rgba(0,0,0,.1);padding:12px}
+.banner{display:flex;gap:8px;align-items:center;border-radius:12px;padding:8px 10px 8px 4px;font-weight:700;font-size:16px}
+.banner.i{background:#E5E7EB;color:var(--gray-strong)}
+.banner.w{background:var(--secondary-container);color:#5C4300;border:1px solid var(--secondary-border);padding-left:10px}
+.banner.ok{background:var(--primary-container);color:#1B5E20}
+.banner.e{background:var(--error-container);color:#9B1C1C}
+.banner .t{flex:1;direction:rtl;text-align:right}
+.fld{display:flex;gap:8px;align-items:flex-end}
+.fld .col{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.fld .lbl{display:flex;align-items:center;justify-content:flex-end;gap:0;height:30px;font-weight:700;font-size:17px;color:var(--gray-strong);direction:rtl}
+.fld .lbl .spk{margin-right:-4px}
+.fld .lbl small{font-weight:400;color:var(--gray-strong);margin-right:4px;font-size:15px}
+.fld .ill{width:46px;height:58px;border-radius:12px;background:var(--primary-container);color:var(--primary);display:grid;place-items:center;flex:none}
+.fld .ill svg{width:30px;height:30px}
+.fld.top{flex-direction:column;align-items:stretch;gap:2px}
+.fld.top .frow{display:flex;gap:8px;align-items:center}
+.box{height:58px;border:1px solid var(--outline);border-radius:14px;background:#fff;display:flex;align-items:center;gap:8px;padding:0 6px}
+.box.sel{border:3px solid var(--primary)}
+.box .v{flex:1;text-align:right;font-weight:700;font-size:26px;white-space:nowrap;overflow:hidden;padding-right:8px}
+.box .v.txt{font-size:22px;font-weight:600;direction:rtl}
+.box .v.ph{color:var(--gray);font-weight:400}
+.box .u{font-size:18px;font-weight:700;color:var(--gray-strong);padding:0 2px;direction:rtl}
+.box.num{justify-content:flex-start}.box.num .v{flex:none;text-align:left;padding:0 4px}
+.caret{display:inline-block;width:3px;height:28px;background:var(--primary);vertical-align:middle;margin-left:2px}
+.keys{display:grid;grid-template-columns:repeat(3,1fr) 1fr;gap:6px;padding:8px 12px;direction:ltr;background:#fff}
+.keys i{font-style:normal;height:50px;border-radius:12px;background:#E5E7EB;color:var(--ink);display:grid;place-items:center;font-size:26px;font-weight:700}
+.keys i.nx{grid-row:span 3;height:auto;background:var(--primary);color:#fff;font-size:19px;direction:rtl}
+.round{width:52px;height:52px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;flex:none}
+.round svg{width:30px;height:30px;stroke-width:3}
+.subbar{height:52px;flex:none;display:flex;align-items:center;padding:0 10px;background:#fff;border-bottom:1px solid var(--outline-soft);gap:8px;direction:ltr}
+.chip{height:40px;border-radius:20px;display:flex;align-items:center;gap:6px;padding:0 12px;font-size:15px;font-weight:700;background:var(--primary-container);color:#1B5E20;direction:rtl}
+.chip.off{background:#E5E7EB;color:var(--gray-strong)}
+.row{display:flex;align-items:center;gap:8px}
+.muted{color:var(--gray-strong)}
+.amt{font-weight:700;direction:rtl;white-space:nowrap}
+.badge{display:inline-flex;align-items:center;gap:4px;border-radius:10px;padding:2px 8px;font-size:14px;font-weight:700;direction:rtl}
+.badge.paid{background:var(--primary-container);color:#1B5E20}
+.badge.ed{background:var(--secondary-container);color:#5C4300;border:1px solid var(--secondary-border)}
+.dlg-scrim{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:5;display:flex;align-items:center;justify-content:center;padding:16px}
+.dlg{background:#fff;border-radius:24px;padding:16px;width:100%;display:flex;flex-direction:column;gap:10px;direction:rtl;text-align:right}
+.dlg h4{margin:0;font-size:21px;display:flex;align-items:center;gap:4px}
+.dlg h4 span{flex:1}
+.dlg p{margin:0;font-size:16px}
+.dlg .bw .btn{min-height:56px;font-size:18px}
+.opt{border:1px solid var(--outline);background:#fff;border-radius:14px;padding:6px 8px;text-align:center;font-weight:700;font-size:17px;direction:rtl;display:flex;flex-direction:column;justify-content:center;min-height:64px}
+.opt.on{border:3px solid var(--primary);background:var(--primary-container)}
+.opt small{font-weight:400;font-size:14px;color:var(--gray-strong)}
+
+/* item row on screens (mirrors the invoice columns) */
+.irow{background:#fff;border-radius:14px;box-shadow:0 1px 2px rgba(0,0,0,.1);padding:6px 6px 6px}
+.igrid{display:grid;direction:rtl;grid-template-columns:92px 40px 1fr 60px;align-items:center;gap:4px}
+.igrid .nm{display:flex;align-items:center;gap:4px;font-weight:700;font-size:15px;line-height:1.25}
+.igrid .q{font-weight:700;font-size:16px;text-align:center;padding:2px 6px}
+.igrid .f{font-size:13px;line-height:1.3;padding-right:2px}
+.igrid .f .s{color:var(--gray-strong)}
+.igrid .tt{font-weight:700;font-size:16px;text-align:left;direction:rtl}
+.iact{display:grid;grid-template-columns:48px 1fr 48px 1fr 48px;column-gap:4px;align-items:center;margin-top:6px;direction:ltr}
+.iact .spk{margin-left:8px}
+.iact>.spt:nth-child(3){margin-left:8px}
+.sbtn{height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 6px;font-weight:700;font-size:15px;background:#E5E7EB;color:var(--ink);direction:rtl}
+.sbtn.d{background:var(--error-container);color:#9B1C1C}
+.thdr{display:grid;direction:rtl;grid-template-columns:92px 40px 1fr 60px;gap:4px;font-size:11px;font-weight:700;color:var(--gray-strong);padding:0 6px}
+.thdr span:nth-child(2){text-align:center}
+.thdr span:last-child{text-align:left}
+
+/* ---------- spec strips ---------- */
+.strip{width:360px;background:#fff;border:1px dashed #CBD5E1;border-radius:8px;overflow:hidden}
+.strip .cap{font:600 12px Arial,sans-serif;color:#6B7280;padding:4px 8px;background:#F8FAFC;border-bottom:1px dashed #CBD5E1}
+.specgrid{display:flex;flex-wrap:wrap;gap:18px}
+.sw{display:flex;align-items:center;gap:10px;font-size:13px}
+.sw i{width:44px;height:44px;border-radius:10px;display:block;border:1px solid rgba(0,0,0,.1)}
+
+/* ---------- invoice tables ---------- */
+.invwrap{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.png{width:360px;background:#fff;padding:12px;direction:rtl;font-size:12px;line-height:1.4;color:#1B1B1B;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.png .hd,.pg .hd{text-align:center}.png .hd b{display:block;font-size:20px;color:var(--primary)}.png .hd span,.pg .hd span{color:#546E7A}
+.png .meta{display:flex;justify-content:space-between;border-top:1px solid #CFD8DC;margin-top:6px;padding-top:6px;font-size:13px}
+.ir{display:grid;direction:rtl;align-items:center;border-bottom:1px solid #E0E4E7;padding:4px 0}
+.ir.h{background:#F1F5F3;border-radius:4px;border:0;font-weight:700;font-size:11px;color:#4B5563;padding:4px 0;margin-top:6px}
+.ir>div{padding:0 3px;min-width:0}
+.ir .n{display:flex;align-items:center;gap:4px;font-weight:700}
+.ir .q{text-align:center;font-weight:700;padding:0 8px;align-self:stretch;display:flex;align-items:center;justify-content:center}
+.ir .p{text-align:left;font-weight:700;white-space:nowrap}
+.ir .s{color:#4B5563}
+.png .A{grid-template-columns:96px 44px 126px 70px}
+.png .B{grid-template-columns:88px 40px 92px 54px 62px}
+.png .ir svg{width:34px;height:34px}
+.sumbox{margin-top:10px;background:#F5F7F8;border:1px solid #CFD8DC;border-radius:8px;padding:8px 12px}
+.sumbox div{display:flex;justify-content:space-between;font-weight:700;padding:2px 0}
+.sumbox .big{font-size:1.35em}
+.sumbox .dep{font-size:1.2em;color:#2E7D32}
+.sumbox .rem{font-size:1.35em;background:#F2B705;color:#1B1B1B;border:1px solid #A67C00;border-radius:6px;padding:3px 8px;margin:4px -6px 0}
+.pg .foot{height:14pt;text-align:center;color:#6B7280;font-size:8pt;direction:rtl}
+.png .thanks,.pg .thanks{text-align:center;color:#546E7A;margin-top:8px}
+/* A4 at true print size: CSS pt == print pt at 100% browser zoom */
+.pg{width:595pt;height:842pt;background:#fff;padding:28pt;direction:rtl;font-size:9.5pt;line-height:1.4;color:#1B1B1B;box-shadow:0 1px 6px rgba(0,0,0,.2);display:flex;flex-direction:column;flex:none;position:relative}
+.pg .pgbody{flex:1;overflow:hidden}
+.pg .hd b{display:block;font-size:16pt;color:var(--primary)}
+.pg .meta{display:flex;justify-content:space-between;border-top:1px solid #CFD8DC;margin-top:4pt;padding-top:4pt;font-size:10pt}
+.pg .run{display:flex;justify-content:space-between;color:#546E7A;font-size:8.5pt;border-bottom:1px solid #CFD8DC;padding-bottom:3pt}
+.pg .ir.h{font-size:8.5pt;margin-top:4pt}
+.pg .A{grid-template-columns:185pt 54pt 210pt 90pt}
+.pg .B{grid-template-columns:180pt 48pt 145pt 82pt 84pt}
+.pg .ir{padding:4pt 0}
+.pg .ir svg{width:26pt;height:26pt}
+.pg .sumbox{font-size:11pt}
+.crop .pg{height:auto}
+.pdfstrip{display:flex;gap:16px;overflow-x:auto;padding:8px 4px 12px;zoom:.5}
+.pdfstrip.full{zoom:1}
+.pngbox{height:800px;overflow-y:auto;overflow-x:hidden;border:10px solid #111;border-radius:30px;width:396px;flex:none;background:#fff}
+.pngbox .png{box-shadow:none}
+.overview{zoom:.25;position:relative}
+.cap8k{position:absolute;left:-40px;right:-40px;border-top:8px dashed #D32F2F}
+.toggle{display:inline-block;margin:6px 0;padding:6px 12px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;cursor:pointer;font-size:14px}
+.bidi{font-size:22px;direction:rtl;text-align:right;border:1px solid #E5E7EB;border-radius:8px;padding:8px 12px;width:300px;background:#fff}
+.mini{display:grid;grid-template-columns:repeat(2,44px);gap:6px;direction:ltr}
+.mini i{font-style:normal;height:44px;border-radius:8px;background:#E8F5E9;border:1px solid #A5D6A7;display:grid;place-items:center;font-weight:700}
+</style>
+</head>
+<body>
+<!-- ===================== ICON + ILLUSTRATION SPRITES ===================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="wood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A1887F"/><stop offset="1" stop-color="#5D4037"/></linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#90CAF9"/><stop offset="1" stop-color="#E3F2FD"/></linearGradient>
+  </defs>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M20 12H5M11 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-fwd" viewBox="0 0 24 24"><path d="M4 12h15M13 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-spk" viewBox="0 0 24 24"><path d="M3 9.5h4l5-4v13l-5-4H3z" fill="currentColor"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-spk-off" viewBox="0 0 24 24"><path d="M3 9.5h4l5-4v13l-5-4H3z" fill="currentColor"/><path d="M15.5 9.5l5 5M20.5 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-checkc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-del" viewBox="0 0 24 24"><path d="M4 7h16M9.5 7V4h5v3M6.5 7l1 13h9l1-13M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z" fill="currentColor"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M6.5 3h3l1.8 4.6-2.4 1.6a11 11 0 0 0 5.9 5.9l1.6-2.4L21 14.5v3A2.5 2.5 0 0 1 18.5 20 15.5 15.5 0 0 1 4 5.5 2.5 2.5 0 0 1 6.5 3z" fill="currentColor"/></symbol>
+  <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><text x="12" y="15.6" font-size="9" font-weight="700" text-anchor="middle" fill="currentColor" font-family="Arial">DH</text></symbol>
+  <symbol id="i-qty" viewBox="0 0 24 24"><rect x="3" y="13" width="8" height="8" rx="1.5" fill="currentColor"/><rect x="13" y="13" width="8" height="8" rx="1.5" fill="currentColor"/><rect x="8" y="3" width="8" height="8" rx="1.5" fill="currentColor"/></symbol>
+  <symbol id="i-w" viewBox="0 0 24 24"><path d="M3 12h18M7 7.5L2.5 12 7 16.5M17 7.5l4.5 4.5-4.5 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-h" viewBox="0 0 24 24"><path d="M12 3v18M7.5 7L12 2.5 16.5 7M7.5 17l4.5 4.5 4.5-4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3" fill="currentColor"/><circle cx="6" cy="12" r="3" fill="currentColor"/><circle cx="18" cy="19" r="3" fill="currentColor"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-img" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="9" cy="10" r="1.8" fill="currentColor"/><path d="M4 18l5-5 3 3 3-4 5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-gallery" viewBox="0 0 24 24"><rect x="2.5" y="5" width="15" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 17l4-4 3 3 2.5-3 3.5 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M20 2.5v7M16.5 6h7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M6 2.5h9l4 4V21.5H6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><text x="12.5" y="17" font-size="6.2" font-weight="700" text-anchor="middle" fill="currentColor" font-family="Arial">PDF</text></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5 2.5h14v19l-2.3-1.6-2.4 1.6-2.3-1.6-2.3 1.6-2.4-1.6L5 21.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 7.5h7M8.5 11.5h7M8.5 15.5h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5.5 9.5V21h13V9.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M4 3h12.5L20 6.5V21H4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 3v5h7V3M7.5 21v-7h9v7" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-backup" viewBox="0 0 24 24"><path d="M7 19a5 5 0 1 1 .8-9.9A6 6 0 0 1 19.3 10 4.5 4.5 0 0 1 18 19z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 16v-5.5M9.5 13l2.5-2.5 2.5 2.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3l10 18H2z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M12 10v5M12 18v.4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.3v.4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M6.5 9V3h11v6M6.5 18H3.5v-8h17v8h-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><rect x="7" y="14" width="10" height="7" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-cat" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5" fill="currentColor"/><rect x="13" y="3" width="8" height="8" rx="1.5" fill="currentColor"/><rect x="3" y="13" width="8" height="8" rx="1.5" fill="currentColor"/><rect x="13" y="13" width="8" height="8" rx="1.5" fill="currentColor"/></symbol>
+  <symbol id="i-ruler" viewBox="0 0 24 24"><rect x="2" y="8" width="20" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M6 8v3M10 8v4M14 8v3M18 8v4" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><text x="12" y="17" font-size="13" font-weight="700" text-anchor="middle" fill="currentColor" font-family="Arial">Aa</text></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v13M6 11l6 6 6-6M5 21h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 20V7M6 13l6-6 6 6M5 3h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-bksp" viewBox="0 0 24 24"><path d="M8 5h13v14H8l-6-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M11.5 9.5l5 5M16.5 9.5l-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-cam" viewBox="0 0 24 24"><path d="M3 7.5h4l2-2.5h6l2 2.5h4V19H3z" fill="currentColor"/><circle cx="12" cy="13" r="3.6" fill="#fff"/></symbol>
+  <symbol id="p-door" viewBox="0 0 48 48"><rect x="11" y="4" width="26" height="41" rx="2" fill="#8D6E63"/><rect x="15" y="8" width="18" height="14" rx="1" fill="#A1887F"/><rect x="15" y="26" width="18" height="15" rx="1" fill="#A1887F"/><circle cx="32" cy="25" r="1.8" fill="#FFD54F"/></symbol>
+  <symbol id="p-window" viewBox="0 0 48 48"><rect x="5" y="7" width="38" height="34" rx="2" fill="#78909C"/><rect x="8.5" y="10.5" width="14" height="27" fill="#B3E5FC"/><rect x="25.5" y="10.5" width="14" height="27" fill="#B3E5FC"/></symbol>
+  <symbol id="p-garage" viewBox="0 0 48 48"><path d="M3 18L24 5l21 13v27H3z" fill="#78909C"/><rect x="9" y="20" width="30" height="25" fill="#CFD8DC"/><path d="M9 25h30M9 30h30M9 35h30M9 40h30" stroke="#78909C" stroke-width="1.6"/></symbol>
+  <symbol id="p-frame" viewBox="0 0 48 48"><rect x="9" y="6" width="30" height="36" fill="none" stroke="#546E7A" stroke-width="5"/></symbol>
+  <symbol id="p-hinge" viewBox="0 0 48 48"><rect x="9" y="8" width="12" height="32" rx="2" fill="#90A4AE"/><rect x="27" y="8" width="12" height="32" rx="2" fill="#90A4AE"/><rect x="21" y="6" width="6" height="36" rx="3" fill="#546E7A"/><circle cx="15" cy="15" r="2" fill="#546E7A"/><circle cx="15" cy="33" r="2" fill="#546E7A"/><circle cx="33" cy="15" r="2" fill="#546E7A"/><circle cx="33" cy="33" r="2" fill="#546E7A"/></symbol>
+  <symbol id="p-lock" viewBox="0 0 48 48"><path d="M16 22v-6a8 8 0 0 1 16 0v6" fill="none" stroke="#607D8B" stroke-width="4"/><rect x="11" y="21" width="26" height="21" rx="3" fill="#FFB300"/><circle cx="24" cy="30" r="3" fill="#5D4037"/><rect x="22.6" y="31" width="2.8" height="6" fill="#5D4037"/></symbol>
+  <symbol id="p-gate" viewBox="0 0 48 48"><path d="M5 43V19Q24 3 43 19v24" fill="none" stroke="#455A64" stroke-width="3"/><path d="M11 43V15M17.5 43V11M24 43V9.5M30.5 43V11M37 43V15M5 30h38" stroke="#455A64" stroke-width="2.4"/></symbol>
+  <symbol id="p-grille" viewBox="0 0 48 48"><rect x="6" y="6" width="36" height="36" fill="none" stroke="#455A64" stroke-width="3"/><path d="M15 6v36M24 6v36M33 6v36M6 18h36M6 30h36" stroke="#455A64" stroke-width="2"/></symbol>
+  <symbol id="p-photo" viewBox="0 0 48 48"><rect width="48" height="48" fill="url(#sky)"/><rect x="0" y="34" width="48" height="14" fill="#BCAAA4"/><rect x="12" y="6" width="24" height="38" fill="url(#wood)"/><rect x="15" y="9" width="18" height="12" fill="#795548"/><rect x="15" y="24" width="18" height="16" fill="#795548"/><circle cx="31" cy="23" r="1.6" fill="#FFE082"/></symbol>
+</svg>
+
+<div class="doc">
+
+<section>
+  <h1>Day 2 upgrade: design review, round 4</h1>
+  <p class="sub">Workshop Invoice (فواتير الورشة) · Kotlin, Jetpack Compose, Room · updated 2026-10-25 with your answers · <b>no app code has been changed</b>.</p>
+  <p>Phone frames are 360 × 800 dp with 1 CSS px = 1 dp, so on-screen sizes are real. The A4 crops use CSS points, so at 100% browser zoom they show the true print size. All UI copy is real Arabic with Latin digits, using the app's own number formatting.</p>
+  <p>Tags: <span class="tag chg">CHANGED</span> existing screen, <span class="tag new">NEW</span> new element, <span class="tag unl">NOT IN BRIEF</span> a screen you did not list, <span class="tag dec">DECIDED</span> settled by your answers, <span class="tag q">QUESTION</span> still needs your decision.</p>
+  <ol class="toc">
+    <li><a href="#dec">Decisions so far (rounds 2 to 4)</a></li>
+    <li><a href="#inv">Step 1: Inventory of the existing app</a></li>
+    <li><a href="#tokens">Theme tokens and contrast check</a></li>
+    <li><a href="#topbar">Top bar, speaker rule, Add button</a></li>
+    <li><a href="#home">Home</a></li>
+    <li><a href="#cust">Customer details</a></li>
+    <li><a href="#items">Invoice item list (empty and filled)</a></li>
+    <li><a href="#cat">Product catalogue card, product list, image import, calculation method</a></li>
+    <li><a href="#entry">Item details (field icons, unit suffix)</a></li>
+    <li><a href="#confirm">Item confirmation</a></li>
+    <li><a href="#review">Invoice review (total, deposit, balance)</a></li>
+    <li><a href="#saved">Saved and share</a></li>
+    <li><a href="#hist">Invoice history and invoice detail</a></li>
+    <li><a href="#settings">Settings with the new options</a></li>
+    <li><a href="#other">Backup, dialogs, empty states</a></li>
+    <li><a href="#table">Unit-price column: A vs B feasibility</a></li>
+    <li><a href="#long">Long invoice: tall PNG and PDF page breaks</a></li>
+    <li><a href="#find">Step 3: Findings, risks and open questions</a></li>
+  </ol>
+</section>
+
+<!-- ============================ DECISIONS ============================ -->
+<section id="dec">
+  <h2>Decisions so far <span class="tag dec">DECIDED</span></h2>
+  <h3>Round 3 (latest)</h3>
+  <table class="t">
+    <tr><th>Your feedback</th><th>Applied as</th></tr>
+    <tr><td>Home cards and product catalogue cards have room for the speaker inside</td><td>Speaker <b>inside</b> those cards again, as its own target (a tap only speaks).</td></tr>
+    <tr><td>Other buttons: the speaker follows the button's design, small gap</td><td><code>| X | button |</code>: the speaker tile has the same colour, border, corner radius and height as its button, with a 4 dp gap. Example: green button → green tile, yellow → yellow, outlined → outlined.</td></tr>
+    <tr><td>Icon-only controls get no speaker</td><td>Back arrow, keypad keys, − / +, mic and photo buttons have no speaker.</td></tr>
+    <tr><td>Calculation card ("الحساب: بالمتر المربع"): one speaker for the whole card</td><td>One speaker reads the full card as one sentence.</td></tr>
+    <tr><td>Total + deposit + balance card: one speaker</td><td>One speaker on the review and invoice-detail cards.</td></tr>
+    <tr><td>Settings (except the product catalogue) need no speakers</td><td>No speakers in Settings and Backup, except the المنتوجات card in Settings and its screens (product list, product edit), which have them (round 4).</td></tr>
+    <tr><td>Item details: only cm or m; labels on the right above their icons</td><td>The m/cm switch is removed and the box shows only the unit from Settings, where the switch was. The labels (العرض, الارتفاع, الثمن للمتر المربع, الكمية) sit on the right, directly above their icons (round 4).</td></tr>
+    <tr><td>Quantity column: no thin dividers</td><td>No dividers on screen, in the PDF or in the PNG; the quantity keeps its own margins and is centred under its title (round 4).</td></tr>
+    <tr><td>PDF: keep page numbers, in the footer; totals only on the last page</td><td>Footer "صفحة 2 / 3" on every page; total, deposit and balance only on the last page.</td></tr>
+    <tr><td>Deposit too small; colours: balance yellow, deposit green</td><td>Deposit is now slightly smaller than the total but no longer small, in green. Balance is in a yellow band (dark text, readable) at the same size as the total. Applies to PDF and PNG (same layout engine).</td></tr>
+    <tr><td>Choose product: no image change</td><td>No photo button on the picker cards. Photos are imported only in product edit (this replaces round 2, answer 14).</td></tr>
+    <tr><td>Grid order not important</td><td>Kept as today (first product top-right).</td></tr>
+    <tr><td>PDF page 2 and later: slim header</td><td>One line above the column titles: "ورشة الأمل للحدادة · فاتورة رقم 0013 · 25/10/2026". The full header appears only on page 1.</td></tr>
+  </table>
+  <h3>Round 2</h3>
+  <table class="t">
+    <tr><th>Answer</th><th>Applied as</th></tr>
+    <tr><td>1. Forward arrow</td><td>Points right, on the right of the label: <b>→ متابعة</b>.</td></tr>
+    <tr><td>2. Labels and amounts</td><td>Labels on the right, amounts on the left.</td></tr>
+    <tr><td>4. Old mixed m/cm invoices</td><td>Each invoice stores its unit; an old mixed invoice takes its first item's unit; existing lines stay as typed.</td></tr>
+    <tr><td>5. Unit-label script</td><td>Also on printed invoices and on re-exports of old invoices (labels only).</td></tr>
+    <tr><td>6. Images</td><td>A literal file copy per invoice item.</td></tr>
+    <tr><td>7. Too long for one PNG</td><td>Point to the PDF.</td></tr>
+    <tr><td>9–11. Mic</td><td>Speech recognizer + microphone permission accepted; mic only on customer name and product name; no notes field; no mic on search.</td></tr>
+    <tr><td>12–13</td><td>Speech rate: 3 presets. Add button: yellow.</td></tr>
+  </table>
+  <div class="callout"><b>All design questions are answered.</b> The design is ready for your approval.</div>
+</section>
+
+<!-- ============================ INVENTORY ============================ -->
+<section id="inv">
+  <h2>Step 1: Inventory (what actually exists)</h2>
+  <h3>Screens and routes</h3>
+  <table class="t">
+    <tr><th>Screen</th><th>Composable · file</th><th>Contents today</th></tr>
+    <tr><td>Home</td><td><code>HomeScreen</code> · ui/screens/HomeScreen.kt</td><td>Exactly 3 cards (new invoice, previous invoices, settings), a backup-alert banner and a one-time startup notice.</td></tr>
+    <tr><td>Customer details (flow step 1)</td><td><code>CustomerScreen</code> · ui/screens/CustomerAndItemsScreens.kt</td><td>Optional name and phone (Material <code>OutlinedTextField</code>), info banner, متابعة. There is <b>no customer list or table</b>: customer is a snapshot on the invoice.</td></tr>
+    <tr><td>Item list (step 2)</td><td><code>ItemListScreen</code>, <code>ItemCard</code></td><td>Empty state, customer chip, item cards (64 dp picture), total, "+ إضافة منتوج", متابعة, remove dialog.</td></tr>
+    <tr><td>Catalogue picker (step 3)</td><td><code>CatalogPickerScreen</code>, <code>ProductCard</code> · ui/components/Inputs.kt</td><td>2-column grid, 112 dp picture, name, separate speaker, category chips if ≥ 2 categories, empty text.</td></tr>
+    <tr><td>Item details (step 4)</td><td><code>ItemEntryScreen</code> · ui/screens/ItemScreens.kt</td><td>Only the fields the formula needs; width/height each with its own <b>m/cm toggle</b>; rate with "DH / م²"; quantity stepper (starts at 1); live total bar; on-screen keypad.</td></tr>
+    <tr><td>Item confirmation (step 5)</td><td><code>ItemConfirmScreen</code></td><td>Picture, name, total with replay speaker, step-by-step calculation, mute toggle, إلغاء / تأكيد.</td></tr>
+    <tr><td>Review and deposit (step 6)</td><td><code>ReviewScreen</code> · ui/screens/ReviewAndSavedScreens.kt</td><td>Items, total + speaker, deposit (keypad, ≤ total), remaining, "خالص" banner, save confirmation dialog. There is <b>no separate payment screen</b>.</td></tr>
+    <tr><td>Saved and share (step 7)</td><td><code>SavedScreen</code>, <code>ExportPanel</code></td><td>Invoice number, share PNG / PDF / both, print PDF, preview, retry on export failure.</td></tr>
+    <tr><td>Draft and leave dialogs</td><td>ui/flow/InvoiceFlowRoute.kt</td><td>Resume unfinished invoice; leave (keep as draft / discard / stay).</td></tr>
+    <tr><td>Invoice history</td><td><code>HistoryScreen</code> · ui/history</td><td>Search, from/to date (Material <code>DatePickerDialog</code>), summary cards, "معدلة" badge, empty and no-results states.</td></tr>
+    <tr><td>Invoice detail</td><td><code>InvoiceDetailScreen</code></td><td>Header card, read-only items, payment card, revision log, share/print, edit, delete, not found / unreadable.</td></tr>
+    <tr><td>Settings</td><td><code>SettingsScreen</code> · ui/settings</td><td>Products link, workshop info, invoice format, audio (on, item totals, invoice totals, status, test, install voice), backup link.</td></tr>
+    <tr><td>Catalogue management</td><td><code>CatalogManagementScreen</code></td><td>Product list with active switch, "منتوج جديد".</td></tr>
+    <tr><td>Product edit</td><td><code>ProductEditScreen</code></td><td>Name, one of 16 built-in pictures, pricing method, <b>default unit toggle</b>, category, active, save/delete.</td></tr>
+    <tr><td>Backup and restore</td><td><code>BackupScreen</code> · ui/backup</td><td>Alerts, reconnect Drive, frequency, destinations, back up now, status, restore from phone / Drive, save a copy elsewhere.</td></tr>
+  </table>
+  <h3>Theme, colours, strings</h3>
+  <ul class="find">
+    <li><b>Theme</b> (<code>ui/theme/Theme.kt</code>): Material 3 light scheme from an <code>AppColors</code> object (13 constants: rust primary <code>#B8541A</code>, steel secondary, green, paper background, red, amber). Bundled Cairo font, large type, <code>TouchTarget = 56.dp</code>. No dark theme.</li>
+    <li><b>Hard-coded colours</b>: <code>AppColors.*</code> or <code>Color.White</code> used directly in 8 UI files. The printed invoice has its own copy in the domain (<code>InvoiceColors</code>).</li>
+    <li><b>Strings</b>: Kotlin constants in <code>ui/Strings.kt</code> (~240), <code>BackupTexts.kt</code>, <code>Messages.kt</code>; invoice wording in the domain <code>ArabicTerms</code>. <code>strings.xml</code> holds only <code>app_name</code>.</li>
+  </ul>
+  <h3>Where RTL, units, TTS, images and export are handled</h3>
+  <table class="t">
+    <tr><th>Concern</th><th>Places</th></tr>
+    <tr><td>RTL</td><td><code>MainActivity</code> sets the window to RTL; <code>InvoiceTheme</code> forces <code>LayoutDirection.Rtl</code>; LTR islands in <code>Inputs.kt</code> (keypad, number in <code>FieldBox</code>); AutoMirrored arrows; renderer uses RTL text with physical LEFT/RIGHT placement; <code>ItemDescriber</code> inserts an RLM; <code>LayoutAndBackUiTest</code> asserts RTL placement.</td></tr>
+    <tr><td>Units m/cm</td><td><code>LengthUnit</code>, <code>Length</code> (typed value + exact micrometres); <code>ItemEntryForm</code> keeps separate width and height units; <code>ProductDefinition.defaultUnit</code>; <code>UnitToggle</code> in item entry ×2 and product edit; <code>ItemDescriber</code> prints mixed units; Room, backup and drafts store unit per dimension per item.</td></tr>
+    <tr><td>TTS</td><td><code>SpeechController</code> (ar-MA preferred, no speech rate); <code>SpokenText</code>; settings for audio on, item totals, invoice totals; speakers on catalogue cards, confirm total, review total; mute chip; install-voice intent; toast when unavailable.</td></tr>
+    <tr><td>Image import</td><td><b>None.</b> 16 vector illustrations in <code>domain/catalog/Illustrations.kt</code>; items store only the illustration key.</td></tr>
+    <tr><td>PDF/PNG export</td><td><code>InvoiceDocumentBuilder</code> → <code>InvoiceLayoutEngine</code> → <code>InvoiceRenderer</code> (PNG 1080 px wide, <b>split above 8,000 px</b>; PDF A4) → <code>InvoiceExporter</code> → share sheet; <code>PdfPrintAdapter</code>. Thumbnail 64 units, tested to stay within 60–80.</td></tr>
+    <tr><td>Backup</td><td>One JSON document, format version 1, max 64 MB; phone keeps 10, Drive keeps 5; validator recomputes every item; staged restore with a safety copy.</td></tr>
+  </table>
+  <h3>Dialogs and empty states</h3>
+  <p><b>Dialogs</b>: remove item, save invoice, delete invoice, delete product (+ deactivate instead), restore backup, resume draft, leave invoice, two date pickers. <b>Empty states</b>: item list empty, no products, no invoices / no results, invoice not found / unreadable, product not found, export preparing / failed.</p>
+</section>
+
+<!-- ============================ TOKENS ============================ -->
+<section id="tokens">
+  <h2>Theme tokens and contrast check <span class="tag new">NEW</span></h2>
+  <p>All colours become theme tokens. The printed invoice reads the same values from one shared table in the domain module.</p>
+  <div class="specgrid">
+    <div class="sw"><i style="background:#2E7D32"></i><div><b>primary</b> #2E7D32<br>on-primary #FFFFFF</div></div>
+    <div class="sw"><i style="background:#66BB6A"></i><div><b>primary-light</b> #66BB6A<br>fill behind dark text only</div></div>
+    <div class="sw"><i style="background:#E8F5E9"></i><div><b>primary-container</b> #E8F5E9</div></div>
+    <div class="sw"><i style="background:#F2B705"></i><div><b>secondary</b> #F2B705<br>on-secondary #1B1B1B</div></div>
+    <div class="sw"><i style="background:#D9A404"></i><div><b>secondary-pressed</b> #D9A404</div></div>
+    <div class="sw"><i style="background:#A67C00"></i><div><b>secondary-border</b> #A67C00</div></div>
+    <div class="sw"><i style="background:#D32F2F"></i><div><b>error</b> #D32F2F</div></div>
+    <div class="sw"><i style="background:#6B7280"></i><div><b>gray</b> #6B7280</div></div>
+    <div class="sw"><i style="background:#4B5563"></i><div><b>gray-strong</b> #4B5563</div></div>
+    <div class="sw"><i style="background:#F3F4F6"></i><div><b>surface</b> #F3F4F6</div></div>
+  </div>
+  <table class="t" style="margin-top:14px">
+    <tr><th>Pair</th><th>Contrast</th><th>Verdict (AA: 4.5 small text, 3.0 large text and UI edges)</th></tr>
+    <tr><td>White on primary #2E7D32</td><td>5.1 : 1</td><td class="ok">Pass</td></tr>
+    <tr><td><b>White on yellow #F2B705</b></td><td>1.8 : 1</td><td class="bad">Fail: never white on yellow</td></tr>
+    <tr><td>#1B1B1B on yellow / pressed yellow</td><td>9.5 : 1 / 7.6 : 1</td><td class="ok">Pass</td></tr>
+    <tr><td>Yellow edge on white</td><td>1.8 : 1</td><td class="bad">Fail, so yellow buttons get a 2 dp <code>#A67C00</code> border (3.8 : 1)</td></tr>
+    <tr><td>White on primary-light #66BB6A</td><td>2.4 : 1</td><td class="bad">Fail: light green only behind dark text</td></tr>
+    <tr><td>White on error #D32F2F</td><td>5.0 : 1</td><td class="ok">Pass</td></tr>
+    <tr><td>Gray #6B7280 on white / on surface</td><td>4.8 : 1 / 4.4 : 1</td><td class="warn">On the surface use gray-strong #4B5563 (6.9 : 1) for small text</td></tr>
+    <tr><td>Primary on surface · ink on surface</td><td>4.7 : 1 · 15.7 : 1</td><td class="ok">Pass</td></tr>
+  </table>
+  <div class="callout w"><b>Green has one meaning: paid.</b> Unpaid balance is bold ink labelled "الباقي"; paid is green with a check icon and "خالص".</div>
+</section>
+
+<!-- ============================ TOP BAR ============================ -->
+<section id="topbar">
+  <h2>Top bar <span class="tag new">NEW</span>, speaker rule <span class="tag dec">DECIDED</span>, Add button <span class="tag chg">CHANGED</span></h2>
+  <p><code>AppTopBar(title, onBack, centerIcon = null, onSpeakTitle)</code>. LTR: back arrow on the left (56 dp), title on the right with its speaker just left of it. With <code>centerIcon</code> the 44 dp icon sits in the exact centre and the title is limited to the right half (19 sp; longer titles end with "…").</p>
+  <div class="pair">
+    <div class="frame"><div class="strip"><div class="cap">Mode 1: title only</div>
+      <div class="pro" style="background:#fff"><div class="tb"><div class="bk"><svg><use href="#i-back"/></svg></div><div class="ttl"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><span>الفواتير السابقة</span></div></div></div></div></div>
+    <div class="frame"><div class="strip"><div class="cap">Mode 2: screen with its own icon (centred)</div>
+      <div class="pro" style="background:#fff"><div class="tb icon"><div class="bk"><svg><use href="#i-back"/></svg></div><div class="ctr"><svg class="s36"><use href="#p-door"/></svg></div><div class="ttl"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><span>باب حديد</span></div></div></div></div></div>
+    <div class="frame"><div class="strip"><div class="cap">Mode 2, long title: ends with "…" before the icon</div>
+      <div class="pro" style="background:#fff"><div class="tb icon"><div class="bk"><svg><use href="#i-back"/></svg></div><div class="ctr"><svg class="s36"><use href="#p-window"/></svg></div><div class="ttl"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><span>نافذة ألمنيوم مزدوجة</span></div></div></div></div></div>
+  </div>
+  <h3>Speaker rule: <code>| X | label / icon |</code> <span class="tag dec">DECIDED</span></h3>
+  <div class="pair">
+    <div class="frame"><div class="strip" style="padding:12px"><div class="pro" style="background:transparent;display:flex;flex-direction:column;gap:10px">
+      <div class="bw"><div class="spt p"><svg><use href="#i-spk"/></svg></div><div class="btn p"><svg class="s28"><use href="#i-fwd"/></svg><span>متابعة</span></div></div>
+      <div class="bw"><div class="spt o"><svg><use href="#i-spk"/></svg></div><div class="btn o"><svg><use href="#i-edit"/></svg>تعديل المنتوجات</div></div>
+      <div class="g2"><div class="spt s o"><svg><use href="#i-spk"/></svg></div><div class="btn o"><svg><use href="#i-close"/></svg>إلغاء</div><div class="spt s p"><svg><use href="#i-spk"/></svg></div><div class="btn p"><svg><use href="#i-check"/></svg>تأكيد</div></div>
+    </div></div><div class="flabel">BUTTON: TILE IN THE SAME STYLE, 4 DP GAP</div></div>
+    <div class="frame"><div class="strip" style="padding:12px"><div class="pro" style="background:transparent;display:flex;flex-direction:column;gap:10px">
+      <div class="row" style="justify-content:flex-end"><div class="spk"><svg><use href="#i-spk"/></svg></div><b style="font-size:22px;direction:rtl">مجموع المنتوج: 2 520 DH</b></div>
+      <div class="row" style="justify-content:flex-end"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><b class="muted" style="direction:rtl">العرض</b></div>
+    </div></div><div class="flabel">CONTENT: ROUND SPEAKER (TITLE, LABEL, LINE, CARD)</div></div>
+    <div class="notes"><ul>
+      <li><b>Buttons</b>: the speaker tile copies the button (colour, border, radius, height), sits on its left with a 4 dp gap, and is its own target of at least 48 × 48 dp.</li>
+      <li><b>Big cards</b> (Home, product catalogue): speaker inside the card, as its own target.</li>
+      <li><b>Content</b> (titles, field labels, item lines, the calculation card, the totals card): one round speaker each.</li>
+      <li><b>No speaker</b>: icon-only controls (back arrow, keypad keys, − / +, mic, photo button) and everything in Settings / Backup except the product catalogue.</li>
+      <li>A speaker tap never presses, selects or navigates.</li>
+    </ul></div>
+  </div>
+  
+  <div class="pair">
+    <div class="frame"><div class="strip" style="padding:12px"><div class="pro" style="background:transparent"><div class="bw"><div class="spt y"><svg><use href="#i-spk"/></svg></div><div class="btn y"><span class="plus"><svg><use href="#i-plus"/></svg></span><span style="font-size:22px">إضافة منتوج</span></div></div></div></div><div class="flabel">NORMAL</div></div>
+    <div class="frame"><div class="strip" style="padding:12px"><div class="pro" style="background:transparent"><div class="bw"><div class="spt y"><svg><use href="#i-spk"/></svg></div><div class="btn y pressed"><span class="plus"><svg><use href="#i-plus"/></svg></span><span style="font-size:22px">إضافة منتوج</span></div></div></div></div><div class="flabel">PRESSED (DARKER, SHRINKS, INNER SHADOW)</div></div>
+  </div>
+</section>
+
+<!-- ============================ HOME ============================ -->
+<section id="home">
+  <h2>Home <span class="tag chg">CHANGED</span></h2>
+  <div class="pair">
+    <div class="frame"><div class="flabel c">Home</div><div class="phone"><div class="scr cur" dir="rtl">
+      <div class="sb"><span>14:30</span><span>82%</span></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:18px;padding:20px">
+        <div style="flex:1;border-radius:28px;background:var(--c-rust);color:#fff;display:flex;align-items:center;gap:20px;padding:16px 24px"><span style="width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,.22);display:grid;place-items:center"><svg class="s52"><use href="#i-plus"/></svg></span><b style="font-size:28px">فاتورة جديدة</b></div>
+        <div style="flex:1;border-radius:28px;background:var(--c-steel);color:#fff;display:flex;align-items:center;gap:20px;padding:16px 24px"><span style="width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,.22);display:grid;place-items:center"><svg class="s52"><use href="#i-receipt"/></svg></span><b style="font-size:28px">الفواتير السابقة</b></div>
+        <div style="flex:1;border-radius:28px;background:var(--c-steel-pale);color:var(--c-steel);display:flex;align-items:center;gap:20px;padding:16px 24px"><span style="width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,.5);display:grid;place-items:center"><svg class="s52"><use href="#i-gear"/></svg></span><b style="font-size:28px">الإعدادات</b></div>
+      </div></div></div></div>
+    <div class="frame"><div class="flabel p">Home, with backup alert</div><div class="phone"><div class="scr pro" dir="ltr">
+      <div class="sb"><span>14:30</span><span>82%</span></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:16px;padding:16px">
+        <div class="banner w"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><span class="t">النسخ الاحتياطي يحتاج انتباهك. اضغط هنا</span><svg class="s26"><use href="#i-warn"/></svg></div>
+        <div style="flex:1;border-radius:28px;background:var(--primary);color:#fff;display:flex;align-items:center;gap:12px;padding:12px 18px 12px 10px"><div class="spt p" style="width:56px;height:56px;background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.5)"><svg><use href="#i-spk"/></svg></div><b style="font-size:28px;flex:1;text-align:right;direction:rtl">فاتورة جديدة</b><span style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.22);display:grid;place-items:center;flex:none"><svg class="s52"><use href="#i-plus"/></svg></span></div>
+        <div style="flex:1;border-radius:28px;background:var(--secondary);color:var(--on-secondary);border:2px solid var(--secondary-border);display:flex;align-items:center;gap:12px;padding:12px 18px 12px 10px"><div class="spt y" style="width:56px;height:56px;background:rgba(0,0,0,.06)"><svg><use href="#i-spk"/></svg></div><b style="font-size:28px;flex:1;text-align:right;direction:rtl">الفواتير السابقة</b><span style="width:80px;height:80px;border-radius:50%;background:rgba(0,0,0,.08);display:grid;place-items:center;flex:none"><svg class="s52"><use href="#i-receipt"/></svg></span></div>
+        <div style="flex:1;border-radius:28px;background:#fff;color:var(--ink);border:2px solid var(--gray);display:flex;align-items:center;gap:12px;padding:12px 18px 12px 10px"><div class="spt o" style="width:56px;height:56px;background:var(--surface)"><svg><use href="#i-spk"/></svg></div><b style="font-size:28px;flex:1;text-align:right;direction:rtl">الإعدادات</b><span style="width:80px;height:80px;border-radius:50%;background:var(--surface);display:grid;place-items:center;flex:none"><svg class="s52"><use href="#i-gear"/></svg></span></div>
+      </div></div></div></div>
+    <div class="notes"><b>What changes</b><ul>
+      <li>Still exactly three actions. Green, yellow with dark text, white with gray edge.</li>
+      <li>The cards are big enough to hold their speaker <b>inside</b>, on the left (decided, round 3). It is its own 56 dp target: a tap there only speaks, it never opens the screen.</li>
+      <li>Icon on the right next to the right-aligned label.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ============================ CUSTOMER ============================ -->
+<section id="cust">
+  <h2>Customer details <span class="tag chg">CHANGED</span></h2>
+  <div class="pair">
+    <div class="frame"><div class="flabel c">Customer</div><div class="phone"><div class="scr cur" dir="rtl">
+      <div class="sb"><span>14:30</span><span>82%</span></div>
+      <div class="c-head"><div class="bk"><svg><use href="#i-back"/></svg></div><b>بيانات الزبون</b></div>
+      <div class="body" style="padding:16px;display:flex;flex-direction:column;gap:20px">
+        <div class="c-banner i"><svg class="s28"><use href="#i-info"/></svg>يمكنك المتابعة بدون كتابة أي شيء</div>
+        <div class="c-field"><small>اسم الزبون (اختياري)</small><span>أحمد بناني</span></div>
+        <div class="c-field"><small>رقم الهاتف (اختياري)</small><span style="direction:ltr;text-align:right">0612 345 678</span></div>
+      </div>
+      <div class="bottom" style="background:#fff"><div class="c-btn p"><svg class="s28 fw"><use href="#i-fwd"/></svg>متابعة</div></div>
+    </div></div></div>
+    <div class="frame"><div class="flabel p">Customer</div><div class="phone"><div class="scr pro" dir="ltr">
+      <div class="sb"><span>14:30</span><span>82%</span></div>
+      <div class="tb"><div class="bk"><svg><use href="#i-back"/></svg></div><div class="ttl"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><span>بيانات الزبون</span></div></div>
+      <div class="body" style="padding:14px 16px;display:flex;flex-direction:column;gap:16px">
+        <div class="banner i"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><span class="t">يمكنك المتابعة بدون كتابة أي شيء</span><svg class="s26"><use href="#i-info"/></svg></div>
+        <div class="fld"><div class="col"><div class="lbl">اسم الزبون <small>(اختياري)</small><div class="spk sm"><svg><use href="#i-spk"/></svg></div></div>
+          <div class="box sel"><div class="mic"><svg><use href="#i-mic"/></svg></div><span class="v txt">أحمد بناني</span></div></div><div class="ill"><svg><use href="#i-person"/></svg></div></div>
+        <div class="fld"><div class="col"><div class="lbl">رقم الهاتف <small>(اختياري)</small><div class="spk sm"><svg><use href="#i-spk"/></svg></div></div>
+          <div class="box"><span class="v" style="font-size:24px">0612 345 678</span></div></div><div class="ill"><svg><use href="#i-phone"/></svg></div></div>
+      </div>
+      <div class="bottom" style="background:#fff"><div class="bw"><div class="spt p"><svg><use href="#i-spk"/></svg></div><div class="btn p"><svg class="s28"><use href="#i-fwd"/></svg><span>متابعة</span></div></div></div>
+    </div></div></div>
+    <div class="notes"><b>What changes</b><ul>
+      <li>App field instead of Material <code>OutlinedTextField</code>: label above (right, with speaker), box below, illustration beside it.</li>
+      <li>Mic on the name only. The first mic tap shows the permission explanation (see dialogs).</li>
+      <li>متابعة: arrow points right, on the right of the label; speaker tile on the left of the button.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ============================ ITEM LIST ============================ -->
+<section id="items">
+  <h2>Invoice item list: empty and filled <span class="tag chg">CHANGED</span></h2>
+  <div class="pair">
+    <div class="frame"><div class="flabel c">Empty</div><div class="phone"><div class="scr cur" dir="rtl">
+      <div class="sb"><span>14:31</span><span>82%</span></div>
+      <div class="c-head"><div class="bk"><svg><use href="#i-back"/></svg></div><b>المنتوجات</b></div>
+      <div class="body" style="padding:24px;display:flex;align-items:center">
+        <div style="width:100%;background:var(--c-rust-light);border-radius:28px;padding:28px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center"><svg class="s120"><use href="#p-door"/></svg><svg class="s64" style="color:var(--c-rust)"><use href="#i-plus"/></svg><b style="font-size:28px">أضف أول منتوج</b><span style="font-size:20px">اضغط لاختيار منتوج من الصور</span></div>
+      </div>
+      <div class="bottom" style="background:#fff"><div class="c-btn p">+ إضافة منتوج</div><div class="c-btn dis"><svg class="s28 fw"><use href="#i-fwd"/></svg>متابعة</div></div>
+    </div></div></div>
+    <div class="frame"><div class="flabel p">Empty</div><div class="phone"><div class="scr pro" dir="ltr">
+      <div class="sb"><span>14:31</span><span>82%</span></div>
+      <div class="tb"><div class="bk"><svg><use href="#i-back"/></svg></div><div class="ttl"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><span>المنتوجات</span></div></div>
+      <div class="body" style="padding:20px;display:flex;align-items:center">
+        <div style="width:100%;background:#fff;border-radius:24px;padding:24px 18px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center"><svg class="s112"><use href="#p-door"/></svg>
+          <div class="row" style="direction:rtl"><b style="font-size:26px">أضف أول منتوج</b><div class="spk"><svg><use href="#i-spk"/></svg></div></div>
+          <span style="font-size:18px;color:var(--gray-strong);direction:rtl">اضغط على الزر الأصفر لاختيار منتوج من الصور</span></div>
+      </div>
+      <div class="bottom" style="background:#fff">
+        <div class="bw"><div class="spt y"><svg><use href="#i-spk"/></svg></div><div class="btn y"><span class="plus"><svg><use href="#i-plus"/></svg></span><span style="font-size:22px">إضافة منتوج</span></div></div>
+        <div class="bw"><div class="spt dis"><svg><use href="#i-spk"/></svg></div><div class="btn dis"><svg class="s28"><use href="#i-fwd"/></svg><span>متابعة</span></div></div></div>
+    </div></div></div>
+    <div class="notes"><b>Empty state</b><ul>
+      <li>The empty card is no longer a button (a speaker inside a button is not allowed now); it is a message with its own round speaker. The yellow button below adds the product.</li>
+      <li>The disabled متابعة keeps its speaker tile, which says "أضف منتوجاً واحداً على الأقل للمتابعة".</li>
+    </ul></div>
+  </div>
+  <div class="pair">
+    <div class="frame"><div class="flabel c">Filled</div><div class="phone"><div class="scr cur" dir="rtl">
+      <div class="sb"><span>14:36</span><span>81%</span></div>
+      <div class="c-head"><div class="bk"><svg><use href="#i-back"/></svg></div><b>المنتوجات</b></div>
+      <div class="body fade" style="padding:16px;display:flex;flex-direction:column;gap:12px">
+        <div style="background:var(--c-steel-pale);border-radius:14px;padding:12px;display:flex;align-items:center;gap:10px"><svg class="s28"><use href="#i-person"/></svg><span style="flex:1">أحمد بناني  •  0612345678</span><svg><use href="#i-edit"/></svg></div>
+        <div class="c-card"><div style="display:flex;align-items:center;gap:12px"><svg class="s64"><use href="#p-door"/></svg><div style="flex:1"><b style="font-size:20px">باب حديد</b><div style="font-size:18px">1,20 × 2,10 م</div><div style="font-size:18px;color:#4A4F54">الكمية: 2</div></div><b style="font-size:24px;color:var(--c-rust)">2 520 DH</b></div>
+          <div style="display:flex;gap:8px;margin-top:8px"><div style="flex:1;height:48px;border-radius:12px;background:var(--c-steel-pale);display:flex;align-items:center;justify-content:center;gap:8px"><svg><use href="#i-edit"/></svg>تعديل</div><div style="flex:1;height:48px;border-radius:12px;background:var(--c-red-pale);color:var(--c-red);display:flex;align-items:center;justify-content:center;gap:8px"><svg><use href="#i-del"/></svg>حذف</div></div></div>
+        <div class="c-card"><div style="display:flex;align-items:center;gap:12px"><svg class="s64"><use href="#p-window"/></svg><div style="flex:1"><b style="font-size:20px">نافذة ألمنيوم</b><div style="font-size:18px">1,50 × 1,20 م</div><div style="font-size:18px;color:#4A4F54">الكمية: 3</div></div><b style="font-size:24px;color:var(--c-rust)">3 510 DH</b></div>
+          <div style="display:flex;gap:8px;margin-top:8px"><div style="flex:1;height:48px;border-radius:12px;background:var(--c-steel-pale);display:flex;align-items:center;justify-content:center;gap:8px"><svg><use href="#i-edit"/></svg>تعديل</div><div style="flex:1;height:48px;border-radius:12px;background:var(--c-red-pale);color:var(--c-red);display:flex;align-items:center;justify-content:center;gap:8px"><svg><use href="#i-del"/></svg>حذف</div></div></div>
+      </div>
+      <div class="bottom" style="background:#fff"><div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:24px">مجموع الفاتورة</b><b style="font-size:28px">6 030 DH</b></div><div class="c-btn s">+ إضافة منتوج</div><div class="c-btn p"><svg class="s28 fw"><use href="#i-fwd"/></svg>متابعة</div></div>
+    </div></div></div>
+    <div class="frame"><div class="flabel p">Filled</div><div class="phone"><div class="scr pro" dir="ltr">
+      <div class="sb"><span>14:36</span><span>81%</span></div>
+      <div class="tb"><div class="bk"><svg><use href="#i-back"/></svg></div><div class="ttl"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><span>المنتوجات</span></div></div>
+      <div class="body fade" style="padding:8px;display:flex;flex-direction:column;gap:8px">
+        <div class="bw"><div class="spt s w"><svg><use href="#i-spk"/></svg></div><div class="grow" style="background:#fff;border-radius:14px;padding:8px 10px;display:flex;align-items:center;gap:6px;border:1px solid var(--outline-soft)"><svg class="s22" style="color:var(--gray-strong)"><use href="#i-edit"/></svg><span style="flex:1;direction:rtl;text-align:right;font-size:16px">أحمد بناني  •  0612345678</span><svg class="s26" style="color:var(--primary)"><use href="#i-person"/></svg></div></div>
+        <div class="thdr"><span>المنتوج</span><span>الكمية</span><span>القياس والحساب</span><span>المبلغ (DH)</span></div>
+        <div class="irow"><div class="igrid"><div class="nm"><svg class="s36"><use href="#p-door"/></svg>باب حديد</div><div class="q">2</div><div class="f">1,20 × 2,10 م<br><span class="s">2,52 م² × 500 DH</span></div><div class="tt">2 520</div></div>
+          <div class="iact"><div class="spt s sd"><svg><use href="#i-spk"/></svg></div><div class="sbtn d"><svg class="s20"><use href="#i-del"/></svg>حذف</div><div class="spt s sg"><svg><use href="#i-spk"/></svg></div><div class="sbtn"><svg class="s20"><use href="#i-edit"/></svg>تعديل</div><div class="spk"><svg><use href="#i-spk"/></svg></div></div></div>
+        <div class="irow"><div class="igrid"><div class="nm"><svg class="s36"><use href="#p-window"/></svg>نافذة ألمنيوم</div><div class="q">3</div><div class="f">1,50 × 1,20 م<br><span class="s">1,80 م² × 650 DH</span></div><div class="tt">3 510</div></div>
+          <div class="iact"><div class="spt s sd"><svg><use href="#i-spk"/></svg></div><div class="sbtn d"><svg class="s20"><use href="#i-del"/></svg>حذف</div><div class="spt s sg"><svg><use href="#i-spk"/></svg></div><div class="sbtn"><svg class="s20"><use href="#i-edit"/></svg>تعديل</div><div class="spk"><svg><use href="#i-spk"/></svg></div></div></div>
+        <div class="irow"><div class="igrid"><div class="nm"><svg class="s36"><use href="#p-hinge"/></svg>مفصلات</div><div class="q">8</div><div class="f"><span class="s">35 DH / قطعة</span></div><div class="tt">280</div></div>
+          <div class="iact"><div class="spt s sd"><svg><use href="#i-spk"/></svg></div><div class="sbtn d"><svg class="s20"><use href="#i-del"/></svg>حذف</div><div class="spt s sg"><svg><use href="#i-spk"/></svg></div><div class="sbtn"><svg class="s20"><use href="#i-edit"/></svg>تعديل</div><div class="spk"><svg><use href="#i-spk"/></svg></div></div></div>
+      </div>
+      <div class="bottom" style="background:#fff;gap:8px"><div class="row"><div class="spk"><svg><use href="#i-spk"/></svg></div><b style="font-size:24px;direction:rtl">6 310 DH</b><div style="flex:1"></div><b style="font-size:21px;direction:rtl">مجموع الفاتورة</b></div>
+        <div class="bw"><div class="spt y"><svg><use href="#i-spk"/></svg></div><div class="btn y"><span class="plus"><svg><use href="#i-plus"/></svg></span><span style="font-size:22px">إضافة منتوج</span></div></div>
+        <div class="bw"><div class="spt p"><svg><use href="#i-spk"/></svg></div><div class="btn p"><svg class="s28"><use href="#i-fwd"/></svg><span>متابعة</span></div></div></div>
+    </div></div></div>
+    <div class="notes"><b>Filled list</b><ul>
+      <li>Rows mirror the printed columns (right to left: product with a 36 dp picture, quantity with its own margins, measurement and calculation, amount in DH).</li>
+      <li>Action line per row: <code>| X | حذف |  | X | تعديل |  ● </code>. Each tile is styled like its button and speaks it; the round speaker on the far right, under the product, reads the whole line.</li>
+      <li>Customer chip is tappable (edit customer), so it gets a tile in its own style.</li>
+      <li>Labels right, amounts left (decided).</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ============================ CATALOGUE ============================ -->
+<section id="cat">
+  <h2>Product catalogue: card, speaker, image import, calculation method <span class="tag chg">CHANGED</span></h2>
+  <div class="pair">
+    <div class="frame"><div class="flabel c">Choose product</div><div class="phone"><div class="scr cur" dir="rtl">
+      <div class="sb"><span>14:32</span><span>82%</span></div>
+      <div class="c-head"><div class="bk"><svg><use href="#i-back"/></svg></div><b>اختر المنتوج</b></div>
+      <div class="body fade" style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start">
+        <div class="c-card" style="padding:12px 8px 0;text-align:center;border-radius:20px"><svg class="s112"><use href="#p-door"/></svg><div style="font-weight:700;min-height:58px;padding-top:6px">باب حديد</div><div style="display:flex;justify-content:flex-end"><div class="c-spk"><svg class="s32"><use href="#i-spk"/></svg></div></div></div>
+        <div class="c-card" style="padding:12px 8px 0;text-align:center;border-radius:20px"><svg class="s112"><use href="#p-window"/></svg><div style="font-weight:700;min-height:58px;padding-top:6px">نافذة ألمنيوم</div><div style="display:flex;justify-content:flex-end"><div class="c-spk"><svg class="s32"><use href="#i-spk"/></svg></div></div></div>
+        <div class="c-card" style="padding:12px 8px 0;text-align:center;border-radius:20px"><svg class="s112"><use href="#p-garage"/></svg><div style="font-weight:700;min-height:58px;padding-top:6px">باب الكراج</div><div style="display:flex;justify-content:flex-end"><div class="c-spk"><svg class="s32"><use href="#i-spk"/></svg></div></div></div>
+        <div class="c-card" style="padding:12px 8px 0;text-align:center;border-radius:20px"><svg class="s112"><use href="#p-frame"/></svg><div style="font-weight:700;min-height:58px;padding-top:6px">إطار حديد</div><div style="display:flex;justify-content:flex-end"><div class="c-spk"><svg class="s32"><use href="#i-spk"/></svg></div></div></div>
+      </div>
+    </div></div></div>
+    <div class="frame"><div class="flabel p">Choose product</div><div class="phone"><div class="scr pro" dir="ltr">
+      <div class="sb"><span>14:32</span><span>82%</span></div>
+      <div class="tb"><div class="bk"><svg><use href="#i-back"/></svg></div><div class="ttl"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><span>اختر المنتوج</span></div></div>
+      <div class="body fade" style="padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:14px 12px;align-content:start;direction:rtl" id="pickgrid"></div>
+    </div></div></div>
+    <div class="frame"><div class="flabel p">No Arabic voice (first speaker tap)</div><div class="phone"><div class="scr pro" dir="ltr">
+      <div class="sb"><span>14:32</span><span>82%</span></div>
+      <div class="tb"><div class="bk"><svg><use href="#i-back"/></svg></div><div class="ttl"><div class="spk sm off"><svg><use href="#i-spk-off"/></svg></div><span>اختر المنتوج</span></div></div>
+      <div class="body" style="padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start;direction:rtl" id="pickgridoff"></div>
+      <div class="dlg-scrim"><div class="dlg">
+        <h4><svg class="s32" style="color:var(--gray-strong)"><use href="#i-spk-off"/></svg><span>لا يوجد صوت عربي في هذا الهاتف</span></h4>
+        <p>كل المعلومات تبقى ظاهرة على الشاشة. يمكنك تثبيت صوت عربي مجاني من إعدادات الهاتف، ويعمل بدون إنترنت بعد التثبيت.</p>
+        <div class="bw"><div class="spt off"><svg><use href="#i-spk-off"/></svg></div><div class="btn p"><svg><use href="#i-down"/></svg>تثبيت صوت عربي</div></div>
+        <div class="bw"><div class="spt off"><svg><use href="#i-spk-off"/></svg></div><div class="btn o"><svg><use href="#i-gear"/></svg>إعدادات الصوت</div></div>
+        <div class="bw"><div class="spt off"><svg><use href="#i-spk-off"/></svg></div><div class="btn o"><svg><use href="#i-close"/></svg>لاحقاً</div></div>
+      </div></div>
+    </div></div></div>
+  </div>
+  <div class="notes" style="margin-top:12px"><b>Catalogue card</b><ul>
+    <li>Tapping the picture or name selects the product. The speaker stays <b>inside the card</b>, bottom-left, as its own target that only speaks (decided, round 3).</li>
+    <li>No photo change on this screen (decided, round 3). Photos are imported only in Settings → المنتوجات → edit; an imported photo shows a small camera badge here.</li>
+    <li>Grid order: either way is fine (your answer); kept as today, first product top-right.</li>
+    <li>No Arabic voice: speakers show the crossed-out icon; the first tap opens this dialog once per app start.</li>
+  </ul></div>
+
+  <h3>Product list (Settings → المنتوجات) <span class="tag chg">CHANGED</span></h3>
+  <div class="pair">
+    <div class="frame"><div class="flabel p">Product list</div><div class="phone"><div class="scr pro" dir="ltr">
+      <div class="sb"><span>15:01</span><span>80%</span></div>
+      <div class="tb"><div class="bk"><svg><use href="#i-back"/></svg></div><div class="ttl"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><span>المنتوجات</span></div></div>
+      <div class="body fade" style="padding:12px;display:flex;flex-direction:column;gap:10px">
+        <div class="bw"><div class="spt w"><svg><use href="#i-spk"/></svg></div><div class="card grow row" style="padding:8px 10px;direction:rtl;"><div style="width:56px;height:56px;border-radius:10px;overflow:hidden;flex:none;position:relative"><svg style="width:56px;height:56px"><use href="#p-photo"/></svg><span style="position:absolute;left:2px;bottom:2px;background:rgba(0,0,0,.6);color:#fff;border-radius:6px;padding:1px 3px;display:flex"><svg class="s16"><use href="#i-cam"/></svg></span></div><div class="grow"><b style="font-size:18px">باب حديد</b><div class="muted" style="font-size:14px">بالمتر المربع</div></div><span class="chip" style="height:30px"><svg class="s16"><use href="#i-check"/></svg>مفعل</span></div></div>
+        <div class="bw"><div class="spt w"><svg><use href="#i-spk"/></svg></div><div class="card grow row" style="padding:8px 10px;direction:rtl;"><svg class="s52" style="width:56px;height:56px"><use href="#p-window"/></svg><div class="grow"><b style="font-size:18px">نافذة ألمنيوم</b><div class="muted" style="font-size:14px">بالمتر المربع</div></div><span class="chip" style="height:30px"><svg class="s16"><use href="#i-check"/></svg>مفعل</span></div></div>
+        <div class="bw"><div class="spt w"><svg><use href="#i-spk"/></svg></div><div class="card grow row" style="padding:8px 10px;direction:rtl;"><svg class="s52" style="width:56px;height:56px"><use href="#p-frame"/></svg><div class="grow"><b style="font-size:18px">إطار حديد</b><div class="muted" style="font-size:14px">بالمتر الطولي</div></div><span class="chip" style="height:30px"><svg class="s16"><use href="#i-check"/></svg>مفعل</span></div></div>
+        <div class="bw"><div class="spt w"><svg><use href="#i-spk"/></svg></div><div class="card grow row" style="padding:8px 10px;direction:rtl;"><svg class="s52" style="width:56px;height:56px"><use href="#p-hinge"/></svg><div class="grow"><b style="font-size:18px">مفصلات</b><div class="muted" style="font-size:14px">بالقطعة</div></div><span class="chip" style="height:30px"><svg class="s16"><use href="#i-check"/></svg>مفعل</span></div></div>
+        <div class="bw"><div class="spt w"><svg><use href="#i-spk"/></svg></div><div class="card grow row" style="padding:8px 10px;direction:rtl;background:#F3F4F6;"><svg class="s52" style="width:56px;height:56px"><use href="#p-gate"/></svg><div class="grow"><b style="font-size:18px">بوابة حديدية</b><div class="muted" style="font-size:14px">بالمتر المربع</div></div><span class="chip off" style="height:30px">غير مفعل</span></div></div>
+        <div class="bw"><div class="spt w"><svg><use href="#i-spk"/></svg></div><div class="card grow row" style="padding:8px 10px;direction:rtl;"><svg class="s52" style="width:56px;height:56px"><use href="#p-lock"/></svg><div class="grow"><b style="font-size:18px">قفل</b><div class="muted" style="font-size:14px">بالقطعة</div></div><span class="chip" style="height:30px"><svg class="s16"><use href="#i-check"/></svg>مفعل</span></div></div>
+      </div>
+      <div class="bottom" style="background:#fff"><div class="bw"><div class="spt p"><svg><use href="#i-spk"/></svg></div><div class="btn p"><svg class="s28"><use href="#i-plus"/></svg>منتوج جديد</div></div></div>
+    </div></div></div>
+    <div class="notes"><b>What changes</b><ul>
+      <li>Reached from the المنتوجات card in Settings, which now has its own speaker (the only one in Settings).</li>
+      <li>Each product row opens product edit, so it gets a white tile in the card style on its left. The tile reads name, calculation method and status ("باب حديد، بالمتر المربع، مفعل").</li>
+      <li>Imported photos show a camera badge; the active state is a word ("مفعل" / "غير مفعل"), not only colour. Inactive rows are grayed.</li>
+      <li>"منتوج جديد" with its tile.</li>
+    </ul></div>
+  </div>
+
+  <h3>Product edit: image import and calculation method with speakers (Settings → المنتوجات)</h3>
+  <div class="pair">
+    <div class="frame"><div class="flabel c">Product edit</div><div class="phone"><div class="scr cur" dir="rtl">
+      <div class="sb"><span>15:02</span><span>80%</span></div>
+      <div class="c-head"><div class="bk"><svg><use href="#i-back"/></svg></div><b>تعديل المنتوج</b></div>
+      <div class="body fade" style="padding:16px;display:flex;flex-direction:column;gap:14px">
+        <div class="c-field" style="min-height:70px"><small>اسم المنتوج</small><span>باب حديد</span></div>
+        <div class="c-card"><b>الصورة</b><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px">
+          <div style="aspect-ratio:1;border:3px solid var(--c-rust);border-radius:14px;background:var(--c-rust-light);display:grid;place-items:center"><svg class="s52"><use href="#p-door"/></svg></div>
+          <div style="aspect-ratio:1;border:1px solid #CFC8BF;border-radius:14px;display:grid;place-items:center"><svg class="s52"><use href="#p-window"/></svg></div>
+          <div style="aspect-ratio:1;border:1px solid #CFC8BF;border-radius:14px;display:grid;place-items:center"><svg class="s52"><use href="#p-garage"/></svg></div>
+          <div style="aspect-ratio:1;border:1px solid #CFC8BF;border-radius:14px;display:grid;place-items:center"><svg class="s52"><use href="#p-frame"/></svg></div></div></div>
+        <div class="c-card"><b>طريقة الحساب</b><div style="background:var(--c-rust-light);border-radius:14px;padding:10px;margin-top:6px">◉ بالمتر المربع<br><small>العرض × الارتفاع</small></div><div style="background:var(--c-variant);border-radius:14px;padding:10px;margin-top:6px">○ بالمتر الطولي<br><small>محيط الإطار</small></div><div style="background:var(--c-variant);border-radius:14px;padding:10px;margin-top:6px">○ بالقطعة<br><small>الكمية فقط</small></div></div>
+        <div class="c-card"><b>وحدة القياس</b><div class="c-tog" style="margin-top:6px"><i class="on">✓ م</i><i>سم</i></div></div>
+      </div>
+      <div class="bottom" style="background:#fff"><div class="c-btn ok"><svg class="s28"><use href="#i-save"/></svg>حفظ</div></div>
+    </div></div></div>
+    <div class="frame"><div class="flabel p">Product edit</div><div class="phone"><div class="scr pro" dir="ltr">
+      <div class="sb"><span>15:02</span><span>80%</span></div>
+      <div class="tb"><div class="bk"><svg><use href="#i-back"/></svg></div><div class="ttl"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><span>تعديل المنتوج</span></div></div>
+      <div class="body fade" style="padding:10px 14px;display:flex;flex-direction:column;gap:10px">
+        <div class="fld"><div class="col"><div class="lbl">اسم المنتوج<div class="spk sm"><svg><use href="#i-spk"/></svg></div></div>
+          <div class="box"><div class="mic"><svg><use href="#i-mic"/></svg></div><span class="v txt">باب حديد</span></div></div><div class="ill"><svg><use href="#i-cat"/></svg></div></div>
+        <div class="card" style="padding:10px"><div class="row" style="justify-content:flex-end"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><b style="direction:rtl">الصورة</b></div>
+          <div class="row" style="gap:10px;margin:4px 0 8px;align-items:stretch"><div style="display:flex;flex-direction:column;gap:6px;flex:1">
+              <div class="bw"><div class="spt s y"><svg><use href="#i-spk"/></svg></div><div class="sbtn grow" style="background:var(--secondary);border:2px solid var(--secondary-border)"><svg class="s22"><use href="#i-gallery"/></svg>تغيير الصورة</div></div>
+              <div class="bw"><div class="spt s sd"><svg><use href="#i-spk"/></svg></div><div class="sbtn d grow"><svg class="s22"><use href="#i-del"/></svg>حذف الصورة</div></div></div>
+            <div style="width:100px;height:100px;border-radius:14px;overflow:hidden;border:3px solid var(--primary);flex:none"><svg style="width:94px;height:94px"><use href="#p-photo"/></svg></div></div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;direction:rtl">
+            <div style="aspect-ratio:1;border:1px solid var(--outline-soft);border-radius:10px;display:grid;place-items:center;background:#fff"><svg class="s40"><use href="#p-door"/></svg></div>
+            <div style="aspect-ratio:1;border:1px solid var(--outline-soft);border-radius:10px;display:grid;place-items:center;background:#fff"><svg class="s40"><use href="#p-window"/></svg></div>
+            <div style="aspect-ratio:1;border:1px solid var(--outline-soft);border-radius:10px;display:grid;place-items:center;background:#fff"><svg class="s40"><use href="#p-garage"/></svg></div>
+            <div style="aspect-ratio:1;border:1px solid var(--outline-soft);border-radius:10px;display:grid;place-items:center;background:#fff"><svg class="s40"><use href="#p-frame"/></svg></div>
+            <div style="aspect-ratio:1;border:1px solid var(--outline-soft);border-radius:10px;display:grid;place-items:center;background:#fff"><svg class="s40"><use href="#p-gate"/></svg></div></div></div>
+        <div class="card" style="padding:10px;display:flex;flex-direction:column;gap:6px"><div class="row" style="justify-content:flex-end"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><b style="direction:rtl">طريقة الحساب</b></div>
+          <div class="bw"><div class="spt s sel"><svg><use href="#i-spk"/></svg></div><div class="btn sel grow" style="min-height:56px;justify-content:flex-start;font-size:17px;padding:4px 10px"><svg style="color:var(--primary)"><use href="#i-checkc"/></svg><div style="text-align:right">بالمتر المربع<br><small style="font-weight:400" class="muted">العرض × الارتفاع</small></div></div></div>
+          <div class="bw"><div class="spt s o"><svg><use href="#i-spk"/></svg></div><div class="btn o grow" style="min-height:56px;justify-content:flex-start;font-size:17px;padding:4px 10px;border-width:1px"><span style="width:24px"></span><div style="text-align:right">بالمتر الطولي<br><small style="font-weight:400" class="muted">محيط الإطار</small></div></div></div>
+          <div class="bw"><div class="spt s o"><svg><use href="#i-spk"/></svg></div><div class="btn o grow" style="min-height:56px;justify-content:flex-start;font-size:17px;padding:4px 10px;border-width:1px"><span style="width:24px"></span><div style="text-align:right">بالقطعة<br><small style="font-weight:400" class="muted">الكمية فقط</small></div></div></div></div>
+      </div>
+      <div class="bottom" style="background:#fff"><div class="bw"><div class="spt p"><svg><use href="#i-spk"/></svg></div><div class="btn p"><svg class="s28"><use href="#i-save"/></svg>حفظ</div></div></div>
+    </div></div></div>
+    <div class="notes"><b>What changes</b><ul>
+      <li><b>Calculation method</b>: each of the three options has its own speaker tile; the tile speaks the name and the hint ("بالمتر المربع، العرض ضرب الارتفاع").</li>
+      <li>Photo import lives only here: تغيير الصورة / حذف الصورة; photo reduced to about 512 px. The 16 built-in pictures stay below (row scrolls).</li>
+      <li>"وحدة القياس" removed from the product: one global setting now.</li>
+      <li>Each confirmed invoice item gets its own copy of the image file (decided).</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ============================ ITEM ENTRY ============================ -->
+<section id="entry">
+  <h2>Item details: field icons and unit suffix <span class="tag chg">CHANGED</span></h2>
+  <div class="pair">
+    <div class="frame"><div class="flabel c">Item details</div><div class="phone"><div class="scr cur" dir="rtl">
+      <div class="sb"><span>14:33</span><span>82%</span></div>
+      <div class="c-head"><div class="bk"><svg><use href="#i-back"/></svg></div><b>باب حديد</b><svg class="s44"><use href="#p-door"/></svg></div>
+      <div style="background:var(--c-rust-light);display:flex;align-items:center;padding:8px 16px;gap:10px"><div style="flex:1"><div style="font-size:16px;font-weight:700">مجموع المنتوج</div><b style="font-size:26px;color:var(--c-rust)">2 520 DH</b><div style="font-size:14px">2,52 م²</div></div><div class="c-btn p" style="width:150px"><svg class="s28 fw"><use href="#i-fwd"/></svg>متابعة</div></div>
+      <div class="body" style="padding:6px 16px;display:flex;flex-direction:column;gap:4px">
+        <div class="c-lbl">العرض</div><div class="c-fbox sel"><span class="n">1,20<span class="caret" style="background:var(--c-rust)"></span></span><div class="c-tog"><i class="on">✓ م</i><i>سم</i></div></div>
+        <div class="c-lbl">الارتفاع</div><div class="c-fbox"><span class="n">2,10</span><div class="c-tog"><i class="on">✓ م</i><i>سم</i></div></div>
+        <div class="c-lbl">الثمن للمتر المربع</div><div class="c-fbox"><span class="n">500</span><span style="font-weight:700;color:#4A4F54">DH / م²</span></div>
+        <div class="c-lbl">الكمية</div><div style="display:flex;align-items:center;gap:12px"><div class="c-round"><svg class="s32"><use href="#i-minus"/></svg></div><div class="c-fbox" style="flex:1;justify-content:center"><b style="font-size:28px">2</b></div><div class="c-round"><svg class="s32"><use href="#i-plus"/></svg></div></div>
+      </div>
+      <div style="background:#fff"><div class="c-keys"><i>7</i><i>8</i><i>9</i><i><svg class="s28"><use href="#i-bksp"/></svg></i><i>4</i><i>5</i><i>6</i><i class="nx">التالي</i><i>1</i><i>2</i><i>3</i><i>,</i><i>0</i><i style="font-size:18px">مسح</i></div></div>
+    </div></div></div>
+    <div class="frame"><div class="flabel p">Item details · unit setting = m, Arabic labels</div><div class="phone"><div class="scr pro" dir="ltr">
+      <div class="sb"><span>14:33</span><span>82%</span></div>
+      <div class="tb icon"><div class="bk"><svg><use href="#i-back"/></svg></div><div class="ctr"><svg class="s36"><use href="#p-door"/></svg></div><div class="ttl"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><span>باب حديد</span></div></div>
+      <div style="background:var(--primary-container);display:flex;align-items:center;padding:6px 8px;gap:6px;flex:none;direction:ltr"><div class="spt s p"><svg><use href="#i-spk"/></svg></div><div class="btn p" style="width:112px;min-height:52px;font-size:18px;padding:4px 6px;gap:4px"><svg><use href="#i-fwd"/></svg>متابعة</div><div class="spk" style="width:44px"><svg><use href="#i-spk"/></svg></div><div style="flex:1;text-align:right;direction:rtl;min-width:0"><div style="font-size:14px;font-weight:700;color:#1B5E20">مجموع المنتوج</div><b style="font-size:24px">2 520 DH</b><div style="font-size:12px" class="muted">2,52 م²</div></div></div>
+      <div class="body" style="padding:2px 14px;display:flex;flex-direction:column;gap:2px">
+        <div class="fld top"><div class="lbl">العرض<div class="spk sm"><svg><use href="#i-spk"/></svg></div></div><div class="frow"><div class="col"><div class="box sel num"><span class="u">م</span><span class="v">1,20<span class="caret"></span></span></div></div><div class="ill"><svg><use href="#i-w"/></svg></div></div></div>
+        <div class="fld top"><div class="lbl">الارتفاع<div class="spk sm"><svg><use href="#i-spk"/></svg></div></div><div class="frow"><div class="col"><div class="box num"><span class="u">م</span><span class="v">2,10</span></div></div><div class="ill"><svg><use href="#i-h"/></svg></div></div></div>
+        <div class="fld top"><div class="lbl">الثمن للمتر المربع<div class="spk sm"><svg><use href="#i-spk"/></svg></div></div><div class="frow"><div class="col"><div class="box num"><span class="u">DH / م²</span><span class="v">500</span></div></div><div class="ill"><svg><use href="#i-coin"/></svg></div></div></div>
+        <div class="fld top"><div class="lbl">الكمية<div class="spk sm"><svg><use href="#i-spk"/></svg></div></div><div class="frow"><div class="col"><div class="row" style="gap:10px"><div class="round"><svg><use href="#i-minus"/></svg></div><div class="box" style="flex:1;justify-content:center"><b style="font-size:26px">2</b></div><div class="round"><svg><use href="#i-plus"/></svg></div></div></div><div class="ill"><svg><use href="#i-qty"/></svg></div></div></div>
+      </div>
+      <div style="box-shadow:0 -6px 12px rgba(0,0,0,.08)"><div class="keys"><i>7</i><i>8</i><i>9</i><i><svg class="s28"><use href="#i-bksp"/></svg></i><i>4</i><i>5</i><i>6</i><i class="nx">التالي</i><i>1</i><i>2</i><i>3</i><i>,</i><i>0</i><i style="font-size:18px">مسح</i></div></div>
+    </div></div></div>
+    <div class="notes"><b>What changes</b><ul>
+      <li>No m/cm switch: the box shows only the unit chosen in Settings (here م), where the switch used to be. Labels العرض / الارتفاع / الثمن للمتر المربع / الكمية sit on the right, directly above their illustration (↔, ↕, DH coin, stacked boxes).</li>
+      <li>Live total bar: <code>| X | → متابعة |</code> on the left, the total with its round speaker on the right.</li>
+      <li>Product picture in the centre of the top bar.</li>
+      <li>Keypad keys and − / + have no speaker (icon-only, decided).</li>
+    </ul></div>
+  </div>
+  <h3>Unit suffix variants (labels only; digits never change)</h3>
+  <div class="pair">
+    <div class="strip"><div class="cap">cm · Arabic label (سم)</div><div class="pro" style="padding:10px;background:#fff"><div class="fld"><div class="col"><div class="box sel num"><span class="u">سم</span><span class="v">120<span class="caret"></span></span></div></div><div class="ill"><svg><use href="#i-w"/></svg></div></div></div></div>
+    <div class="strip"><div class="cap">cm · Latin label (cm)</div><div class="pro" style="padding:10px;background:#fff"><div class="fld"><div class="col"><div class="box sel num"><span class="v">120<span class="caret"></span> <span style="font-size:18px;color:var(--gray-strong)">cm</span></span></div></div><div class="ill"><svg><use href="#i-w"/></svg></div></div></div></div>
+    <div class="strip"><div class="cap">m · Latin label · rate (DH / m²)</div><div class="pro" style="padding:10px;background:#fff"><div class="fld"><div class="col"><div class="box num"><span class="v">500 <span style="font-size:18px;color:var(--gray-strong)">DH / m²</span></span></div></div><div class="ill"><svg><use href="#i-coin"/></svg></div></div></div></div>
+  </div>
+</section>
+
+<!-- ============================ CONFIRM ============================ -->
+<section id="confirm">
+  <h2>Item confirmation <span class="tag chg">CHANGED</span></h2>
+  <div class="pair">
+    <div class="frame"><div class="flabel c">Confirm item</div><div class="phone"><div class="scr cur" dir="rtl">
+      <div class="sb"><span>14:34</span><span>82%</span></div>
+      <div class="c-head"><div class="bk"><svg><use href="#i-back"/></svg></div><b>تأكيد المنتوج</b><div class="c-audio"><svg><use href="#i-spk"/></svg>الصوت</div></div>
+      <div class="body fade" style="padding:16px;display:flex;flex-direction:column;gap:12px;align-items:center">
+        <svg class="s96"><use href="#p-door"/></svg><b style="font-size:28px">باب حديد</b>
+        <div style="width:100%;background:var(--c-rust-light);border-radius:20px;padding:16px;display:flex;align-items:center"><div style="flex:1"><div style="font-weight:700">مجموع المنتوج</div><b style="font-size:32px;color:var(--c-rust)">2 520 DH</b></div><div class="c-spk"><svg class="s32"><use href="#i-spk"/></svg></div></div>
+        <div class="c-card" style="width:100%;display:flex;flex-direction:column;gap:8px;font-size:17px"><span style="color:#4A4F54;font-weight:700">الحساب</span>
+          <div><small style="color:#4A4F54">العرض</small><br><b>1,20 م</b></div><div><small style="color:#4A4F54">الارتفاع</small><br><b>2,10 م</b></div><div><small style="color:#4A4F54">المساحة</small><br><b>1,20 × 2,10 = 2,52 م²</b></div></div>
+      </div>
+      <div class="bottom" style="background:#fff;flex-direction:row"><div class="c-btn s" style="flex:1"><svg><use href="#i-close"/></svg>إلغاء</div><div class="c-btn ok" style="flex:1"><svg><use href="#i-check"/></svg>تأكيد</div></div>
+    </div></div></div>
+    <div class="frame"><div class="flabel p">Confirm item</div><div class="phone"><div class="scr pro" dir="ltr">
+      <div class="sb"><span>14:34</span><span>82%</span></div>
+      <div class="tb icon"><div class="bk"><svg><use href="#i-back"/></svg></div><div class="ctr"><svg class="s36"><use href="#p-door"/></svg></div><div class="ttl"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><span>تأكيد المنتوج</span></div></div>
+      <div class="subbar"><div class="spt s c"><svg><use href="#i-spk"/></svg></div><div class="chip"><svg class="s20"><use href="#i-spk"/></svg>الصوت يعمل</div><div style="flex:1"></div><span style="font-size:13px" class="muted ar">ينطق المجموع تلقائياً</span></div>
+      <div class="body fade" style="padding:10px 14px;display:flex;flex-direction:column;gap:8px">
+        <div class="row" style="justify-content:flex-end"><div class="spk"><svg><use href="#i-spk"/></svg></div><b style="font-size:26px;direction:rtl">باب حديد</b></div>
+        <div style="background:var(--primary-container);border-radius:18px;padding:10px 12px 10px 6px;display:flex;align-items:center"><div class="spk" style="width:56px;height:56px"><svg class="s28"><use href="#i-spk"/></svg></div><div style="flex:1;text-align:right;direction:rtl"><div style="font-weight:700;color:#1B5E20">مجموع المنتوج</div><b style="font-size:34px">2 520 DH</b></div></div>
+        <div class="card" style="display:flex;flex-direction:column;gap:0;font-size:17px;direction:rtl;padding:8px 10px">
+          <div class="row"><b class="muted grow" style="font-size:15px">الحساب: بالمتر المربع</b><div class="spk sm"><svg><use href="#i-spk"/></svg></div></div>
+          <div class="row"><svg class="s22" style="color:var(--primary)"><use href="#i-w"/></svg><span class="muted" style="width:72px">العرض</span><b class="grow">1,20 م</b></div>
+          <div class="row"><svg class="s22" style="color:var(--primary)"><use href="#i-h"/></svg><span class="muted" style="width:72px">الارتفاع</span><b class="grow">2,10 م</b></div>
+          <div class="row"><svg class="s22" style="color:var(--primary)"><use href="#i-ruler"/></svg><span class="muted" style="width:72px">المساحة</span><b class="grow">1,20 × 2,10 = 2,52 م²</b></div>
+          <div class="row"><svg class="s22" style="color:var(--primary)"><use href="#i-coin"/></svg><span class="muted" style="width:72px">الثمن</span><b class="grow">500 DH / م²</b></div>
+          <div class="row"><svg class="s22" style="color:var(--primary)"><use href="#i-qty"/></svg><span class="muted" style="width:72px">الكمية</span><b class="grow">2</b></div>
+        </div>
+      </div>
+      <div class="bottom" style="background:#fff"><div class="g2"><div class="spt s o"><svg><use href="#i-spk"/></svg></div><div class="btn o"><svg><use href="#i-close"/></svg>إلغاء</div><div class="spt s p"><svg><use href="#i-spk"/></svg></div><div class="btn p"><svg><use href="#i-check"/></svg>تأكيد</div></div></div>
+    </div></div></div>
+    <div class="notes"><b>What changes</b><ul>
+      <li>The calculation card has <b>one</b> speaker, next to "الحساب: بالمتر المربع", which reads the whole card as one sentence (decided, round 3).</li>
+      <li>The mute chip is a button, so it has a tile in the chip style.</li>
+      <li><code>| X | إلغاء | X | تأكيد |</code>. Confirming still returns to the item list.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ============================ REVIEW ============================ -->
+<section id="review">
+  <h2>Invoice review: total, deposit, balance <span class="tag chg">CHANGED</span></h2>
+  <div class="pair">
+    <div class="frame"><div class="flabel c">Review</div><div class="phone"><div class="scr cur" dir="rtl">
+      <div class="sb"><span>14:40</span><span>80%</span></div>
+      <div class="c-head"><div class="bk"><svg><use href="#i-back"/></svg></div><b>مراجعة الفاتورة</b><div class="c-audio"><svg><use href="#i-spk"/></svg>الصوت</div></div>
+      <div class="body fade" style="padding:16px;display:flex;flex-direction:column;gap:10px">
+        <div class="c-card" style="display:flex;align-items:center;gap:10px;padding:10px"><svg class="s44"><use href="#p-door"/></svg><div style="flex:1"><b style="font-size:17px">باب حديد</b><div style="font-size:15px;color:#4A4F54">الكمية: 2</div></div><b>2 520 DH</b></div>
+        <div class="c-card" style="display:flex;align-items:center;gap:10px;padding:10px"><svg class="s44"><use href="#p-window"/></svg><div style="flex:1"><b style="font-size:17px">نافذة ألمنيوم</b><div style="font-size:15px;color:#4A4F54">الكمية: 3</div></div><b>3 510 DH</b></div>
+        <div class="c-card" style="border-radius:20px;padding:16px"><div style="display:flex;align-items:center"><b style="flex:1;font-size:22px">مجموع الفاتورة</b><b style="font-size:26px">17 066,30 DH</b><div class="c-spk"><svg class="s32"><use href="#i-spk"/></svg></div></div>
+          <div class="c-lbl" style="margin-top:6px">التسبيق (المبلغ المدفوع)</div><div class="c-fbox"><span class="n">5 000</span><b style="color:#4A4F54">DH</b></div>
+          <div style="display:flex;margin-top:10px"><b style="flex:1;font-size:22px">الباقي</b><b style="font-size:26px;color:var(--c-rust)">12 066,30 DH</b></div></div>
+      </div>
+      <div class="bottom" style="background:#fff"><div class="c-btn ok"><svg class="s28"><use href="#i-save"/></svg>حفظ الفاتورة</div><div class="c-btn s"><svg><use href="#i-edit"/></svg>تعديل المنتوجات</div></div>
+    </div></div></div>
+    <div class="frame"><div class="flabel p">Review</div><div class="phone"><div class="scr pro" dir="ltr">
+      <div class="sb"><span>14:40</span><span>80%</span></div>
+      <div class="tb"><div class="bk"><svg><use href="#i-back"/></svg></div><div class="ttl"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><span>مراجعة الفاتورة</span></div></div>
+      <div class="subbar"><div class="spt s c"><svg><use href="#i-spk"/></svg></div><div class="chip"><svg class="s20"><use href="#i-spk"/></svg>الصوت يعمل</div><div style="flex:1"></div><span style="font-size:13px" class="muted ar">6 منتوجات</span></div>
+      <div class="body fade" style="padding:8px 10px;display:flex;flex-direction:column;gap:6px">
+        <div class="card" style="padding:6px 6px 2px" id="revtable"></div>
+        <div class="card" style="display:flex;flex-direction:column;gap:4px">
+          <div class="row"><div class="spk"><svg><use href="#i-spk"/></svg></div><b style="font-size:23px;direction:rtl">17 066,30 DH</b><div class="grow"></div><b style="font-size:18px;direction:rtl">مجموع الفاتورة</b></div>
+          <div class="fld"><div class="col"><div class="lbl">التسبيق (المبلغ المدفوع)</div><div class="box num"><span class="u">DH</span><span class="v">5 000</span></div></div><div class="ill"><svg><use href="#i-coin"/></svg></div></div>
+          <div class="row"><div style="width:48px;flex:none"></div><b style="font-size:23px;direction:rtl">12 066,30 DH</b><div class="grow"></div><b style="font-size:18px;direction:rtl">الباقي</b></div>
+        </div>
+      </div>
+      <div class="bottom" style="background:#fff"><div class="bw"><div class="spt p"><svg><use href="#i-spk"/></svg></div><div class="btn p"><svg class="s28"><use href="#i-save"/></svg>حفظ الفاتورة</div></div><div class="bw"><div class="spt o"><svg><use href="#i-spk"/></svg></div><div class="btn o"><svg><use href="#i-edit"/></svg>تعديل المنتوجات</div></div></div>
+    </div></div></div>
+    <div class="notes"><b>What changes</b><ul>
+      <li>Items as the compact invoice table (32 dp pictures, quantity with its own margins, no dividers on screen), a round speaker per line.</li>
+      <li>Total, deposit and balance share <b>one</b> speaker that reads them as one sentence ("المجموع … التسبيق … الباقي …").</li>
+      <li>Deposit: DH coin illustration and "DH" beside the number.</li>
+      <li>الباقي in bold ink; paid state below.</li>
+      <li>Save and edit buttons with tiles.</li>
+    </ul>
+    <div class="strip" style="margin-top:10px"><div class="cap">Paid state (deposit = total)</div><div class="pro" style="padding:10px;background:#fff;direction:ltr"><div class="row"><div class="spk"><svg><use href="#i-spk"/></svg></div><span class="badge paid" style="font-size:18px"><svg class="s22" style="color:var(--primary)"><use href="#i-checkc"/></svg>خالص</span><b style="font-size:22px;direction:rtl;color:#1B5E20">0 DH</b><div class="grow"></div><b style="font-size:19px;direction:rtl">الباقي</b></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ SAVED ============================ -->
+<section id="saved">
+  <h2>Saved and share <span class="tag unl">NOT IN BRIEF</span> <span class="tag chg">CHANGED</span></h2>
+  <div class="pair">
+    <div class="frame"><div class="flabel c">Saved</div><div class="phone"><div class="scr cur" dir="rtl">
+      <div class="sb"><span>14:41</span><span>80%</span></div>
+      <div class="c-head" style="padding-right:20px"><b>تم حفظ الفاتورة</b></div>
+      <div class="body fade" style="padding:16px;display:flex;flex-direction:column;gap:14px;align-items:center">
+        <svg class="s72" style="color:var(--c-green)"><use href="#i-checkc"/></svg><b style="font-size:28px">فاتورة رقم 0012</b>
+        <div class="c-btn ok" style="width:100%"><svg class="s28"><use href="#i-share"/></svg>مشاركة الصورة</div>
+        <span style="font-size:15px;color:#4A4F54">ستفتح قائمة المشاركة لتختار واتساب أو غيره</span>
+      </div>
+      <div class="bottom" style="background:#fff;flex-direction:row"><div class="c-btn s" style="flex:.85"><svg><use href="#i-home"/></svg>الرئيسية</div><div class="c-btn p" style="flex:1.15"><svg><use href="#i-plus"/></svg>فاتورة جديدة</div></div>
+    </div></div></div>
+    <div class="frame"><div class="flabel p">Saved (format = both)</div><div class="phone"><div class="scr pro" dir="ltr">
+      <div class="sb"><span>14:41</span><span>80%</span></div>
+      <div class="tb"><div style="width:56px"></div><div class="ttl"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><span>تم حفظ الفاتورة</span></div></div>
+      <div class="body fade" style="padding:12px 14px;display:flex;flex-direction:column;gap:10px">
+        <div class="row" style="justify-content:center;direction:rtl"><svg class="s44" style="color:var(--primary)"><use href="#i-checkc"/></svg><b style="font-size:26px">فاتورة رقم 0012</b><div class="spk"><svg><use href="#i-spk"/></svg></div></div>
+        <div class="bw"><div class="spt p"><svg><use href="#i-spk"/></svg></div><div class="btn p"><svg class="s28"><use href="#i-img"/></svg>مشاركة الصورة</div></div>
+        <div class="bw"><div class="spt p"><svg><use href="#i-spk"/></svg></div><div class="btn p"><svg class="s28"><use href="#i-pdf"/></svg>مشاركة PDF</div></div>
+        <div class="bw"><div class="spt o"><svg><use href="#i-spk"/></svg></div><div class="btn o"><svg class="s28"><use href="#i-print"/></svg>طباعة PDF</div></div>
+        <span style="font-size:15px;direction:rtl;text-align:right" class="muted">ستفتح قائمة المشاركة لتختار واتساب أو غيره</span>
+        <div class="png" style="width:100%;padding:8px;font-size:10px;zoom:.9" id="savedprev"></div>
+      </div>
+      <div class="bottom" style="background:#fff;gap:8px"><div class="bw"><div class="spt p"><svg><use href="#i-spk"/></svg></div><div class="btn p"><svg><use href="#i-plus"/></svg>فاتورة جديدة</div></div><div class="bw"><div class="spt o"><svg><use href="#i-spk"/></svg></div><div class="btn o"><svg><use href="#i-home"/></svg>الرئيسية</div></div></div>
+    </div></div></div>
+    <div class="notes"><b>Treatment</b><ul>
+      <li>Every call to action: <code>| X | button |</code> with the tile in the button's style. The two bottom buttons are stacked.</li>
+      <li>Preview = the new compact invoice.</li>
+      <li>Long invoices: see the "point to PDF" variant in the long-invoice section.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ============================ HISTORY ============================ -->
+<section id="hist">
+  <h2>Invoice history and invoice detail <span class="tag chg">CHANGED</span></h2>
+  <div class="pair">
+    <div class="frame"><div class="flabel c">History</div><div class="phone"><div class="scr cur" dir="rtl">
+      <div class="sb"><span>16:05</span><span>77%</span></div>
+      <div class="c-head"><div class="bk"><svg><use href="#i-back"/></svg></div><b>الفواتير السابقة</b></div>
+      <div style="padding:8px 16px;display:flex;flex-direction:column;gap:8px"><div class="c-fbox" style="min-height:60px"><svg><use href="#i-search"/></svg><span style="color:#7A8085;font-size:17px">بحث بالاسم أو الهاتف أو الرقم</span></div>
+        <div style="display:flex;gap:8px"><div class="c-btn s" style="flex:1;min-height:56px;font-size:17px;border-width:1px"><svg class="s22"><use href="#i-cal"/></svg>من تاريخ</div><div class="c-btn s" style="flex:1;min-height:56px;font-size:17px;border-width:1px"><svg class="s22"><use href="#i-cal"/></svg>إلى تاريخ</div></div></div>
+      <div class="body fade" style="padding:8px 16px;display:flex;flex-direction:column;gap:12px">
+        <div class="c-card" style="display:flex;padding:16px"><div style="flex:1"><b>فاتورة رقم 0012</b><div>أحمد بناني</div><div style="font-size:15px;color:#4A4F54">25/10/2026  •  6 منتوجات</div></div><div style="text-align:left"><b style="font-size:22px">17 066,30 DH</b><div style="color:var(--c-rust);font-weight:700;font-size:16px">الباقي: 12 066,30 DH</div></div></div>
+        <div class="c-card" style="display:flex;padding:16px"><div style="flex:1"><b>فاتورة رقم 0011</b><div>بدون اسم</div><div style="font-size:15px;color:#4A4F54">24/10/2026  •  2 منتوجات</div><div style="color:var(--c-amber);font-weight:700;font-size:15px">معدلة</div></div><div style="text-align:left"><b style="font-size:22px">1 860 DH</b><div style="color:var(--c-green);font-weight:700;font-size:16px">✓ خالص</div></div></div>
+      </div>
+    </div></div></div>
+    <div class="frame"><div class="flabel p">History</div><div class="phone"><div class="scr pro" dir="ltr">
+      <div class="sb"><span>16:05</span><span>77%</span></div>
+      <div class="tb"><div class="bk"><svg><use href="#i-back"/></svg></div><div class="ttl"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><span>الفواتير السابقة</span></div></div>
+      <div style="padding:8px 12px;display:flex;flex-direction:column;gap:8px;background:#fff;flex:none"><div class="box" style="height:56px"><span class="v ph txt" style="font-size:17px">بحث بالاسم أو الهاتف أو الرقم</span><svg style="color:var(--gray-strong);margin-right:6px"><use href="#i-search"/></svg></div>
+        <div class="g2"><div class="spt s o"><svg><use href="#i-spk"/></svg></div><div class="btn o" style="border-width:1px"><svg class="s20"><use href="#i-cal"/></svg>إلى تاريخ</div><div class="spt s o"><svg><use href="#i-spk"/></svg></div><div class="btn o" style="border-width:1px"><svg class="s20"><use href="#i-cal"/></svg>من تاريخ</div></div></div>
+      <div class="body fade" style="padding:10px 12px;display:flex;flex-direction:column;gap:10px">
+        <div class="bw"><div class="spt w"><svg><use href="#i-spk"/></svg></div><div class="card grow" style="padding:10px"><div class="row" style="align-items:flex-start"><div style="direction:rtl;text-align:left"><b style="font-size:19px;display:block;white-space:nowrap">17 066,30 DH</b><span style="font-weight:700;font-size:14px;white-space:nowrap">الباقي: 12 066,30</span></div><div class="grow" style="direction:rtl;text-align:right;font-size:16px"><b>فاتورة رقم 0012</b><div>أحمد بناني</div><div style="font-size:13px" class="muted">25/10/2026 • 6 منتوجات</div></div></div></div></div>
+        <div class="bw"><div class="spt w"><svg><use href="#i-spk"/></svg></div><div class="card grow" style="padding:10px"><div class="row" style="align-items:flex-start"><div style="direction:rtl;text-align:left"><b style="font-size:19px;display:block">1 860 DH</b><span class="badge paid"><svg class="s16" style="color:var(--primary)"><use href="#i-checkc"/></svg>خالص</span></div><div class="grow" style="direction:rtl;text-align:right;font-size:16px"><b>فاتورة رقم 0011</b><div>بدون اسم</div><div style="font-size:13px" class="muted">24/10/2026 • 2 منتوجات</div><span class="badge ed"><svg class="s16"><use href="#i-edit"/></svg>معدلة</span></div></div></div></div>
+        <div class="bw"><div class="spt w"><svg><use href="#i-spk"/></svg></div><div class="card grow" style="padding:10px"><div class="row" style="align-items:flex-start"><div style="direction:rtl;text-align:left"><b style="font-size:19px;display:block">8 420 DH</b><span style="font-weight:700;font-size:14px">الباقي: 2 420</span></div><div class="grow" style="direction:rtl;text-align:right;font-size:16px"><b>فاتورة رقم 0010</b><div>يوسف العلمي</div><div style="font-size:13px" class="muted">22/10/2026 • 4 منتوجات</div></div></div></div></div>
+      </div>
+    </div></div></div>
+    <div class="notes"><b>History</b><ul>
+      <li>Each invoice card opens the invoice, so it gets a white tile in the card style on its left. It reads number, customer, total and balance.</li>
+      <li>Date buttons: <code>| X | إلى تاريخ | X | من تاريخ |</code> (من on the right, read first).</li>
+      <li>No mic on search (decided).</li>
+    </ul></div>
+  </div>
+  <div class="pair">
+    <div class="frame"><div class="flabel p">Invoice detail <span class="tag unl">NOT IN BRIEF</span></div><div class="phone"><div class="scr pro" dir="ltr">
+      <div class="sb"><span>16:06</span><span>77%</span></div>
+      <div class="tb"><div class="bk"><svg><use href="#i-back"/></svg></div><div class="ttl"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><span>تفاصيل الفاتورة</span></div></div>
+      <div class="body fade" style="padding:10px;display:flex;flex-direction:column;gap:8px">
+        <div class="card" style="direction:rtl;text-align:right"><div class="row"><b style="font-size:22px" class="grow">فاتورة رقم 0012</b><div class="spk sm"><svg><use href="#i-spk"/></svg></div></div><div class="muted">25/10/2026</div><div class="row"><svg class="s20" style="color:var(--primary)"><use href="#i-person"/></svg>أحمد بناني</div></div>
+        <div class="card" style="padding:6px 6px 2px" id="dettable"></div>
+        <div class="card" style="direction:ltr"><div class="row"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><b class="amt">17 066,30 DH</b><div class="grow"></div><b class="ar">مجموع الفاتورة</b></div><div class="row"><div style="width:48px;flex:none"></div><b class="amt">5 000 DH</b><div class="grow"></div><b class="ar">التسبيق</b></div><div class="row"><div style="width:48px;flex:none"></div><b class="amt" style="font-size:20px">12 066,30 DH</b><div class="grow"></div><b class="ar" style="font-size:20px">الباقي</b></div></div>
+      </div>
+      <div class="bottom" style="background:#fff"><div class="g2"><div class="spt s d"><svg><use href="#i-spk"/></svg></div><div class="btn d"><svg><use href="#i-del"/></svg>حذف</div><div class="spt s p"><svg><use href="#i-spk"/></svg></div><div class="btn p"><svg><use href="#i-edit"/></svg>تعديل</div></div></div>
+    </div></div></div>
+    <div class="notes"><b>Invoice detail</b><ul>
+      <li>Same compact table as the paper with a speaker per line; the long formula wraps inside its cell.</li>
+      <li><code>| X | حذف | X | تعديل |</code>; delete still confirms first.</li>
+      <li>The current version (rust cards, 64 dp pictures) is in the round 1 inventory; structure is unchanged apart from the table.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ============================ SETTINGS ============================ -->
+<section id="settings">
+  <h2>Settings with the new options <span class="tag chg">CHANGED</span></h2>
+  <div class="pair">
+    <div class="frame"><div class="flabel c">Settings (audio section)</div><div class="phone"><div class="scr cur" dir="rtl">
+      <div class="sb"><span>15:00</span><span>80%</span></div>
+      <div class="c-head"><div class="bk"><svg><use href="#i-back"/></svg></div><b>الإعدادات</b></div>
+      <div class="body fade" style="padding:16px;display:flex;flex-direction:column;gap:14px">
+        <div class="c-card" style="border-radius:20px;display:flex;align-items:center;gap:14px;padding:14px"><span style="width:60px;height:60px;border-radius:50%;background:var(--c-rust-light);color:var(--c-rust);display:grid;place-items:center"><svg class="s32"><use href="#i-cat"/></svg></span><div style="flex:1"><b style="font-size:22px">المنتوجات</b><div style="font-size:16px;color:#4A4F54">إضافة وتعديل المنتوجات</div></div></div>
+        <div class="c-card" style="border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:8px"><b style="font-size:22px">الصوت</b>
+          <div style="display:flex;justify-content:space-between;font-weight:700">تشغيل الصوت <span>⬤━</span></div>
+          <div style="display:flex;justify-content:space-between;font-weight:700">نطق مجموع المنتوج <span>⬤━</span></div>
+          <div style="display:flex;justify-content:space-between;font-weight:700">نطق مجموع الفاتورة والباقي <span>⬤━</span></div>
+          <div class="c-banner w" style="font-size:16px"><svg><use href="#i-warn"/></svg>لا يوجد صوت عربي في هذا الهاتف</div>
+          <div class="c-btn s" style="min-height:56px"><svg><use href="#i-down"/></svg>تثبيت صوت عربي</div></div>
+      </div>
+    </div></div></div>
+    <div class="frame"><div class="flabel p">Settings, top: units</div><div class="phone"><div class="scr pro" dir="ltr">
+      <div class="sb"><span>15:00</span><span>80%</span></div>
+      <div class="tb"><div class="bk"><svg><use href="#i-back"/></svg></div><div class="ttl"><span>الإعدادات</span></div></div>
+      <div class="body fade" style="padding:12px;display:flex;flex-direction:column;gap:12px">
+        <div class="bw"><div class="spt w"><svg><use href="#i-spk"/></svg></div><div class="card grow row" style="padding:10px;direction:rtl"><span style="width:48px;height:48px;border-radius:50%;background:var(--primary-container);color:var(--primary);display:grid;place-items:center;flex:none"><svg class="s26"><use href="#i-cat"/></svg></span><div class="grow"><b style="font-size:19px">المنتوجات</b><div style="font-size:14px" class="muted">المنتوجات والصور</div></div></div></div>
+        <div class="card" style="display:flex;flex-direction:column;gap:8px;padding:10px"><div class="row" style="direction:rtl"><svg class="s26" style="color:var(--primary)"><use href="#i-ruler"/></svg><b class="grow" style="font-size:19px">وحدة القياس <span class="tag new">NEW</span></b></div>
+          <div class="g2n"><div class="opt">متر<small>1,20 × 2,10</small></div><div class="opt on">✓ سنتيمتر<small>120 × 210</small></div></div>
+          <div style="font-size:13px;direction:rtl" class="muted">الفواتير القديمة تبقى بالوحدة التي كُتبت بها</div></div>
+        <div class="card" style="display:flex;flex-direction:column;gap:8px;padding:10px"><div class="row" style="direction:rtl"><svg class="s26" style="color:var(--primary)"><use href="#i-text"/></svg><b class="grow" style="font-size:19px">كتابة الوحدة <span class="tag new">NEW</span></b></div>
+          <div class="g2n"><div class="opt">لاتيني<small style="direction:ltr">cm · m · m²</small></div><div class="opt on">✓ عربي<small>سم · م · م²</small></div></div>
+          <div style="font-size:13px;direction:rtl" class="muted">تُطبَّق على الشاشات والفواتير المطبوعة. الأرقام لا تتغير</div></div>
+        <div class="bw"><div class="card grow row" style="padding:12px;direction:rtl"><b class="grow" style="font-size:19px">معلومات الورشة</b><svg style="transform:rotate(90deg)"><use href="#i-fwd"/></svg></div></div>
+      </div>
+    </div></div></div>
+    <div class="frame"><div class="flabel p">Settings, scrolled: voice</div><div class="phone"><div class="scr pro" dir="ltr">
+      <div class="sb"><span>15:00</span><span>80%</span></div>
+      <div class="tb"><div class="bk"><svg><use href="#i-back"/></svg></div><div class="ttl"><span>الإعدادات</span></div></div>
+      <div class="body fade" style="padding:12px;display:flex;flex-direction:column;gap:12px">
+        <div class="card" style="display:flex;flex-direction:column;gap:6px;padding:10px"><div class="row" style="direction:rtl"><svg class="s26" style="color:var(--primary)"><use href="#i-spk"/></svg><b class="grow" style="font-size:19px">الصوت</b></div>
+          <div class="bw"><div class="grow row" style="direction:rtl;min-height:48px"><b class="grow">تشغيل الصوت</b><span class="chip" style="height:32px"><svg class="s16"><use href="#i-check"/></svg>يعمل</span></div></div>
+          <div style="direction:rtl"><b>سرعة الكلام <span class="tag new">NEW</span></b></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:center;direction:ltr"><div class="opt" style="min-height:48px;font-size:16px;padding:2px">سريع</div><div class="opt on" style="min-height:48px;font-size:16px;padding:2px">✓ عادي</div><div class="opt" style="min-height:48px;font-size:16px;padding:2px">بطيء</div></div>
+          <div class="bw"><div class="grow row" style="direction:rtl;min-height:48px"><span class="grow">نطق مجموع المنتوج</span><span class="chip" style="height:30px"><svg class="s16"><use href="#i-check"/></svg>يعمل</span></div></div>
+          <div class="bw"><div class="grow row" style="direction:rtl;min-height:48px"><span class="grow">نطق مجموع الفاتورة والباقي</span><span class="chip" style="height:30px"><svg class="s16"><use href="#i-check"/></svg>يعمل</span></div></div>
+          <div class="banner e"><span class="t">لا يوجد صوت عربي في هذا الهاتف</span><svg class="s26"><use href="#i-warn"/></svg></div>
+          <div class="bw"><div class="btn y" style="min-height:56px;font-size:18px"><svg><use href="#i-down"/></svg>تثبيت صوت عربي</div></div>
+          <div class="bw"><div class="btn o" style="min-height:52px;font-size:17px;border-width:1px"><svg><use href="#i-spk"/></svg>تجربة الصوت</div></div></div>
+        <div class="card" style="display:flex;flex-direction:column;gap:6px;padding:10px"><div class="row" style="direction:rtl"><svg class="s26" style="color:var(--primary)"><use href="#i-mic"/></svg><b class="grow" style="font-size:19px">الإملاء الصوتي <span class="tag new">NEW</span></b></div>
+          <div class="banner w"><span class="t" style="font-size:14px">يعمل بدون إنترنت فقط إذا كانت العربية محمّلة في الهاتف</span><svg class="s22"><use href="#i-info"/></svg></div></div>
+      </div>
+    </div></div></div>
+  </div>
+  <div class="notes" style="margin-top:12px"><b>What changes</b><ul>
+    <li><b>Speakers in Settings only for the المنتوجات card and its screens</b> (product list, product edit). Nothing else in Settings or Backup has speakers (decided, rounds 3–4).</li>
+    <li><b>وحدة القياس</b> (cm / m) and <b>كتابة الوحدة</b> (Arabic / Latin). The note says the script applies to printed invoices too (decided).</li>
+    <li><b>Speech rate</b>: 3 presets (decided). "تجربة الصوت" plays a sample at the chosen rate.</li>
+    <li>"No Arabic voice" banner with the install button; dictation status line.</li>
+  </ul></div>
+</section>
+
+<!-- ============================ OTHER ============================ -->
+<section id="other">
+  <h2>Backup, dialogs, empty states <span class="tag unl">NOT IN BRIEF</span></h2>
+  <div class="pair">
+    <div class="frame"><div class="flabel p">Backup (structure unchanged)</div><div class="phone"><div class="scr pro" dir="ltr">
+      <div class="sb"><span>15:10</span><span>80%</span></div>
+      <div class="tb"><div class="bk"><svg><use href="#i-back"/></svg></div><div class="ttl"><span>النسخ الاحتياطي</span></div></div>
+      <div class="body fade" style="padding:12px;display:flex;flex-direction:column;gap:12px">
+        <div class="card" style="display:flex;flex-direction:column;gap:6px;padding:10px"><b style="font-size:19px;direction:rtl">النسخ التلقائي</b>
+          <div class="bw"><div class="opt grow" style="min-height:48px">متوقف</div></div>
+          <div class="bw"><div class="opt on grow" style="min-height:48px">✓ كل يوم</div></div>
+          <div class="bw"><div class="opt grow" style="min-height:48px">كل أسبوع</div></div></div>
+        <div class="card" style="display:flex;flex-direction:column;gap:6px;padding:10px"><b style="font-size:19px;direction:rtl">أين تُحفظ النسخ؟</b>
+          <div class="bw"><div class="grow row" style="direction:rtl;min-height:48px"><span class="grow">على هذا الهاتف</span><span class="chip" style="height:30px"><svg class="s16"><use href="#i-check"/></svg>يعمل</span></div></div>
+          <div class="bw"><div class="grow row" style="direction:rtl;min-height:48px"><span class="grow">على Google Drive</span><span class="chip off" style="height:30px">متوقف</span></div></div>
+          <div class="banner i"><span class="t" style="font-size:14px">تشمل النسخة صور المنتوجات. الحجم الحالي تقريباً 9 MB</span><svg class="s22"><use href="#i-img"/></svg></div>
+          <div class="bw"><div class="btn p"><svg class="s28"><use href="#i-backup"/></svg>انسخ الآن</div></div></div>
+      </div>
+    </div></div></div>
+    <div class="notes"><b>Backup</b><ul>
+      <li>Layout unchanged; palette and top bar only, no speakers.</li>
+      <li>One line saying photos are included, with the size. With a file per item the size grows with every invoice (see risks).</li>
+    </ul>
+    <b>Empty states</b> (picture or icon, one sentence, round speaker, and a button with its tile if there is an action)
+    <ul>
+      <li>Item list empty (drawn), picker without products, history without invoices / results ("مسح الفلتر" with tile), not found / unreadable, export preparing / failed (إعادة المحاولة with tile).</li>
+    </ul></div>
+  </div>
+  <h3>Dialogs: speaker on every title; every action as <code>| X | button |</code>, stacked</h3>
+  <div class="pair" id="dialogs"></div>
+</section>
+
+<!-- ============================ TABLE A vs B ============================ -->
+<section id="table">
+  <h2>Unit-price column: feasibility of A vs B</h2>
+  <p>Same six items, unit = m, Arabic labels, including per-piece products (<bdi>مفصلات</bdi>, <bdi>قفل</bdi>) and a long formula (<bdi>باب الكراج</bdi>: <bdi dir="rtl">3,25 × 2,375 م</bdi> at <bdi dir="rtl">1 250,50 DH/م²</bdi>). Columns left to right: <b>Price | Measurement / Formula | Quantity | Name/Icon</b>; B adds a unit-price column. The quantity column has its own margins (8 units each side), centred, with no dividers.</p>
+  <h3>Phone width (tall PNG, 360 units = 1080 px)</h3>
+  <div class="invwrap">
+    <div class="frame"><div class="flabel">A · unit price inside the formula cell <span class="tag new">RECOMMENDED</span></div><div id="pngA"></div></div>
+    <div class="frame"><div class="flabel">B · extra unit-price column (fallback)</div><div id="pngB"></div></div>
+  </div>
+  <h3>A4 width (true print size at 100% browser zoom)</h3>
+  <div class="frame"><div class="flabel">A · A4</div><div class="crop" id="a4A"></div></div>
+  <div class="frame" style="margin-top:14px"><div class="flabel">B · A4</div><div class="crop" id="a4B"></div></div>
+  <h3>Assessment</h3>
+  <table class="t">
+    <tr><th></th><th>A: unit price inside the formula cell</th><th>B: extra unit-price column</th></tr>
+    <tr><td>Phone columns (336 units)</td><td>Price 70 · Formula 126 · Qty 44 (with margins) · Name 96</td><td>Price 62 · Unit 54 · Measure 92 · Qty 40 · Name 88</td></tr>
+    <tr><td>Phone readability</td><td class="ok">12-unit text. "2,52 م² × 1 250 DH" fits on one line; the extreme case (4-decimal area × rate ≥ 1 000 DH with decimals) wraps to a third line, never cut.</td><td class="bad">Unit column wraps "1 250,50 DH/م²"; names and cm measurements wrap more. Avoiding wraps means 10-unit text.</td></tr>
+    <tr><td>Phone row height · rows before 8,000 px</td><td>≈ 42 units · ≈ 55 rows</td><td>42–56 units · ≈ 45–50 rows</td></tr>
+    <tr><td>A4 columns (539 pt)</td><td>90 · 210 · 54 · 185 pt</td><td>84 · 82 · 145 · 48 · 180 pt</td></tr>
+    <tr><td>A4 readability</td><td class="ok">9.5 pt body; formula on one line even for the long case</td><td class="ok">Same sizes, one line</td></tr>
+    <tr><td>Rows per A4 page</td><td><b>≈ 18 on page 1, ≈ 20 after</b> (the 45-item mock-up below measures 18 / 20 / 7 + totals)</td><td>≈ 19 on page 1, ≈ 21 after</td></tr>
+    <tr><td>Today</td><td colspan="2">6 rows on page 1, 8 after; a 45-item invoice is 7 A4 pages and 2 PNG images.</td></tr>
+    <tr><td>Per-piece products</td><td>"35 DH / قطعة" in the formula cell</td><td>Measurement "—", unit price in its column</td></tr>
+  </table>
+  <div class="callout"><b>Recommendation: A.</b> The 9 mm picture sets the row height on paper, so B gains only about one row per page, while on the phone PNG (the WhatsApp format) B forces wrapping or smaller text. A keeps the rate next to what it multiplies. <b>Fallback: B.</b></div>
+  <div class="callout w"><b>Bidi check for Latin unit labels</b> (now relevant on printed invoices too, decision 5). Left: unprotected text reorders. Right: wrapped as an LTR isolate, which the implementation must do whenever the script is Latin.
+    <div class="row" style="gap:16px;margin-top:8px;flex-wrap:wrap"><div><div class="flabel" style="color:#B3261E">UNPROTECTED (WRONG ORDER)</div><div class="bidi">120 cm × 85 cm · 2,52 m² × 500 DH</div></div><div><div class="flabel" style="color:#1B6B3A">ISOLATED (CORRECT)</div><div class="bidi"><bdi dir="ltr">120 cm × 85 cm</bdi> · <bdi dir="ltr">2,52 m² × 500 DH</bdi></div></div></div></div>
+</section>
+
+<!-- ============================ LONG ============================ -->
+<section id="long">
+  <h2>Long invoice: one tall PNG and the PDF page breaks</h2>
+  <p>45 items (option A). <span id="pnginfo"></span></p>
+  <div class="invwrap">
+    <div class="frame"><div class="flabel">TALL PNG at 100% (scroll inside the frame)</div><div class="pngbox" id="tallbox"></div></div>
+    <div class="frame"><div class="flabel">WHOLE PNG at 25% · red line = 8,000 px limit</div><div id="overview" style="width:96px"></div></div>
+    <div class="frame"><div class="flabel p">Saved screen, invoice too long for one image <span class="tag dec">DECIDED</span></div><div class="strip" style="height:auto"><div class="pro" dir="ltr" style="padding:12px;display:flex;flex-direction:column;gap:10px">
+      <div class="banner w"><div class="spk sm"><svg><use href="#i-spk"/></svg></div><span class="t">هذه الفاتورة طويلة على صورة واحدة. شاركها كملف PDF</span><svg class="s26"><use href="#i-info"/></svg></div>
+      <div class="bw"><div class="spt p"><svg><use href="#i-spk"/></svg></div><div class="btn p"><svg class="s28"><use href="#i-pdf"/></svg>مشاركة PDF</div></div>
+      <div class="bw"><div class="spt o"><svg><use href="#i-spk"/></svg></div><div class="btn o"><svg class="s28"><use href="#i-print"/></svg>طباعة PDF</div></div>
+    </div></div>
+    <div class="notes" style="width:360px;margin-top:6px"><ul>
+      <li>When one PNG would be taller than 8,000 px (≈ 55 items), the image button is replaced by this message and the PDF button, even if the format setting is "image".</li>
+      <li>The split into several PNGs disappears.</li>
+    </ul></div></div>
+  </div>
+  <h3>PDF pages <button class="toggle" id="zoomBtn" type="button">Show at 100%</button></h3>
+  <p class="sub">Page number in the footer of every page ("صفحة 2 / 3"). Total, deposit and balance only on the last page, always with the last row. Deposit in green and slightly smaller than total; balance in a yellow band, same size as the total (decided, round 3).</p>
+  <div class="pdfstrip" id="pdfstrip"></div>
+  <div class="callout" id="hdrq"><b>Top of page 2, 3, … <span class="tag dec">DECIDED</span>: one slim line</b> (workshop · invoice number · date) above the column titles. The full header is only on page 1. The rejected option is kept on the right for reference.
+    <div class="row" style="gap:20px;flex-wrap:wrap;margin-top:10px;align-items:flex-start">
+      <div><div class="flabel" style="color:#1B6B3A">(a) SLIM LINE · CHOSEN · ≈ 2 more rows per page</div>
+        <div class="pg" style="height:auto;width:360pt;padding:12pt;zoom:.9"><div class="run"><span>ورشة الأمل للحدادة · فاتورة رقم 0013</span><span>25/10/2026</span></div><div class="ir h A" style="grid-template-columns:120pt 40pt 1fr 60pt"><div>المنتوج</div><div class="q">الكمية</div><div>القياس والحساب</div><div class="p">المبلغ (DH)</div></div><div style="color:#9CA3AF;text-align:center;padding:6pt">… rows 19–38 …</div></div></div>
+      <div><div class="flabel">(b) FULL HEADER ON EVERY PAGE · NOT CHOSEN</div>
+        <div class="pg" style="height:auto;width:360pt;padding:12pt;zoom:.9"><div class="hd"><b>ورشة الأمل للحدادة</b><span>0522 33 44 55 · الدار البيضاء</span></div><div class="meta"><b>فاتورة رقم 0013</b><span>25/10/2026</span></div><div class="meta" style="border:0;margin:0;padding-top:2px"><span>الزبون: شركة البناء الحديث</span><span>الهاتف: 0612345678</span></div><div class="ir h A" style="grid-template-columns:120pt 40pt 1fr 60pt"><div>المنتوج</div><div class="q">الكمية</div><div>القياس والحساب</div><div class="p">المبلغ (DH)</div></div><div style="color:#9CA3AF;text-align:center;padding:6pt">… rows 19–36 …</div></div></div>
+    </div></div>
+</section>
+
+<!-- ============================ FINDINGS ============================ -->
+<section id="find">
+  <h2>Step 3: Findings</h2>
+  <h3>A. Existing code that conflicts with the decisions</h3>
+  <ol class="find">
+    <li><b>RTL is forced in two places</b> (<code>MainActivity</code>, <code>InvoiceTheme</code>) and every <code>Row</code> relies on it. Switching to LTR mirrors every row at once.</li>
+    <li><b>Arabic alignment in an LTR layout</b>: strings starting with a digit or Latin text, and content-width <code>Text</code>s in a <code>Column</code>, move left. Needs one <code>ArabicText</code> wrapper and an app text field replacing the 9 Material <code>OutlinedTextField</code>s.</li>
+    <li><b>AutoMirrored icons</b>: forward arrows must be set explicitly to point right and placed on the right of the label (decided).</li>
+    <li><b>Tests assert RTL</b> (<code>LayoutAndBackUiTest</code>): rewrite, plus new checks that a speaker tap never navigates or selects and that every labelled button in the flow has its own speaker target ≥ 48 dp.</li>
+    <li><b>Hard-coded colours</b> in 8 UI files and a second palette in the domain (<code>InvoiceColors</code>); launcher icon is rust.</li>
+    <li><b>Green meaning clash</b>: unpaid balance must move to ink.</li>
+    <li><b>Speaker rule touches most button components</b> in the invoice flow, history and product catalogue: <code>BigButton</code>, <code>SmallAction</code>, <code>ConfirmDialog</code> actions, <code>FormulaOption</code>, date buttons, chips, history cards (Home cards and catalogue cards keep the speaker inside). Best done as one wrapper (<code>SpokenButton</code>: a tile styled like its button + the button, 4 dp gap) so it is the same everywhere. Settings and Backup get none. Some pairs had to be stacked (saved screen bottom, dialogs).</li>
+    <li><b>Per-item unit logic</b>: separate width/height units in <code>ItemEntryForm</code>, <code>UnitToggle</code>, <code>ProductDefinition.defaultUnit</code>, drafts, tests. Item storage already fits; an invoice-level unit is new (old mixed invoices: first item's unit, decided).</li>
+    <li><b>Room: first real migration</b> (v1 → v2): settings + length unit, label script, speech rate; invoices + length unit; items + image file; products + image file. <code>defaultUnit</code> stays unused.</li>
+    <li><b>Backup must carry images</b>: needs a v2 container (proposed ZIP: <code>backup.json</code> + <code>images/</code>), restore accepting v1 JSON and v2 ZIP, staged image swap, validator checking every referenced file, safety copy including images.</li>
+    <li><b>Literal image file per item</b> (decided): the file is created at item confirmation and deleted only when its item or invoice is deleted (and restored from backup with it). Editing an old invoice keeps each item's own file.</li>
+    <li><b>PNG 8,000 px split</b> is removed; above the limit the app points to PDF (decided).</li>
+    <li><b>PDF</b>: pagination exists; new are the page-number footer, the totals colours (deposit green, balance yellow band) and the slim running header on pages 2+ (decided). Thumbnail 64 → 32–40 and <code>InvoiceLayoutTest</code>'s 60–80 check change.</li>
+    <li><b>Formula text</b> drops "× quantity" because quantity has its own column; Latin labels need LTR isolation, now on printed invoices too.</li>
+    <li><b>Unit-label script on re-exports</b> (decided): the setting is read at export time, so an old invoice re-exported after a change shows the new labels (numbers unchanged). Snapshot tests must cover both scripts.</li>
+    <li><b>Speak-to-fill</b> (accepted): <code>SpeechRecognizer</code> + <code>RECORD_AUDIO</code> runtime permission, explanation before the system prompt, fallback to typing; offline only with the Arabic pack.</li>
+    <li><b>Speech rate</b> not implemented today (<code>setSpeechRate</code> never called).</li>
+    <li><b>Existing bug</b>: product "not found" shows "الفاتورة غير موجودة".</li>
+  </ol>
+  <h3>B. Affected screens you did not list</h3>
+  <p>Saved and share, invoice detail, catalogue management, product edit, backup, all dialogs, date pickers (flip to LTR), keypad (restyle only), home banners. Treatments are drawn above.</p>
+  <h3>C. Risks</h3>
+  <ul class="find">
+    <li><b>Tile next to its button with a 4 dp gap</b>: the two look like one pair, which is the goal, but a thumb aimed at the button edge can hit the tile. The tile only speaks, so a wrong tap is harmless; the tile is never smaller than 48 dp.</li>
+    <li><b>LTR switch breadth</b>: one wrapper for text and one for buttons, then screenshot checks per screen.</li>
+    <li><b>Yellow contrast</b>: dark text and a darker edge always.</li>
+    <li><b>Storage with a file per item</b>: ~40–80 KB per item photo; 1,000 items with photos ≈ 40–80 MB in the app and in every backup (10 on the phone, 5 on Drive). Backups slow down on mobile data.</li>
+    <li><b>WhatsApp image quality</b> for tall PNGs under the limit: test on the owner's phone.</li>
+    <li><b>Speech recognition</b> quality for Darija varies by phone.</li>
+    <li><b>Bidi</b> with Latin labels in RTL text.</li>
+  </ul>
+  <h3 id="qs">D. Open questions</h3>
+  <p>None. All design questions are answered.</p>
+  <h3>E. Calculation stays pluggable</h3>
+  <p><code>PricingFormula</code> is an enum with <code>when</code> branches in <code>PricingEngine</code>, <code>ItemDescriber</code>, the entry labels, product edit and the backup validator; DB and backups store the formula as a text id. Day 2 adds no new <code>when (formula)</code> branches: formula cell text and the spoken method name come from <code>ItemDescriber</code> only.</p>
+  <h3>F. Kept unchanged</h3>
+  <p>Quantity defaults to 1; repeated products stay separate items; confirming an item returns to the item list; area / perimeter / per-piece maths; immutable snapshots and revisions; no taxes; no other new features.</p>
+</section>
+</div>
+
+<script>
+(function(){
+  var NB=' ';
+  function grp(s){s=String(s);var out='',first=s.length%3;if(first)out=s.slice(0,first);for(var i=first;i<s.length;i+=3){if(out)out+=NB;out+=s.slice(i,i+3);}return out;}
+  function money(c){var d=Math.floor(c/100),r=c%100;return grp(d)+(r?','+String(r).padStart(2,'0'):'');}
+  function dec(x,min,max){var s=x.toFixed(max).split('.');var f=(s[1]||'').replace(/0+$/,'');while(f.length<min)f+='0';return grp(s[0])+(f?','+f:'');}
+  function sym(id,cls){return '<svg'+(cls?' class="'+cls+'"':'')+'><use href="#'+id+'"/></svg>';}
+  var BASE=[
+    ['باب حديد','p-door','area',1.20,2.10,500,2],
+    ['نافذة ألمنيوم','p-window','area',1.50,1.20,650,3],
+    ['إطار حديد','p-frame','per',2.00,1.10,120,1],
+    ['مفصلات','p-hinge','piece',0,0,35,8],
+    ['باب الكراج','p-garage','area',3.25,2.375,1250.50,1],
+    ['قفل','p-lock','piece',0,0,180,2]
+  ];
+  var MORE=[
+    ['بوابة حديدية','p-gate','area',3.00,1.80,700,1],
+    ['شباك حماية','p-grille','area',1.00,1.20,420,4],
+    ['باب حديد','p-door','area',0.90,2.00,500,1],
+    ['نافذة ألمنيوم','p-window','area',0.60,0.80,650,2],
+    ['إطار حديد','p-frame','per',1.20,1.20,120,3],
+    ['مفصلات','p-hinge','piece',0,0,35,12],
+    ['باب الكراج','p-garage','area',2.80,2.20,950,1],
+    ['قفل','p-lock','piece',0,0,180,1],
+    ['شباك حماية','p-grille','area',0.80,1.00,420,6]
+  ];
+  function describe(it){
+    var k=it[2],w=it[3],h=it[4],rate=it[5],q=it[6],rc=Math.round(rate*100);
+    var r={n:it[0],ic:it[1],q:q};
+    if(k==='piece'){r.m=null;r.f=money(rc)+' DH / قطعة';r.u=money(rc)+' DH/قطعة';r.base=null;r.tc=Math.round(rate*q*100);}
+    else{var base=k==='area'?w*h:2*(w+h);var bt=k==='area'?dec(base,2,4)+' م²':dec(base,0,4)+' م';
+      r.m=dec(w,2,3)+' × '+dec(h,2,3)+' م';r.f=bt+' × '+money(rc)+' DH';r.u=money(rc)+(k==='area'?' DH/م²':' DH/م');r.base=bt;r.tc=Math.round(base*rate*q*100);}
+    r.t=money(r.tc);return r;
+  }
+  function cellF(r){return r.m?r.m+'<br><span class="s">'+r.f+'</span>':'<span class="s">'+r.f+'</span>';}
+  function rowA(r){return '<div class="ir A"><div class="n">'+sym(r.ic)+'<span>'+r.n+'</span></div><div class="q">'+r.q+'</div><div>'+cellF(r)+'</div><div class="p">'+r.t+'</div></div>';}
+  function rowB(r){return '<div class="ir B"><div class="n">'+sym(r.ic)+'<span>'+r.n+'</span></div><div class="q">'+r.q+'</div><div>'+(r.m?r.m+'<br><span class="s">= '+r.base+'</span>':'<span class="s">—</span>')+'</div><div class="s">'+r.u+'</div><div class="p">'+r.t+'</div></div>';}
+  function headA(){return '<div class="ir h A"><div>المنتوج</div><div class="q">الكمية</div><div>القياس والحساب</div><div class="p">المبلغ (DH)</div></div>';}
+  function headB(){return '<div class="ir h B"><div>المنتوج</div><div class="q">الكمية</div><div>القياس</div><div>ثمن الوحدة</div><div class="p">المبلغ (DH)</div></div>';}
+  function hdr(no,date,cust){return '<div class="hd"><b>ورشة الأمل للحدادة</b><span>0522 33 44 55 · الدار البيضاء</span></div><div class="meta"><b>فاتورة رقم '+no+'</b><span>'+date+'</span></div><div class="meta" style="border:0;margin:0;padding-top:2px"><span>الزبون: '+cust+'</span><span>الهاتف: 0612345678</span></div>';}
+  function summary(totalC,depC){var rem=totalC-depC;return '<div class="sumbox"><div class="big"><span>المجموع</span><span>'+money(totalC)+' DH</span></div><div class="dep"><span>التسبيق</span><span>'+money(depC)+' DH</span></div><div class="rem"><span>الباقي</span><span>'+money(rem)+' DH</span></div></div><div class="thanks">شكراً لثقتكم</div>';}
+
+  var six=BASE.map(describe);
+  var total6=six.reduce(function(a,r){return a+r.tc;},0);
+  var inv=hdr('0012','25/10/2026','أحمد بناني');
+  document.getElementById('pngA').innerHTML='<div class="png">'+inv+headA()+six.map(rowA).join('')+summary(total6,500000)+'</div>';
+  document.getElementById('pngB').innerHTML='<div class="png">'+inv+headB()+six.map(rowB).join('')+summary(total6,500000)+'</div>';
+  document.getElementById('a4A').innerHTML='<div class="pg">'+inv+headA()+six.map(rowA).join('')+summary(total6,500000)+'</div>';
+  document.getElementById('a4B').innerHTML='<div class="pg">'+inv+headB()+six.map(rowB).join('')+summary(total6,500000)+'</div>';
+
+  // on-screen compact tables (review, detail, saved preview)
+  var cols='grid-template-columns:104px 40px 1fr 62px 40px;font-size:13px';
+  function scrRow(r,last){return '<div class="ir" style="'+cols+(last?';border:0':'')+'"><div class="n">'+sym(r.ic,'s32')+r.n+'</div><div class="q">'+r.q+'</div><div>'+cellF(r)+'</div><div class="p">'+r.t+'</div><div><div class="spk sm" style="width:40px;height:40px">'+sym('i-spk')+'</div></div></div>';}
+  var scrHead='<div class="ir h" style="'+cols.replace('13px','11px')+'"><div>المنتوج</div><div class="q">الكمية</div><div>القياس والحساب</div><div class="p">المبلغ</div><div></div></div>';
+  document.getElementById('revtable').innerHTML=scrHead+six.slice(0,4).map(function(r,i){return scrRow(r,i===3);}).join('');
+  document.getElementById('dettable').innerHTML=scrHead+[six[0],six[1],six[4]].map(function(r,i){return scrRow(r,i===2);}).join('');
+  document.getElementById('savedprev').innerHTML='<div class="hd"><b style="font-size:15px">ورشة الأمل للحدادة</b></div><div class="meta"><b>فاتورة رقم 0012</b><span>25/10/2026</span></div>'+headA().replace('class="ir h A"','class="ir h A" style="grid-template-columns:88px 38px 1fr 58px"')+six.slice(0,4).map(function(r){return rowA(r).replace('class="ir A"','class="ir A" style="grid-template-columns:88px 38px 1fr 58px"');}).join('');
+
+  // catalogue picker cards: card = select button; speaker tile + photo button outside it
+  function pick(name,ic,photo,off){
+    var pic=photo?'<div style="position:relative;width:104px;height:104px;margin:0 auto;border-radius:12px;overflow:hidden"><svg style="width:104px;height:104px"><use href="#p-photo"/></svg><span style="position:absolute;left:4px;bottom:4px;background:rgba(0,0,0,.6);color:#fff;border-radius:8px;padding:2px 4px;display:flex">'+sym('i-cam','s16')+'</span></div>':sym(ic,'s96');
+    return '<div class="card" style="padding:8px 6px 4px;text-align:center;border-radius:16px">'+pic+'<div style="font-weight:700;font-size:17px;min-height:48px;padding-top:4px">'+name+'</div>'+
+      '<div style="display:flex;justify-content:flex-end;direction:ltr"><div class="spk'+(off?' off':'')+'">'+sym(off?'i-spk-off':'i-spk')+'</div></div></div>';
+  }
+  document.getElementById('pickgrid').innerHTML=pick('باب حديد','p-door',true)+pick('نافذة ألمنيوم','p-window')+pick('باب الكراج','p-garage')+pick('إطار حديد','p-frame');
+  document.getElementById('pickgridoff').innerHTML=pick('باب حديد','p-door',false,true)+pick('نافذة ألمنيوم','p-window',false,true);
+
+  // long invoice
+  var long=[];for(var i=0;i<45;i++){var src=i<6?BASE[i]:MORE[(i-6)%MORE.length];long.push(describe(src));}
+  var totalL=long.reduce(function(a,r){return a+r.tc;},0),depL=1000000;
+  var tall=document.createElement('div');tall.className='png';
+  tall.innerHTML=hdr('0013','25/10/2026','شركة البناء الحديث')+headA()+long.map(rowA).join('')+summary(totalL,depL);
+  document.getElementById('tallbox').appendChild(tall);
+  var units=tall.offsetHeight;
+  document.getElementById('pnginfo').textContent='Measured from this mock-up: the tall PNG is '+units+' units high, about 1080 × '+grp(units*3)+' px, below the 8 000 px limit (2 667 units).';
+  var ov=document.createElement('div');ov.className='overview';ov.appendChild(tall.cloneNode(true));
+  var line=document.createElement('div');line.className='cap8k';line.style.top=(8000/3)+'px';ov.appendChild(line);
+  document.getElementById('overview').appendChild(ov);
+
+  // PDF pagination, measured on the real DOM; no page numbers
+  var strip=document.getElementById('pdfstrip');var pages=[];
+  function newPage(first){var pg=document.createElement('div');pg.className='pg';var body=document.createElement('div');body.className='pgbody';pg.appendChild(body);var foot=document.createElement('div');foot.className='foot';pg.appendChild(foot);strip.appendChild(pg);pages.push(foot);
+    body.innerHTML=first?hdr('0013','25/10/2026','شركة البناء الحديث'):'<div class="run"><span>ورشة الأمل للحدادة · فاتورة رقم 0013</span><span>25/10/2026</span></div>';
+    body.insertAdjacentHTML('beforeend',headA());return body;}
+  function fits(b){return b.scrollHeight<=b.clientHeight+1;}
+  var body=newPage(true);
+  for(var j=0;j<long.length-1;j++){body.insertAdjacentHTML('beforeend',rowA(long[j]));if(!fits(body)){body.lastElementChild.remove();body=newPage(false);body.insertAdjacentHTML('beforeend',rowA(long[j]));}}
+  var tail=rowA(long[long.length-1])+summary(totalL,depL);
+  var mark=body.children.length;body.insertAdjacentHTML('beforeend',tail);
+  if(!fits(body)){while(body.children.length>mark)body.lastElementChild.remove();body=newPage(false);body.insertAdjacentHTML('beforeend',tail);}
+  pages.forEach(function(f,ix){f.textContent='صفحة '+(ix+1)+' / '+pages.length;});
+  var btn=document.getElementById('zoomBtn');btn.addEventListener('click',function(){var on=strip.classList.toggle('full');btn.textContent=on?'Show at 50%':'Show at 100%';});
+
+  // dialogs: speaker on title; actions stacked as | X | button |
+  var D=[
+    ['حذف هذا المنتوج؟','سيتم حذفه من الفاتورة',[['d','i-del','حذف'],['o','i-close','إلغاء']]],
+    ['حفظ الفاتورة؟','<div style="display:flex;justify-content:space-between"><span>مجموع الفاتورة</span><b>17 066,30 DH</b></div><div style="display:flex;justify-content:space-between"><span>التسبيق</span><b>5 000 DH</b></div><div style="display:flex;justify-content:space-between;font-size:19px"><b>الباقي</b><b>12 066,30 DH</b></div>',[['p','i-check','حفظ'],['o','i-close','إلغاء']]],
+    ['الخروج من الفاتورة؟','لم تحفظ الفاتورة بعد. يمكنك تركها كمسودة والعودة إليها لاحقاً',[['p','i-save','حفظ كمسودة'],['d','i-del','حذف التعديلات'],['o','i-close','البقاء']]],
+    ['فاتورة غير مكتملة','لديك فاتورة لم تحفظها. هل تريد متابعتها؟',[['p','i-fwd','متابعتها'],['o','i-plus','فاتورة جديدة']]],
+    ['حذف الفاتورة؟','سيتم حذف الفاتورة نهائياً ولا يمكن التراجع',[['d','i-del','حذف'],['o','i-close','إلغاء']]],
+    ['إذن الميكروفون','لكتابة الاسم بصوتك يحتاج التطبيق إذن الميكروفون. لا يُسجَّل ولا يُحفظ أي صوت. بعد ذلك سيسألك الهاتف.',[['p','i-mic','متابعة'],['o','i-close','لا، سأكتب بيدي']]],
+    ['تكلّم الآن','<div style="display:flex;align-items:center;gap:10px;justify-content:center;padding:6px 0"><svg class="s52" style="color:var(--error)"><use href="#i-mic"/></svg><b>أستمع…</b></div><div class="muted" style="font-size:15px">قل اسم الزبون. يمكنك تصحيح النص بعد ذلك</div>',[['o','i-close','إيقاف']]]
+  ];
+  var g=document.getElementById('dialogs');
+  D.forEach(function(d){var acts=d[2].map(function(a){return '<div class="bw"><div class="spt '+a[0]+'">'+sym('i-spk')+'</div><div class="btn '+a[0]+'">'+sym(a[1])+a[2]+'</div></div>';}).join('');
+    g.insertAdjacentHTML('beforeend','<div class="pro" dir="ltr" style="width:320px;background:transparent"><div class="dlg" style="box-shadow:0 4px 16px rgba(0,0,0,.18);border:1px solid #E5E7EB"><h4><span>'+d[0]+'</span><div class="spk sm">'+sym('i-spk')+'</div></h4><div style="font-size:16px;display:flex;flex-direction:column;gap:4px">'+d[1]+'</div>'+acts+'</div></div>');});
+})();
+</script>
+</body>
+</html>

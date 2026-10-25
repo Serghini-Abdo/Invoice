@@ -16,6 +16,17 @@ enum class ExportFormat(val id: String) {
     }
 }
 
+/** How fast speech is played: three large choices instead of a slider. */
+enum class SpeechRate(val id: String, val multiplier: Float) {
+    SLOW("slow", 0.8f),
+    NORMAL("normal", 1.0f),
+    FAST("fast", 1.25f);
+
+    companion object {
+        fun fromId(id: String): SpeechRate? = entries.firstOrNull { it.id == id }
+    }
+}
+
 /** The few settings the workshop owner can change. Persisted in the AppSettings table and backed up. */
 data class AppSettings(
     val workshopName: String = "",
@@ -30,6 +41,7 @@ data class AppSettings(
     val thankYouMessage: String = DEFAULT_THANK_YOU,
     /** Next invoice number to hand out. Never decreases, so numbers are not reused after deletions. */
     val nextInvoiceNumber: Long = 1L,
+    val speechRate: SpeechRate = SpeechRate.NORMAL,
 ) {
     companion object {
         const val DEFAULT_THANK_YOU = "شكراً لثقتكم"

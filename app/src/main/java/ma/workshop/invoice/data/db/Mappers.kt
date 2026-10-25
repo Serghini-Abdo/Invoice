@@ -14,6 +14,7 @@ import ma.workshop.invoice.domain.pricing.LengthUnit
 import ma.workshop.invoice.domain.pricing.PricingFormula
 import ma.workshop.invoice.domain.settings.AppSettings
 import ma.workshop.invoice.domain.settings.ExportFormat
+import ma.workshop.invoice.domain.settings.SpeechRate
 import java.math.BigDecimal
 
 // ---------- products ----------
@@ -176,6 +177,7 @@ fun SettingsEntity.toDomain() = AppSettings(
     speakInvoiceTotals = speakInvoiceTotals,
     thankYouMessage = thankYouMessage,
     nextInvoiceNumber = nextInvoiceNumber,
+    speechRate = SpeechRate.fromId(speechRate) ?: SpeechRate.NORMAL,
 )
 
 fun AppSettings.toEntity(catalogSeeded: Boolean) = SettingsEntity(
@@ -189,4 +191,5 @@ fun AppSettings.toEntity(catalogSeeded: Boolean) = SettingsEntity(
     thankYouMessage = thankYouMessage,
     nextInvoiceNumber = nextInvoiceNumber,
     catalogSeeded = catalogSeeded,
+    speechRate = speechRate.id,
 )

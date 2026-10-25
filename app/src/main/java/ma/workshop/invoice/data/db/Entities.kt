@@ -1,9 +1,11 @@
 package ma.workshop.invoice.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import ma.workshop.invoice.domain.settings.SpeechRate
 
 /** Catalog definition. Deliberately has no price column: rates are typed per invoice item. */
 @Entity(tableName = "products", indices = [Index(value = ["isActive", "sortOrder"])])
@@ -128,6 +130,9 @@ data class SettingsEntity(
     val nextInvoiceNumber: Long,
     /** True once the starter catalog has been inserted, so deleting every product never re-seeds. */
     val catalogSeeded: Boolean,
+    /** Added in schema version 2 (Day 2). */
+    @ColumnInfo(defaultValue = "normal")
+    val speechRate: String = SpeechRate.NORMAL.id,
 ) {
     companion object {
         const val SINGLETON_ID = 1
