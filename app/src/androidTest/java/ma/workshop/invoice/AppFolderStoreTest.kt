@@ -64,7 +64,7 @@ class AppFolderStoreTest {
         val bytes = "{\"hello\":\"world\"}".toByteArray()
         val written = store.write(name, bytes)
 
-        assertFalse("written to the public folder", written.inPrivateFolder)
+        assertFalse("written to the public folder, but fell back because: ${written.fallbackReason}", written.inPrivateFolder)
         assertTrue(store.list(inPrivateFolder = false).any { it.name == name })
         assertTrue(name in store.existingNames())
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
