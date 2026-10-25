@@ -11,7 +11,10 @@ import ma.workshop.invoice.data.InvoiceRepository
 import ma.workshop.invoice.data.ProductRepository
 import ma.workshop.invoice.data.SettingsRepository
 import ma.workshop.invoice.data.db.AppDatabase
+import ma.workshop.invoice.platform.RestoreSafety
 import ma.workshop.invoice.platform.SpeechController
+import ma.workshop.invoice.platform.drive.DriveBackupClient
+import java.io.File
 import ma.workshop.invoice.platform.export.InvoiceExporter
 
 /**
@@ -28,6 +31,13 @@ class AppContainer(val application: Application) {
     val invoices: InvoiceRepository by lazy { InvoiceRepository(database, environment) }
     val drafts: DraftRepository by lazy { DraftRepository(database, environment) }
     val backups: BackupRepository by lazy { BackupRepository(database) }
+
+    val drive: DriveBackupClient by lazy { DriveBackupClient(application) }
+    val restoreSafety: RestoreSafety by lazy { RestoreSafety(File(application.filesDir, "backups")) }
+
+    /** Set at startup if the previous restore was cut off; shown once on the home screen. */
+    @Volatile
+    var startupNotice: String? = null
 
     val speech: SpeechController by lazy { SpeechController(application) }
     val exporter: InvoiceExporter by lazy { InvoiceExporter(application) }
