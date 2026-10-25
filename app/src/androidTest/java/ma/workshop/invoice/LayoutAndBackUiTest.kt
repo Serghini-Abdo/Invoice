@@ -1,5 +1,6 @@
 package ma.workshop.invoice
 
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertWidthIsAtLeast
@@ -16,6 +17,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
@@ -121,6 +123,20 @@ class LayoutAndBackUiTest {
         rule.onAllNodesWithContentDescription(Strings.SPEAK_NAME).onFirst().performClick()
         rule.waitForIdle()
         // still on the catalog: nothing was selected and nothing navigated away
+        rule.onNodeWithText(Strings.CHOOSE_PRODUCT).assertExists()
+        assertTrue(rule.onAllNodesWithText(Strings.WIDTH).fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
+    fun aFingerThatSlidesOffAProductDoesNotSelectIt() {
+        goToCatalog()
+        rule.onNodeWithText("باب حديد").performTouchInput {
+            down(center)
+            moveBy(Offset(0f, 400f))
+            up()
+        }
+        rule.waitForIdle()
+        // a sweep is a scroll, not a tap: the catalog stays open and nothing was selected
         rule.onNodeWithText(Strings.CHOOSE_PRODUCT).assertExists()
         assertTrue(rule.onAllNodesWithText(Strings.WIDTH).fetchSemanticsNodes().isEmpty())
     }
