@@ -60,4 +60,26 @@ class MigrationTest {
             }
         }
     }
+
+    @Test
+    fun version2SettingsKeepTheirValuesAndSpeakDarija() {
+        val name = "migration-settings-3.db"
+        helper.createDatabase(name, 2).use { db ->
+            db.execSQL(
+                "INSERT INTO app_settings (id, workshopName, workshopPhone, exportFormat, audioEnabled, speakItemTotals, " +
+                    "speakInvoiceTotals, thankYouMessage, nextInvoiceNumber, catalogSeeded, speechRate) " +
+                    "VALUES (1, 'ورشة الأمل', '0522', 'pdf', 1, 1, 0, 'شكراً', 9, 1, 'fast')",
+            )
+        }
+        helper.runMigrationsAndValidate(name, 3, true, AppDatabase.MIGRATION_2_3).use { db ->
+            db.query("SELECT workshopName, speakInvoiceTotals, nextInvoiceNumber, speechRate, speechLanguage FROM app_settings").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                org.junit.Assert.assertEquals("ورشة الأمل", cursor.getString(0))
+                org.junit.Assert.assertEquals(0, cursor.getInt(1))
+                org.junit.Assert.assertEquals(9L, cursor.getLong(2))
+                org.junit.Assert.assertEquals("fast", cursor.getString(3))
+                org.junit.Assert.assertEquals("darija", cursor.getString(4))
+            }
+        }
+    }
 }

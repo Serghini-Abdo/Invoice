@@ -180,6 +180,9 @@ object Strings {
     const val SPEECH_RATE_SLOW = "بطيء"
     const val SPEECH_RATE_NORMAL = "عادي"
     const val SPEECH_RATE_FAST = "سريع"
+    const val SPEECH_LANGUAGE = "لغة الكلام"
+    const val SPEECH_LANGUAGE_DARIJA = "الدارجة"
+    const val SPEECH_LANGUAGE_STANDARD = "العربية الفصحى"
 
     // speak-to-fill
     const val DICTATE = "الكتابة بالصوت"

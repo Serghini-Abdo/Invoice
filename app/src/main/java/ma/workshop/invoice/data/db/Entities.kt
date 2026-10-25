@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import ma.workshop.invoice.domain.settings.SpeechLanguage
 import ma.workshop.invoice.domain.settings.SpeechRate
 
 /** Catalog definition. Deliberately has no price column: rates are typed per invoice item. */
@@ -133,6 +134,9 @@ data class SettingsEntity(
     /** Added in schema version 2 (Day 2). */
     @ColumnInfo(defaultValue = "normal")
     val speechRate: String = SpeechRate.NORMAL.id,
+    /** Added in schema version 3 (Day 2). */
+    @ColumnInfo(defaultValue = "darija")
+    val speechLanguage: String = SpeechLanguage.DARIJA.id,
 ) {
     companion object {
         const val SINGLETON_ID = 1

@@ -33,7 +33,9 @@ Approved by the owner on 2026-10-25 after four design rounds. The mock-ups are i
   (product list, product edit, including the calculation-method options).
 * A speaker tap never selects, presses or navigates. Tapping another speaker stops the current speech.
 * Voice settings: on/off (existing), speech rate as **3 presets** (slow / normal / fast).
-* Spoken text is Darija spelling; numbers are spoken as Darija words generated offline.
+* Spoken language: **Darija by default**; standard Arabic can be chosen in Settings → الصوت → "لغة الكلام"
+  (الدارجة / العربية الفصحى). Numbers are spoken as words generated offline in the chosen language.
+  Screens and printed invoices are not affected.
 * No Arabic voice installed: a clear prompt explains how to download the voice data; everything stays
   usable silently.
 

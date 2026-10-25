@@ -27,7 +27,8 @@ migration plus a `MigrationTest` case (see `docs/data-and-migrations.md`).
 * Invoice items are immutable snapshots; catalogue edits never change saved invoices.
 * Never use `fallbackToDestructiveMigration`. Older backups must stay restorable.
 * User-facing screen text lives in `ui/Strings.kt`; printed invoice words in the domain `ArabicTerms`;
-  spoken Darija text in the domain `speech` package (`DarijaTerms`, `DarijaNumbers`, `DarijaSpeech`).
+  spoken text in the domain `speech` package, always through `SpeechTexts.of(settings.speechLanguage)`
+  (Darija by default: `DarijaTerms`, `DarijaNumbers`, `DarijaSpeech`; standard Arabic: `StandardSpeech`).
 * Colour is never the only signal: every state has an icon and a word.
 * A speaker tap only speaks: it never selects, presses or navigates.
 * Speech is an aid. Every flow must work with voice off or with no Arabic voice installed.

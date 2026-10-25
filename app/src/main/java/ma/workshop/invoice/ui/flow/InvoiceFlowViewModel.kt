@@ -30,7 +30,8 @@ import ma.workshop.invoice.domain.invoice.PaymentSummary
 import ma.workshop.invoice.domain.invoice.ProductDefinition
 import ma.workshop.invoice.domain.money.Money
 import ma.workshop.invoice.domain.settings.AppSettings
-import ma.workshop.invoice.domain.speech.DarijaSpeech
+import ma.workshop.invoice.domain.speech.SpeechText
+import ma.workshop.invoice.domain.speech.SpeechTexts
 import ma.workshop.invoice.platform.SpeakResult
 import ma.workshop.invoice.platform.SpeechStatus
 import ma.workshop.invoice.platform.export.ExportFiles
@@ -244,14 +245,17 @@ class InvoiceFlowViewModel(
     private fun itemTotalText(): String? {
         val pending = _state.value?.pending
         val pricing = pending?.confirmedPricing ?: return null
-        return DarijaSpeech.itemTotal(pending.product.name, pricing.total)
+        return speechText().itemTotal(pending.product.name, pricing.total)
     }
 
     private fun invoiceSummaryText(): String? {
         val state = _state.value ?: return null
         val deposit = state.deposit ?: Money.ZERO
-        return DarijaSpeech.paymentSummary(PaymentSummary(state.total, deposit, state.total - deposit))
+        return speechText().paymentSummary(PaymentSummary(state.total, deposit, state.total - deposit))
     }
+
+    /** Sentences in the language chosen in Settings (Darija by default). */
+    private fun speechText(): SpeechText = SpeechTexts.of(settings.value.speechLanguage)
 
     /** After the user came back from installing a voice, look for it again. */
     fun recheckVoiceIfMissing() {

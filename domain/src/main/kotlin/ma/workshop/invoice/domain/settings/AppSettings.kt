@@ -27,6 +27,16 @@ enum class SpeechRate(val id: String, val multiplier: Float) {
     }
 }
 
+/** The language the app speaks in. Screens and printed invoices are not affected. */
+enum class SpeechLanguage(val id: String) {
+    DARIJA("darija"),
+    STANDARD("standard");
+
+    companion object {
+        fun fromId(id: String): SpeechLanguage? = entries.firstOrNull { it.id == id }
+    }
+}
+
 /** The few settings the workshop owner can change. Persisted in the AppSettings table and backed up. */
 data class AppSettings(
     val workshopName: String = "",
@@ -42,6 +52,7 @@ data class AppSettings(
     /** Next invoice number to hand out. Never decreases, so numbers are not reused after deletions. */
     val nextInvoiceNumber: Long = 1L,
     val speechRate: SpeechRate = SpeechRate.NORMAL,
+    val speechLanguage: SpeechLanguage = SpeechLanguage.DARIJA,
 ) {
     companion object {
         const val DEFAULT_THANK_YOU = "شكراً لثقتكم"

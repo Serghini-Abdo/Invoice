@@ -15,7 +15,7 @@ import java.math.RoundingMode
  * ("باب حديد، متر و عشرين سانتي على جوج متر و عشرة سانتي، العدد جوج، المجموع ...") so one speaker can
  * read a whole row or card. Voice is only an aid: every figure is always on screen too.
  */
-object DarijaSpeech {
+object DarijaSpeech : SpeechText {
 
     private const val SEP = "، "
 
@@ -39,7 +39,7 @@ object DarijaSpeech {
     private val fewCount = listOf("", "", "", "تلت", "ربع", "خمس", "ست", "سبع", "تمن", "تسع", "عشر")
 
     /** "ألفين و خمس مية و عشرين درهم", "درهم واحد", "جوج دراهم", "خمس دراهم و خمسين سنتيم". */
-    fun amount(money: Money): String {
+    override fun amount(money: Money): String {
         val absolute = Math.abs(money.centimes)
         val dirhams = absolute / 100
         val centimes = (absolute % 100).toInt()
@@ -55,16 +55,16 @@ object DarijaSpeech {
         return if (dirhamPart == null) centimePart else "$dirhamPart ${DarijaTerms.AND} $centimePart"
     }
 
-    fun quantity(quantity: Int): String = DarijaNumbers.integer(quantity.toLong())
+    override fun quantity(quantity: Int): String = DarijaNumbers.integer(quantity.toLong())
 
     /** A measurement in the unit it was typed in. */
-    fun length(length: Length): String = when (length.unit) {
+    override fun length(length: Length): String = when (length.unit) {
         LengthUnit.METER -> DarijaNumbers.meters(length.value)
         LengthUnit.CENTIMETER -> DarijaNumbers.centimeters(length.value)
     }
 
     /** "خمس مية درهم للمتر مربع". */
-    fun rate(pricing: ItemPricing): String = "${amount(pricing.unitRate)} ${rateBases.getValue(pricing.rateBasis)}"
+    override fun rate(pricing: ItemPricing): String = "${amount(pricing.unitRate)} ${rateBases.getValue(pricing.rateBasis)}"
 
     /**
      * The area or perimeter of one piece; null for per-piece items. It is spoken with the same four
@@ -85,7 +85,7 @@ object DarijaSpeech {
     }
 
     /** One invoice row: name, size, quantity and line total. */
-    fun itemLine(productName: String, pricing: ItemPricing): String = listOfNotNull(
+    override fun itemLine(productName: String, pricing: ItemPricing): String = listOfNotNull(
         productName,
         dimensions(pricing),
         "${DarijaTerms.QUANTITY} ${quantity(pricing.quantity)}",
@@ -93,10 +93,10 @@ object DarijaSpeech {
     ).joinToString(SEP)
 
     /** Spoken on the confirmation screen: "باب حديد، المجموع ...". */
-    fun itemTotal(productName: String, total: Money): String = "$productName$SEP${DarijaTerms.TOTAL} ${amount(total)}"
+    override fun itemTotal(productName: String, total: Money): String = "$productName$SEP${DarijaTerms.TOTAL} ${amount(total)}"
 
     /** The whole calculation card as one sentence, method first. */
-    fun calculation(pricing: ItemPricing): String {
+    override fun calculation(pricing: ItemPricing): String {
         val parts = ArrayList<String>()
         parts += "${DarijaTerms.CALCULATION} ${methodNames.getValue(pricing.formula)}"
         pricing.width?.let { parts += "${DarijaTerms.WIDTH} ${length(it)}" }
@@ -109,16 +109,18 @@ object DarijaSpeech {
     }
 
     /** Name of a calculation method, for the options in product edit. */
-    fun method(formula: PricingFormula): String = methodNames.getValue(formula)
+    override fun method(formula: PricingFormula): String = methodNames.getValue(formula)
 
     /** The total + deposit + balance card as one sentence. */
-    fun paymentSummary(payment: PaymentSummary): String = buildString {
+    override fun paymentSummary(payment: PaymentSummary): String = buildString {
         append("${DarijaTerms.INVOICE_TOTAL} ${amount(payment.total)}")
         append(SEP)
         append(if (payment.deposit.isZero) DarijaTerms.NO_DEPOSIT else "${DarijaTerms.DEPOSIT} ${amount(payment.deposit)}")
         append(SEP)
         append(if (payment.isFullyPaid) DarijaTerms.FULLY_PAID else "${DarijaTerms.REMAINING} ${amount(payment.remaining)}")
     }
+
+    override val voiceTest: String = DarijaTerms.VOICE_TEST
 
     /** A decimal read as words, for places that show a bare number. */
     fun number(value: BigDecimal): String = DarijaNumbers.decimal(value)

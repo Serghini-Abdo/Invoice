@@ -14,6 +14,7 @@ import ma.workshop.invoice.domain.pricing.LengthUnit
 import ma.workshop.invoice.domain.pricing.PricingFormula
 import ma.workshop.invoice.domain.settings.AppSettings
 import ma.workshop.invoice.domain.settings.ExportFormat
+import ma.workshop.invoice.domain.settings.SpeechLanguage
 import ma.workshop.invoice.domain.settings.SpeechRate
 import java.math.BigDecimal
 
@@ -178,6 +179,7 @@ fun SettingsEntity.toDomain() = AppSettings(
     thankYouMessage = thankYouMessage,
     nextInvoiceNumber = nextInvoiceNumber,
     speechRate = SpeechRate.fromId(speechRate) ?: SpeechRate.NORMAL,
+    speechLanguage = SpeechLanguage.fromId(speechLanguage) ?: SpeechLanguage.DARIJA,
 )
 
 fun AppSettings.toEntity(catalogSeeded: Boolean) = SettingsEntity(
@@ -192,4 +194,5 @@ fun AppSettings.toEntity(catalogSeeded: Boolean) = SettingsEntity(
     nextInvoiceNumber = nextInvoiceNumber,
     catalogSeeded = catalogSeeded,
     speechRate = speechRate.id,
+    speechLanguage = speechLanguage.id,
 )
