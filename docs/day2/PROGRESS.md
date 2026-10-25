@@ -14,9 +14,9 @@ on the screens after the layout sprint.
 | 3 (speech core) | TTS wrapper, voice check and prompt, Darija speech, speech rate, speech recognizer core | Done, see below |
 | 3 (add-on) | Spoken-language setting: Darija (default) or standard Arabic | Done, see below |
 | 4 (foundations) | Theme tokens, forced LTR, Arabic text and field components, top bar, speaker tile, Add button | Done, see below |
-| 5 (units, fields, photos) | cm/m and unit-label settings, invoice unit, field icons, photo import, backup with images | Not started |
-| 6 (invoice output) | Table option A, PDF headers and footer, totals colours, one PNG or point to PDF | Not started |
-| 7 (placement) | Speakers on every row/card/field/CTA; mic on customer name and product name | Not started (needs 4 to 6) |
+| 5 (invoice output) | Table option A on paper and on screen, PDF headers and footer, totals colours, one PNG or point to PDF, paid badge, stacked Saved buttons | Not started (moved before units) |
+| 6 (units, fields, photos) | cm/m and unit-label settings, invoice unit, field icons, photo import, backup with images | Not started |
+| 7 (placement) | Speakers on every row/card/field/CTA; mic on customer name and product name; dictation status line | Not started (needs 4 to 6) |
 
 The step-by-step plan for sprints 4 to 7 and a starter prompt for the next session are in
 [Next sprints, step by step](#next-sprints-step-by-step) at the end of this file.
@@ -166,7 +166,7 @@ Branch `day2/sprint-4` (from `day2/sprint-3`).
   * Green means paid only: unpaid balances, item totals and invoice totals on screens are ink; the paid
     balance and the "خالص" badge stay green. On the **printed invoice** the unpaid balance is ink too, and the
     workshop name, muted text, dividers and panels use the new palette (rust is gone). The rest of the invoice
-    layout is unchanged (sprint 6).
+    layout is unchanged (sprint 5, invoice output).
   * Buttons: primary/success green with white, danger red with white, secondary white with a gray edge and
     ink text, accent yellow with ink text and a `#A67C00` edge. Home cards: green, yellow (dark text, dark
     edge), white (gray edge), as in the mock-up.
@@ -181,7 +181,7 @@ Branch `day2/sprint-4` (from `day2/sprint-3`).
   right-aligned text (a phone number keeps its digit order), optional illustration beside it on the right,
   optional `trailing` slot inside the box on the left (for the mic in sprint 7), error line with icon. It
   replaces all 9 `OutlinedTextField`s (customer name/phone, product name, category, workshop name/phone/
-  thank-you, history search). No illustrations are passed yet (field icons are sprint 5).
+  thank-you, history search). No illustrations are passed yet (field icons are sprint 6).
 * **Arrows**: forward arrows point right, on the right of the label ("→ متابعة"); back arrow on the left.
 * **`AppTopBar`** replaces `ScreenHeader` on every screen: back left (56 dp), title right with an optional
   speaker slot, optional centred 44 dp picture (item details and item confirmation) with the title limited
@@ -299,7 +299,39 @@ Rules for every sprint below:
 8. **Tests.** Rewrite `LayoutAndBackUiTest` for LTR (back arrow left, title right); keep the touch-target
    checks; update `ScreenshotTourTest` if it asserts positions. Existing flow tests must pass unchanged.
 
-### Sprint 5: units, fields, photos
+### Sprint 5: invoice output (screens and paper)
+
+Moved before units and photos on the owner's request (2026-10-25): it needs no database change and works
+with today's data. The Latin unit labels and imported photos reach the output in sprint 6.
+
+1. **Table option A** in `InvoiceLayoutEngine`: columns left to right Price | Measurement / Formula |
+   Quantity | Name/Icon; unit price inside the formula cell ("2,52 م² × 500 DH"), quantity dropped from
+   that cell; "DH" in the column header; quantity column with its own margins, centred, no dividers.
+2. **Thumbnails** 34 units on the PNG (26 pt ≈ 9 mm on A4); change `InvoiceLayoutTest`'s 60–80 check to
+   the new 32–40 range.
+3. **PDF.** Full header on page 1 only; pages 2+ start with one slim line (workshop · invoice number ·
+   date) above the column titles; footer "صفحة 2 / 3" on every page; total, deposit and balance only on
+   the last page with at least the last row. Deposit in green, slightly smaller than the total; balance
+   in a yellow band (dark text), same size as the total.
+4. **PNG.** One image. If it would be taller than 8,000 px (about 55 items), the saved screen shows
+   "هذه الفاتورة طويلة على صورة واحدة. شاركها كملف PDF" and the PDF buttons instead of the image button,
+   even when the format setting is "image". Remove the multi-PNG split.
+5. **The same compact table on screen** (in the mock-ups, in no sprint before): one shared composable,
+   right to left: product with its picture, quantity in its own column, measurement and calculation (unit
+   price in the cell), amount in DH; column titles above; no dividers; a long formula wraps inside its cell.
+   * Item list: 36 dp pictures; each row keeps its actions below it, | حذف | تعديل | (delete left, edit
+     right; their speaker tiles come in sprint 7).
+   * Review: 32 dp pictures.
+   * Invoice detail: the same table as the paper.
+6. **Paid state on Review**: when the deposit equals the total, the balance line shows "0 DH" in green with
+   the "خالص" badge (check icon + word) on the same line, instead of the separate banner. An open balance
+   stays bold ink.
+7. **Saved screen**: the two bottom buttons (الرئيسية, فاتورة جديدة) stacked, full width.
+8. **Tests.** Pagination (rows per page, slim header, footer, totals on the last page only), the PNG limit
+   switch; on-screen table column order (amount left, product right) on the item list, review and detail;
+   the paid badge only when fully paid; the stacked Saved buttons.
+
+### Sprint 6: units, fields, photos
 
 1. **Settings.** `lengthUnit` (cm / m) and `unitLabelScript` (Arabic سم / م, Latin cm / m) in
    `AppSettings`, Room v4 migration, backup fields with defaults (older backups: metres, Arabic labels).
@@ -324,24 +356,9 @@ Rules for every sprint below:
    every referenced file; the safety copy includes images; update file names, MIME types and the Drive
    upload. Show the backup size line in Backup.
 8. **Tests.** Migration 3 → 4, invoice unit on create / edit / old mixed invoices, label script in
-   descriptions (both scripts, bidi isolation), image copy per item, backup v1 and v2 round trips.
-
-### Sprint 6: invoice output
-
-1. **Table option A** in `InvoiceLayoutEngine`: columns left to right Price | Measurement / Formula |
-   Quantity | Name/Icon; unit price inside the formula cell ("2,52 م² × 500 DH"), quantity dropped from
-   that cell; "DH" in the column header; quantity column with its own margins, centred, no dividers.
-2. **Thumbnails** 34 units on the PNG (26 pt ≈ 9 mm on A4); change `InvoiceLayoutTest`'s 60–80 check to
-   the new 32–40 range.
-3. **PDF.** Full header on page 1 only; pages 2+ start with one slim line (workshop · invoice number ·
-   date) above the column titles; footer "صفحة 2 / 3" on every page; total, deposit and balance only on
-   the last page with at least the last row. Deposit in green, slightly smaller than the total; balance
-   in a yellow band (dark text), same size as the total.
-4. **PNG.** One image. If it would be taller than 8,000 px (about 55 items), the saved screen shows
-   "هذه الفاتورة طويلة على صورة واحدة. شاركها كملف PDF" and the PDF buttons instead of the image button,
-   even when the format setting is "image". Remove the multi-PNG split.
-5. **Tests.** Pagination (rows per page, slim header, footer, totals on the last page only), the PNG limit
-   switch, both label scripts in the output.
+   descriptions (both scripts, bidi isolation), image copy per item, backup v1 and v2 round trips; both
+   label scripts in the printed output and the on-screen table from sprint 5; a photo shown as the
+   thumbnail in the table, the PNG and the PDF.
 
 ### Sprint 7: placement (speakers and mic)
 
@@ -355,6 +372,8 @@ Rules for every sprint below:
    sentence comes from `SpeechTexts.of(settings.speechLanguage)` (never `DarijaSpeech` directly). Add any
    missing sentence (history card, product list row) to both `DarijaSpeech` and `StandardSpeech`.
 3. **Mic.** `MicButton` in the trailing slot of the customer-name and product-name fields only.
+   Settings → الصوت gets one status line for dictation (ready / offline Arabic pack missing / no recogniser),
+   next to the voice status, as in the mock-up (in no sprint before), without a speaker.
 4. **Tests.** A speaker tap never selects, presses or navigates (one per screen type); the mic appears
    only on the two text fields; voice off keeps the whole flow usable; the missing-voice dialog appears
    once.
@@ -372,16 +391,19 @@ Rules for every sprint below:
 ### Starter prompt for the next session
 
 ```text
-Day 2, Sprint 4 (foundations) of the Workshop Invoice app in C:\dev\projects\Kotlin\Invoice.
-Read CLAUDE.md, docs/day2/DECISIONS.md, docs/day2/PROGRESS.md (section "Next sprints, step by step")
-and the approved mock-ups in docs/day2/design-review.html first.
-Create branch day2/sprint-4 from day2/sprint-3 and build exactly the Sprint 4 steps listed in
-PROGRESS.md: theme tokens, forced LTR with an ArabicText component, the app text field, arrows,
-AppTopBar, SpokenButton, the yellow "+ إضافة منتوج" button, and the LTR UI tests. No features beyond
-that list.
+Day 2, Sprint 5 (invoice output) of the Workshop Invoice app in C:\dev\projects\Kotlin\Invoice.
+Read CLAUDE.md, docs/day2/DECISIONS.md, docs/day2/PROGRESS.md (sections "Sprint 4: foundations" and
+"Next sprints, step by step") and the approved mock-ups in docs/day2/design-review.html first
+(sections "Unit-price column", "Long invoice", item list, review, saved, history).
+Create branch day2/sprint-5 from day2/sprint-4 and build exactly the Sprint 5 steps listed in
+PROGRESS.md: table option A on the printed invoice, 34-unit thumbnails, PDF page header/footer and
+totals on the last page, one PNG or point to PDF, the same compact table on the item list, review and
+invoice detail screens, the paid badge on review, stacked Saved buttons, and their tests. Use the Sprint 4
+components (ArabicText, AppTopBar, SpokenButton, appPalette). No features beyond that list; units,
+photos and speakers come later.
 Safety: instrumented tests wipe the app database. Target one device explicitly (adb -s / ANDROID_SERIAL)
 and ask me before using my phone. This PC cannot run the emulator and Gradle together (7.7 GB RAM):
 build first, stop Gradle, then run the APKs with adb shell am instrument.
-Before ending: build, run all tests, update docs/day2/PROGRESS.md, commit on day2/sprint-4 (do not
+Before ending: build, run all tests, update docs/day2/PROGRESS.md, commit on day2/sprint-5 (do not
 push), and tell me what was verified on a device and what I must check by hand.
 ```
