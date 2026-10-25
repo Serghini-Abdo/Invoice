@@ -112,6 +112,33 @@ Design decisions worth knowing:
 
 Data model and migration strategy: [docs/data-and-migrations.md](docs/data-and-migrations.md).
 
+## Verification: what has and has not been proven
+
+Proven by the CI workflow (`.github/workflows/ci.yml`), on every push:
+
+* 145 domain unit tests pass on a plain JDK.
+* The Android app builds (debug and unsigned release APK), passes lint, and the committed Room schema equals
+  the one generated from the entities.
+* 32 instrumented tests run on real Android system images: **Android 14 (API 34)** and **Android 7.0 (API 24,
+  the oldest supported; the 2 screenshot tests need API 26 and are skipped there)**. They cover the Room
+  database (reopening, repeated items, edits with audit revisions, catalog changes not touching invoices,
+  backup round trip, a failed restore leaving data intact), PNG and PDF export (files decoded and measured),
+  and the complete invoice workflow through the real screens with audio disabled.
+
+Not proven, stated plainly:
+
+* Google Drive backup against a real Google account (needs your OAuth client).
+* Spoken Arabic quality (the CI emulators have no Arabic voice).
+* Any physical phone, any screen smaller than the Pixel 5 profile, device restart, airplane mode, and a
+  failing share target.
+
+The mapping of the 20 acceptance scenarios to tests, with the exact gaps, is in
+[docs/testing.md](docs/testing.md), together with the defects the emulator found that the JVM tests could not.
+
+To get the APK without installing anything, open the latest green run of the **CI** workflow in the
+repository's Actions tab and download the `app-debug-apk` artifact. Screenshots of the real screens and of
+the exported invoice are published to the `ci-screenshots` branch by every run.
+
 ## Known limitations
 
 These are real, current limits, not future plans:
@@ -125,9 +152,10 @@ These are real, current limits, not future plans:
   (Moroccan Arabic if present). Darija pronunciation is *not* promised or verified; spoken amounts use
   standard Arabic number words. CI emulators have no Arabic voice, so speech output itself is only verified
   to degrade correctly (clear "unavailable" state, everything still on screen), not to sound right.
-* **Tested on one emulator configuration** (Android 11 / API 30, x86_64, Pixel 5 profile) in CI, not on
-  physical phones or other Android versions. Touch-target sizes and right-to-left placement are asserted
-  in density-independent pixels by automated UI tests rather than checked by hand on hardware.
+* **Tested on emulators only**: Android 7.0 (API 24) and Android 14 (API 34), x86_64, Pixel 5 profile
+  (1080 x 2340), not on physical phones or smaller screens. Touch-target sizes and right-to-left placement are
+  asserted in density-independent pixels by automated UI tests rather than checked by hand on hardware. On a
+  small phone the item-entry form scrolls and keeps the field being typed into in view.
 * **Product pictures are the 16 built-in illustrations** (the owner can add any number of products, each
   using one of them). Taking or importing photos of products is not implemented.
 * **Phones are locked to portrait.** Tablets may rotate; on a tablet in landscape the item-entry screen is

@@ -146,7 +146,7 @@ fun ReviewScreen(
                 )
                 AmountRow(
                     label = Strings.REMAINING,
-                    value = remaining?.let { ArabicFormat.amount(it) } ?: "—",
+                    value = remaining?.let { ArabicFormat.amount(it) } ?: "-",
                     emphasized = true,
                     valueColor = if (fullyPaid) AppColors.Green else MaterialTheme.colorScheme.primary,
                 )
@@ -193,7 +193,7 @@ fun ReviewScreen(
             extra = {
                 AmountRow(Strings.INVOICE_TOTAL, ArabicFormat.amount(total))
                 AmountRow(Strings.DEPOSIT_SHORT, ArabicFormat.amount(deposit ?: Money.ZERO))
-                AmountRow(Strings.REMAINING, remaining?.let { ArabicFormat.amount(it) } ?: "—", emphasized = true)
+                AmountRow(Strings.REMAINING, remaining?.let { ArabicFormat.amount(it) } ?: "-", emphasized = true)
             },
         )
     }

@@ -140,7 +140,7 @@ fun ItemEntryScreen(
                 Column(Modifier.weight(1f)) {
                     Text(Strings.ITEM_TOTAL, style = MaterialTheme.typography.titleSmall)
                     Text(
-                        evaluation.pricing?.let { ArabicFormat.amount(it.total) } ?: "—",
+                        evaluation.pricing?.let { ArabicFormat.amount(it.total) } ?: "-",
                         style = MaterialTheme.typography.headlineMedium,
                         color = MaterialTheme.colorScheme.primary,
                     )
