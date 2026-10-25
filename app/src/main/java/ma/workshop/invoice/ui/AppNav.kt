@@ -22,6 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -142,6 +144,8 @@ fun AppNav(container: AppContainer) {
                 val deleteFailed by vm.deleteFailed.collectAsStateWithLifecycle()
                 val goBack by rememberUpdatedState { nav.popBackStack() }
                 LaunchedEffect(vm) { vm.exits.collect { goBack() } }
+                // Reload on every resume so returning from the edit screen shows the edited invoice.
+                LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.refresh() }
                 InvoiceDetailScreen(
                     state = state,
                     export = export,
