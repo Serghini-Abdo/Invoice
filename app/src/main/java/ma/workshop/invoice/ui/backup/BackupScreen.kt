@@ -1,7 +1,6 @@
 package ma.workshop.invoice.ui.backup
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -51,6 +50,7 @@ import ma.workshop.invoice.ui.components.ConfirmDialog
 import ma.workshop.invoice.ui.components.ScreenHeader
 import ma.workshop.invoice.ui.components.SectionCard
 import ma.workshop.invoice.ui.components.StatusBanner
+import ma.workshop.invoice.ui.components.strictClickable
 import ma.workshop.invoice.ui.settings.FormatOption
 import java.time.ZoneId
 
@@ -67,7 +67,7 @@ private fun DestinationRow(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 72.dp)
-            .clickable(enabled = enabled, role = Role.Switch) { onChange(!checked) },
+            .strictClickable(enabled = enabled, role = Role.Switch) { onChange(!checked) },
         shape = RoundedCornerShape(14.dp),
         color = if (checked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
     ) {
