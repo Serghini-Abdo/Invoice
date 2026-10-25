@@ -75,11 +75,17 @@ jobs:
           if [ -f app/build/reports/lint-results-debug.txt ]; then head -80 app/build/reports/lint-results-debug.txt; fi
 
   instrumented:
-    name: Emulator tests (Room, export, UI workflow)
+    # API 24 is the oldest Android the app supports (it caught java.time and BigInteger gaps that the JVM
+    # tests cannot see); API 34 is a current phone.
+    name: Emulator tests (Android API ${{ matrix.api }})
     runs-on: ubuntu-latest
     timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [24, 34]
     permissions:
-      contents: write # only used to publish screenshots on manual (workflow_dispatch) runs
+      contents: write # only used to publish screenshots to the throwaway ci-screenshots branch
     steps:
       - uses: actions/checkout@v4
       - name: Enable KVM
@@ -97,7 +103,7 @@ jobs:
       - name: Run instrumented tests on an emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 30
+          api-level: ${{ matrix.api }}
           arch: x86_64
           target: google_apis
           profile: pixel_5
@@ -106,7 +112,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: instrumented-reports
+          name: instrumented-reports-api${{ matrix.api }}
           path: |
             app/build/reports/androidTests
             app/build/outputs/androidTest-results
@@ -123,7 +129,7 @@ jobs:
           done
           echo "=============== END ==============="
       - name: Publish screenshots (branch ci-screenshots, overwritten on every run)
-        if: always() && github.event_name != 'pull_request'
+        if: always() && github.event_name != 'pull_request' && matrix.api == 34
         run: |
           out=app/build/outputs/connected_android_test_additional_output
           if [ -d "$out" ]; then
