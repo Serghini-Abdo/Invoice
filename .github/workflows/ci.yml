@@ -41,6 +41,7 @@ jobs:
       - name: Accept SDK licenses
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
       - name: Build, test, lint
+        shell: bash # GitHub's "bash" shell enables pipefail, so a Gradle failure is not hidden by tee
         run: |
           ./gradlew :domain:test :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease --console=plain 2>&1 | tee build.log
       - uses: actions/upload-artifact@v4

@@ -76,12 +76,14 @@ class DriveBackupClient(private val context: Context) {
     }
 
     /** Reads the access token from the result of the consent screen; null if the user declined. */
-    fun tokenFromConsent(data: Intent?): String? =
-        try {
-            Identity.getAuthorizationClient(context).getAuthorizationResultFromIntent(data ?: return null).accessToken
+    fun tokenFromConsent(data: Intent?): String? {
+        if (data == null) return null
+        return try {
+            Identity.getAuthorizationClient(context).getAuthorizationResultFromIntent(data).accessToken
         } catch (e: ApiException) {
             null
         }
+    }
 
     /** Stores [json] as the current backup. */
     suspend fun upload(token: String, json: String) {
