@@ -72,6 +72,7 @@ fun ReviewScreen(
     state: FlowState,
     speechAvailable: Boolean,
     onSpeakSummary: () -> Unit,
+    onReplay: () -> Unit,
     onDepositChange: (String) -> Unit,
     onSave: () -> Unit,
     onConfirmSave: () -> Unit,
@@ -124,7 +125,7 @@ fun ReviewScreen(
                     Column(Modifier.weight(1f)) {
                         AmountRow(Strings.INVOICE_TOTAL, ArabicFormat.amount(total), emphasized = true)
                     }
-                    SpeakerButton(onClick = onSpeakSummary, available = speechAvailable, description = Strings.REPLAY)
+                    SpeakerButton(onClick = onReplay, available = speechAvailable, description = Strings.REPLAY)
                 }
                 FieldBox(
                     label = Strings.DEPOSIT,

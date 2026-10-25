@@ -11,6 +11,8 @@ import ma.workshop.invoice.data.InvoiceRepository
 import ma.workshop.invoice.data.ProductRepository
 import ma.workshop.invoice.data.SettingsRepository
 import ma.workshop.invoice.data.db.AppDatabase
+import ma.workshop.invoice.platform.SpeechController
+import ma.workshop.invoice.platform.export.InvoiceExporter
 
 /**
  * Hand-rolled dependency container: small enough that a DI framework would only add build risk.
@@ -26,6 +28,9 @@ class AppContainer(val application: Application) {
     val invoices: InvoiceRepository by lazy { InvoiceRepository(database, environment) }
     val drafts: DraftRepository by lazy { DraftRepository(database, environment) }
     val backups: BackupRepository by lazy { BackupRepository(database) }
+
+    val speech: SpeechController by lazy { SpeechController(application) }
+    val exporter: InvoiceExporter by lazy { InvoiceExporter(application) }
 
     /** For work that must outlive a screen, such as saving a draft while the user leaves. */
     val appScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
