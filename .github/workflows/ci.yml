@@ -55,10 +55,14 @@ jobs:
         with:
           name: app-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
-      - name: Print Room schema (to be committed under app/schemas)
-        if: always()
+      - name: Room schema must match the committed baseline
+        # The build regenerates app/schemas/**/N.json from the entities. If it differs from what is committed,
+        # an entity changed without a new schema version / committed schema (migrations would silently break).
         run: |
-          for f in app/schemas/*/*.json; do [ -f "$f" ] && { echo "=== $f ==="; cat "$f"; }; done; true
+          git status --short app/schemas
+          git diff --stat -- app/schemas
+          git diff -- app/schemas | head -60
+          git diff --quiet -- app/schemas
       - name: Failure summary
         if: failure()
         run: |
