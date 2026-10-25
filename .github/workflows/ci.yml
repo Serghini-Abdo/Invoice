@@ -127,6 +127,13 @@ jobs:
             grep -B1 -A6 "<failure" "$f" | cut -c1-1800 | head -120
             grep -B1 -A6 "<error" "$f" | cut -c1-1800 | head -40
           done
+          echo "--- crash details from per-test logcat files (only files that contain a crash)"
+          find app/build/outputs/androidTest-results -type f -name "logcat*" -print0 2>/dev/null | while IFS= read -r -d '' f; do
+            if grep -q -E "FATAL EXCEPTION|ANR in" "$f"; then
+              echo "--- $f"
+              grep -m1 -B2 -A25 -E "FATAL EXCEPTION|ANR in" "$f" | cut -c1-300
+            fi
+          done
           echo "=============== END ==============="
       - name: Publish screenshots (branch ci-screenshots, overwritten on every run)
         if: always() && github.event_name != 'pull_request' && matrix.api == 34
