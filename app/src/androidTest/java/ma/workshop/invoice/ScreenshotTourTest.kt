@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.filters.SdkSuppress
 import kotlinx.coroutines.runBlocking
 import ma.workshop.invoice.ui.Strings
 import org.junit.After
@@ -25,6 +26,7 @@ import org.junit.runner.RunWith
  * Walks through every screen of the real app on the emulator and saves pictures (see [Shots]).
  * It is also a smoke test: every screen must be reachable and render without crashing.
  */
+@SdkSuppress(minSdkVersion = 26) // Compose's captureToImage needs PixelCopy (API 26)
 @RunWith(AndroidJUnit4::class)
 class ScreenshotTourTest {
 
