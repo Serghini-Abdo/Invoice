@@ -56,8 +56,11 @@ below), so it runs on the oldest and a current Android version.
   delete, two backups in one minute do not overwrite each other: **passes**), and on API 24 the app-private fallback
   when the permission is missing (**passes**). The API 24 public-folder write with the permission granted
   (`scripts/legacy-storage-test.sh`, a fresh process after `pm grant`) **did not pass on the CI emulator**: the app
-  could not write inside `/sdcard/Documents` even with the permission granted. It is reported as a CI warning, not a
-  failure. Whether `Documents/Fawatir Warsha` works on real Android 7 to 9 phones is therefore **unverified**; the
+  could not write inside `/sdcard/Documents` even with the permission granted. The diagnostics it printed show why:
+  the test process ran with Android 7's "default" storage view (`/mnt/runtime/default`, no shared-storage access)
+  although `WRITE_EXTERNAL_STORAGE` was listed as granted, so a shell `pm grant` does not give that process real
+  storage access on this emulator image. That points at the test setup rather than the app, but it means the
+  public-folder write was not exercised. It is reported as a CI warning, not a failure. Whether `Documents/Fawatir Warsha` works on real Android 7 to 9 phones is therefore **unverified**; the
   app falls back to its private folder and says so on screen.
 * Domain `AutoBackupTest`: file names (ASCII, sortable, no collisions), retention rules (never the new copy, always
   at least one, foreign files untouched), Play Services and HTTP error mapping, the "more than twice the interval"
