@@ -230,6 +230,7 @@ fun ItemConfirmScreen(
     pending: PendingItem,
     speechAvailable: Boolean,
     onSpeakTotal: () -> Unit,
+    onReplay: () -> Unit,
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
     onBack: () -> Unit,
@@ -284,7 +285,7 @@ fun ItemConfirmScreen(
                             color = MaterialTheme.colorScheme.primary,
                         )
                     }
-                    SpeakerButton(onClick = onSpeakTotal, available = speechAvailable, description = Strings.REPLAY)
+                    SpeakerButton(onClick = onReplay, available = speechAvailable, description = Strings.REPLAY)
                 }
             }
         }

@@ -97,6 +97,7 @@ object Strings {
     const val EXPORT_PREPARING = "جارٍ تجهيز الفاتورة..."
     const val SHARE_UNAVAILABLE = "لا يوجد تطبيق للمشاركة"
     const val PREVIEW = "معاينة الفاتورة"
+    const val PREPARE_SHARE = "معاينة ومشاركة الفاتورة"
 
     // draft / exit
     const val RESUME_DRAFT_TITLE = "فاتورة غير مكتملة"
@@ -133,6 +134,7 @@ object Strings {
     const val CHANGE_ITEM_CHANGED = "تغيير منتوج"
     const val CHANGE_CUSTOMER = "تغيير بيانات الزبون"
     const val CHANGE_DEPOSIT = "تغيير التسبيق"
+    const val DELETE_FAILED = "تعذر حذف الفاتورة. لم يتغير أي شيء"
     const val INVOICE_NOT_FOUND = "الفاتورة غير موجودة"
     const val INVOICE_UNREADABLE = "تعذر قراءة هذه الفاتورة"
 
