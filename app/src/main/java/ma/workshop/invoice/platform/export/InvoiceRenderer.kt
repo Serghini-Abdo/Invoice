@@ -107,7 +107,12 @@ class InvoiceRenderer(context: Context) {
     /** Writes PNG file(s) and returns them in page order. Usually exactly one file. */
     fun writePng(doc: InvoiceDocument, directory: File, baseName: String): List<File> {
         val layout = layoutForPng(doc)
-        val bitmaps = renderBitmaps(layout, PNG_SCALE)
+        val bitmaps = try {
+            renderBitmaps(layout, PNG_SCALE)
+        } catch (e: OutOfMemoryError) {
+            // Report as a normal failure: the invoice is already saved, only this export is lost.
+            throw IllegalStateException("not enough memory to draw the invoice image", e)
+        }
         try {
             return bitmaps.mapIndexed { index, bitmap ->
                 val name = if (bitmaps.size == 1) "$baseName.png" else "$baseName-${index + 1}.png"
@@ -220,7 +225,7 @@ class InvoiceRenderer(context: Context) {
         /** 360 units at 3 px per unit is a 1080 px wide image, ideal for WhatsApp. */
         const val PNG_WIDTH_UNITS = 360f
         const val PNG_SCALE = 3f
-        const val PNG_MAX_PIXELS = 12_000f
+        const val PNG_MAX_PIXELS = 8_000f
 
         /** A4 in PostScript points. The invoice is laid out 520 units wide and scaled to fit. */
         const val PDF_PAGE_WIDTH = 595f

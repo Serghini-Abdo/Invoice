@@ -151,7 +151,7 @@ class ExportInstrumentedTest {
         for (file in files.png) {
             val bmp = BitmapFactory.decodeFile(file.path)
             assertEquals(1080, bmp.width)
-            assertTrue("PNG height ${bmp.height} stays decodable", bmp.height in 1..12_100)
+            assertTrue("PNG height ${bmp.height} stays decodable", bmp.height in 1..8_100)
             bmp.recycle()
         }
         val lastPng = BitmapFactory.decodeFile(files.png.last().path)
