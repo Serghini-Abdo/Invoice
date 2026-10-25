@@ -92,6 +92,7 @@ object Strings {
     const val SHARE_IMAGE = "مشاركة الصورة"
     const val SHARE_PDF = "مشاركة PDF"
     const val SHARE_BOTH = "مشاركة الاثنين"
+    const val PRINT = "طباعة PDF"
     const val SHARE_HINT = "ستفتح قائمة المشاركة لتختار واتساب أو غيره"
     const val EXPORT_FAILED = "الفاتورة محفوظة، لكن تعذر إنشاء الملف"
     const val EXPORT_PREPARING = "جارٍ تجهيز الفاتورة..."

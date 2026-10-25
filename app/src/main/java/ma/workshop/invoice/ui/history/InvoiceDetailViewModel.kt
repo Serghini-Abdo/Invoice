@@ -17,6 +17,7 @@ import ma.workshop.invoice.domain.invoice.Invoice
 import ma.workshop.invoice.domain.invoice.InvoiceRevision
 import ma.workshop.invoice.domain.settings.AppSettings
 import ma.workshop.invoice.platform.export.ExportFiles
+import ma.workshop.invoice.platform.export.PdfPrintAdapter
 import ma.workshop.invoice.platform.export.ShareHelper
 import ma.workshop.invoice.ui.Strings
 import ma.workshop.invoice.ui.screens.ExportStatus
@@ -100,6 +101,11 @@ class InvoiceDetailViewModel(private val container: AppContainer, private val in
         }
         val opened = ShareHelper.share(context, list)
         _export.value = _export.value?.copy(message = if (opened) null else Strings.SHARE_UNAVAILABLE)
+    }
+
+    fun print(context: Context) {
+        val pdf = files?.pdf ?: return
+        if (!PdfPrintAdapter.print(context, pdf)) _export.value = _export.value?.copy(message = Strings.SHARE_UNAVAILABLE)
     }
 
     fun delete() {

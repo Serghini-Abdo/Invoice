@@ -33,6 +33,7 @@ import ma.workshop.invoice.domain.money.Money
 import ma.workshop.invoice.domain.settings.AppSettings
 import ma.workshop.invoice.platform.SpeechStatus
 import ma.workshop.invoice.platform.export.ExportFiles
+import ma.workshop.invoice.platform.export.PdfPrintAdapter
 import ma.workshop.invoice.platform.export.ShareHelper
 import ma.workshop.invoice.ui.Strings
 import ma.workshop.invoice.ui.screens.ExportStatus
@@ -209,6 +210,13 @@ class InvoiceFlowViewModel(
         }
         val opened = ShareHelper.share(context, toShare)
         _export.value = _export.value.copy(message = if (opened) null else Strings.SHARE_UNAVAILABLE)
+    }
+
+    /** Opens the system print dialog for the generated PDF. */
+    fun print(context: Context) {
+        val pdf = exportFiles?.pdf ?: return
+        val opened = PdfPrintAdapter.print(context, pdf)
+        if (!opened) _export.value = _export.value.copy(message = Strings.SHARE_UNAVAILABLE)
     }
 
     // ---- speech ----

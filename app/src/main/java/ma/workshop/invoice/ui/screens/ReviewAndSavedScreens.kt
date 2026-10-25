@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.PictureAsPdf
+import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
@@ -218,6 +219,7 @@ fun ExportPanel(
     onShare: (ShareChoice) -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    onPrint: (() -> Unit)? = null,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         when (export.status) {
@@ -250,6 +252,9 @@ fun ExportPanel(
                         BigButton(Strings.SHARE_BOTH, Icons.Filled.Share, { onShare(ShareChoice.BOTH) }, kind = ButtonKind.Secondary)
                     }
                 }
+                if (onPrint != null && format != ExportFormat.PNG) {
+                    BigButton(Strings.PRINT, Icons.Filled.Print, onPrint, kind = ButtonKind.Secondary)
+                }
                 Text(Strings.SHARE_HINT, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
@@ -265,6 +270,7 @@ fun SavedScreen(
     export: ExportUi,
     onShare: (ShareChoice) -> Unit,
     onRetry: () -> Unit,
+    onPrint: () -> Unit,
     onNewInvoice: () -> Unit,
     onHome: () -> Unit,
 ) {
@@ -284,7 +290,7 @@ fun SavedScreen(
                 style = MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
             )
-            ExportPanel(format, export, onShare, onRetry)
+            ExportPanel(format, export, onShare, onRetry, onPrint = onPrint)
         }
         Surface(shadowElevation = 12.dp, color = MaterialTheme.colorScheme.surface) {
             Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
