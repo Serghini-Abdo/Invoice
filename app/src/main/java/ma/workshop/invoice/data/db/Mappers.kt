@@ -180,6 +180,7 @@ fun SettingsEntity.toDomain() = AppSettings(
     nextInvoiceNumber = nextInvoiceNumber,
     speechRate = SpeechRate.fromId(speechRate) ?: SpeechRate.NORMAL,
     speechLanguage = SpeechLanguage.fromId(speechLanguage) ?: SpeechLanguage.DARIJA,
+    showSpeakers = showSpeakers,
 )
 
 fun AppSettings.toEntity(catalogSeeded: Boolean) = SettingsEntity(
@@ -195,4 +196,5 @@ fun AppSettings.toEntity(catalogSeeded: Boolean) = SettingsEntity(
     catalogSeeded = catalogSeeded,
     speechRate = speechRate.id,
     speechLanguage = speechLanguage.id,
+    showSpeakers = showSpeakers,
 )

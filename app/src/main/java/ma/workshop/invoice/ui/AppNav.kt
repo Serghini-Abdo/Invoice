@@ -13,6 +13,17 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.setValue
+import androidx.navigation.compose.currentBackStackEntryAsState
+import android.widget.Toast
+import ma.workshop.invoice.domain.settings.AppSettings
+import ma.workshop.invoice.domain.speech.SpeechTexts
+import ma.workshop.invoice.platform.SpeakResult
+import ma.workshop.invoice.ui.components.LocalSpeakers
+import ma.workshop.invoice.ui.components.SpeakerUi
+import ma.workshop.invoice.ui.components.VoiceMissingDialog
+import ma.workshop.invoice.ui.Strings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -72,6 +83,46 @@ fun AppNav(container: AppContainer) {
     val nav = rememberNavController()
     val context = LocalContext.current
 
+    // The speaker icons: one switch in Settings; Settings and Backup themselves never show them.
+    val appSettings by container.settings.settings.collectAsStateWithLifecycle(AppSettings())
+    val route by nav.currentBackStackEntryAsState()
+    var askForVoice by remember { mutableStateOf(false) }
+    val speakerUi = remember(appSettings) {
+        SpeakerUi(
+            show = appSettings.showSpeakers,
+            texts = SpeechTexts.of(appSettings.speechLanguage),
+            speak = { text ->
+                val message = when (container.speaker.say(text, appSettings)) {
+                    SpeakResult.SPOKEN -> null
+                    SpeakResult.AUDIO_OFF -> Strings.AUDIO_OFF
+                    SpeakResult.UNAVAILABLE -> Strings.AUDIO_UNAVAILABLE_TOAST
+                    SpeakResult.CHECKING -> Strings.AUDIO_CHECKING
+                    SpeakResult.ASK_FOR_VOICE -> {
+                        askForVoice = true
+                        null
+                    }
+                }
+                if (message != null) Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            },
+        )
+    }
+    val currentRoute = route?.destination?.route
+    val shownUi = if (currentRoute == Routes.SETTINGS || currentRoute == Routes.BACKUP) speakerUi.hidden() else speakerUi
+    if (askForVoice) {
+        VoiceMissingDialog(
+            onInstall = {
+                askForVoice = false
+                try {
+                    context.startActivity(container.speech.installVoiceDataIntent())
+                } catch (e: android.content.ActivityNotFoundException) {
+                    Toast.makeText(context, Strings.AUDIO_NO_ENGINE, Toast.LENGTH_LONG).show()
+                }
+            },
+            onDismiss = { askForVoice = false },
+        )
+    }
+
+    CompositionLocalProvider(LocalSpeakers provides shownUi) {
     Box(
         Modifier
             .fillMaxSize()
@@ -292,5 +343,6 @@ fun AppNav(container: AppContainer) {
                 )
             }
         }
+    }
     }
 }

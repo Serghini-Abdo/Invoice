@@ -137,6 +137,9 @@ data class SettingsEntity(
     /** Added in schema version 3 (Day 2). */
     @ColumnInfo(defaultValue = "darija")
     val speechLanguage: String = SpeechLanguage.DARIJA.id,
+    /** Added in schema version 4 (Day 2). */
+    @ColumnInfo(defaultValue = "0")
+    val showSpeakers: Boolean = false,
 ) {
     companion object {
         const val SINGLETON_ID = 1

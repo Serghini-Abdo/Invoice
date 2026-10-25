@@ -30,6 +30,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -79,7 +80,17 @@ fun BigButton(
     modifier: Modifier = Modifier,
     kind: ButtonKind = ButtonKind.Primary,
     enabled: Boolean = true,
+    /** With "show speaker icons" on, a tile of this button's style sits on its left and speaks the label. */
+    spokenTile: Boolean = true,
 ) {
+    val speakers = LocalSpeakers.current
+    if (spokenTile && speakers.show) {
+        Row(modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            SpeakerTile(kind, { speakers.speak(text) }, "${Strings.SPEAK_LABEL}: $text", buttonEnabled = enabled)
+            BigButton(text, icon, onClick, Modifier.weight(1f), kind, enabled, spokenTile = false)
+        }
+        return
+    }
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val colors = buttonColors(kind, enabled, pressed)

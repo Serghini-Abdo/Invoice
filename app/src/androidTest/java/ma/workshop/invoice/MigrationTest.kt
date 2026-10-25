@@ -82,4 +82,26 @@ class MigrationTest {
             }
         }
     }
+
+    @Test
+    fun version3SettingsKeepTheirValuesAndHideTheSpeakers() {
+        val name = "migration-settings-4.db"
+        helper.createDatabase(name, 3).use { db ->
+            db.execSQL(
+                "INSERT INTO app_settings (id, workshopName, workshopPhone, exportFormat, audioEnabled, speakItemTotals, " +
+                    "speakInvoiceTotals, thankYouMessage, nextInvoiceNumber, catalogSeeded, speechRate, speechLanguage) " +
+                    "VALUES (1, 'ورشة الأمل', '0522', 'pdf', 1, 1, 0, 'شكراً', 11, 1, 'slow', 'standard')",
+            )
+        }
+        helper.runMigrationsAndValidate(name, 4, true, AppDatabase.MIGRATION_3_4).use { db ->
+            db.query("SELECT workshopName, nextInvoiceNumber, speechRate, speechLanguage, showSpeakers FROM app_settings").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                org.junit.Assert.assertEquals("ورشة الأمل", cursor.getString(0))
+                org.junit.Assert.assertEquals(11L, cursor.getLong(1))
+                org.junit.Assert.assertEquals("slow", cursor.getString(2))
+                org.junit.Assert.assertEquals("standard", cursor.getString(3))
+                org.junit.Assert.assertEquals(0, cursor.getInt(4))
+            }
+        }
+    }
 }

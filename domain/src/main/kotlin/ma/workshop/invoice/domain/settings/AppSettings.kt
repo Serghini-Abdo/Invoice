@@ -53,6 +53,8 @@ data class AppSettings(
     val nextInvoiceNumber: Long = 1L,
     val speechRate: SpeechRate = SpeechRate.NORMAL,
     val speechLanguage: SpeechLanguage = SpeechLanguage.DARIJA,
+    /** Show the round speaker icons and speaker tiles beside buttons, titles and table rows. Off by default. */
+    val showSpeakers: Boolean = false,
 ) {
     companion object {
         const val DEFAULT_THANK_YOU = "شكراً لثقتكم"

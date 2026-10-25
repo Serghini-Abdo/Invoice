@@ -234,7 +234,7 @@ fun AppTopBar(
                         .widthIn(max = titleMax),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    speaker?.invoke()
+                    if (speaker != null) speaker() else RoundSpeaker(title)
                     ArabicText(
                         text = title,
                         style = if (centerIcon != null) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
@@ -315,7 +315,7 @@ fun SpokenButton(
 ) {
     Row(modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         SpeakerTile(kind, onSpeak, "${Strings.SPEAK_LABEL}: $text", buttonEnabled = enabled, speechAvailable = speechAvailable)
-        BigButton(text, icon, onClick, buttonModifier.weight(1f), kind = kind, enabled = enabled)
+        BigButton(text, icon, onClick, buttonModifier.weight(1f), kind = kind, enabled = enabled, spokenTile = false)
     }
 }
 
