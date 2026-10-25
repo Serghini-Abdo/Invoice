@@ -52,9 +52,13 @@ below), so it runs on the oldest and a current Android version.
   touches foreign files; a write failure retries and is then recorded; a disabled schedule does nothing; Drive
   creates the new copy before deleting any old one and keeps 5; a failed upload deletes nothing; gone consent is
   recorded with no UI and becomes a home alert; a developer error is not retried and keeps its raw code.
-* `AppFolderStoreTest`: the real storage path. MediaStore into `Documents/Fawatir Warsha` on API 34, the public
-  Documents directory with the runtime permission on API 24; list, read back, delete, two backups in one minute do
-  not overwrite each other, and the app-private fallback when the permission is missing (API 24 only).
+* `AppFolderStoreTest`: the real storage path. MediaStore into `Documents/Fawatir Warsha` on API 34 (list, read back,
+  delete, two backups in one minute do not overwrite each other: **passes**), and on API 24 the app-private fallback
+  when the permission is missing (**passes**). The API 24 public-folder write with the permission granted
+  (`scripts/legacy-storage-test.sh`, a fresh process after `pm grant`) **did not pass on the CI emulator**: the app
+  could not write inside `/sdcard/Documents` even with the permission granted. It is reported as a CI warning, not a
+  failure. Whether `Documents/Fawatir Warsha` works on real Android 7 to 9 phones is therefore **unverified**; the
+  app falls back to its private folder and says so on screen.
 * Domain `AutoBackupTest`: file names (ASCII, sortable, no collisions), retention rules (never the new copy, always
   at least one, foreign files untouched), Play Services and HTTP error mapping, the "more than twice the interval"
   warning, catch-up decisions.

@@ -157,8 +157,10 @@ Not proven, stated plainly:
   retention and the worker's behaviour with a scripted fake Drive are tested; the live Google calls are not.
 * A background backup actually firing on schedule on a real phone (the worker is tested by running it
   directly; WorkManager's own timing, Doze and reboot behaviour were not observed).
-* Saving to `Documents/Fawatir Warsha` was tested on API 24 and API 34 emulators only, and the file picker
-  opening in that folder was not observed.
+* Saving to `Documents/Fawatir Warsha` is verified on the Android 14 (API 34) emulator only. On Android 7 to 9 the
+  public-folder write could **not** be verified on the Android 7 emulator (the permission was granted but the write
+  was refused there); the app falls back to its private folder and tells the owner. The file picker opening in that
+  folder was not observed.
 * Spoken Arabic quality (the CI emulators have no Arabic voice).
 * Any physical phone, any screen smaller than the Pixel 5 profile, device restart, airplane mode, and a
   failing share target.
