@@ -28,6 +28,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ma.workshop.invoice.domain.flow.PendingItem
@@ -150,7 +151,7 @@ fun ItemEntryScreen(
                     text = Strings.CONTINUE,
                     icon = Icons.AutoMirrored.Filled.ArrowForward,
                     onClick = onSubmit,
-                    modifier = Modifier.width(170.dp),
+                    modifier = Modifier.width(170.dp).testTag("entry-continue"),
                 )
             }
         }
@@ -167,6 +168,7 @@ fun ItemEntryScreen(
             if (needsDimensions) {
                 FieldBox(
                     label = Strings.WIDTH,
+                    tag = "field-width",
                     value = form.widthText,
                     selected = active == ActiveField.WIDTH,
                     onClick = { select(ActiveField.WIDTH) },
@@ -175,6 +177,7 @@ fun ItemEntryScreen(
                 )
                 FieldBox(
                     label = Strings.HEIGHT,
+                    tag = "field-height",
                     value = form.heightText,
                     selected = active == ActiveField.HEIGHT,
                     onClick = { select(ActiveField.HEIGHT) },
@@ -184,6 +187,7 @@ fun ItemEntryScreen(
             }
             FieldBox(
                 label = formula.rateLabel(),
+                tag = "field-rate",
                 value = form.rateText,
                 selected = active == ActiveField.RATE,
                 onClick = { select(ActiveField.RATE) },
