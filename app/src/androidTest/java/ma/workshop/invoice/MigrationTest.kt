@@ -30,11 +30,33 @@ class MigrationTest {
                     "VALUES ('inv-1', 1, 1, 1, 1, 'أحمد', '', 126000, 0, 126000, 1)",
             )
         }
-        helper.runMigrationsAndValidate(name, 1, true, *AppDatabase.MIGRATIONS).use { db ->
+        helper.runMigrationsAndValidate(name, AppDatabase.MIGRATIONS.last().endVersion, true, *AppDatabase.MIGRATIONS).use { db ->
             db.query("SELECT customerName, totalCentimes FROM invoices WHERE id = 'inv-1'").use { cursor ->
                 assertTrue(cursor.moveToFirst())
                 org.junit.Assert.assertEquals("أحمد", cursor.getString(0))
                 org.junit.Assert.assertEquals(126000L, cursor.getLong(1))
+            }
+        }
+    }
+
+    @Test
+    fun version1SettingsKeepTheirValuesAndGetTheNormalSpeechRate() {
+        val name = "migration-settings.db"
+        helper.createDatabase(name, 1).use { db ->
+            db.execSQL(
+                "INSERT INTO app_settings (id, workshopName, workshopPhone, exportFormat, audioEnabled, speakItemTotals, " +
+                    "speakInvoiceTotals, thankYouMessage, nextInvoiceNumber, catalogSeeded) " +
+                    "VALUES (1, 'ورشة الأمل', '0522', 'pdf', 0, 1, 1, 'شكراً', 7, 1)",
+            )
+        }
+        helper.runMigrationsAndValidate(name, 2, true, AppDatabase.MIGRATION_1_2).use { db ->
+            db.query("SELECT workshopName, exportFormat, audioEnabled, nextInvoiceNumber, speechRate FROM app_settings").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                org.junit.Assert.assertEquals("ورشة الأمل", cursor.getString(0))
+                org.junit.Assert.assertEquals("pdf", cursor.getString(1))
+                org.junit.Assert.assertEquals(0, cursor.getInt(2))
+                org.junit.Assert.assertEquals(7L, cursor.getLong(3))
+                org.junit.Assert.assertEquals("normal", cursor.getString(4))
             }
         }
     }

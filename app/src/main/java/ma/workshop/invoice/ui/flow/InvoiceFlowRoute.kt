@@ -18,14 +18,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ma.workshop.invoice.AppContainer
+import ma.workshop.invoice.platform.SpeakResult
 import ma.workshop.invoice.domain.flow.FlowEvent
 import ma.workshop.invoice.domain.flow.FlowMode
 import ma.workshop.invoice.domain.flow.FlowStep
@@ -36,6 +42,7 @@ import ma.workshop.invoice.ui.components.BigButton
 import ma.workshop.invoice.ui.components.ButtonKind
 import ma.workshop.invoice.ui.components.ConfirmDialog
 import ma.workshop.invoice.ui.components.ScreenHeader
+import ma.workshop.invoice.ui.components.VoiceMissingDialog
 import ma.workshop.invoice.ui.screens.CatalogPickerScreen
 import ma.workshop.invoice.ui.screens.CustomerScreen
 import ma.workshop.invoice.ui.screens.ItemConfirmScreen
@@ -73,13 +80,37 @@ fun InvoiceFlowRoute(
     val currentOnExit by rememberUpdatedState(onExit)
     LaunchedEffect(vm) { vm.exits.collect { currentOnExit() } }
 
+    var askForVoice by rememberSaveable { mutableStateOf(false) }
+
     fun speakFeedback(result: SpeakResult) {
         val message = when (result) {
             SpeakResult.SPOKEN -> null
             SpeakResult.AUDIO_OFF -> Strings.AUDIO_OFF
             SpeakResult.UNAVAILABLE -> Strings.AUDIO_UNAVAILABLE_TOAST
+            SpeakResult.CHECKING -> Strings.AUDIO_CHECKING
+            SpeakResult.ASK_FOR_VOICE -> {
+                askForVoice = true
+                null
+            }
         }
         if (message != null) Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+
+    // Coming back from the voice download screen: pick up the new voice.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.recheckVoiceIfMissing() }
+
+    if (askForVoice) {
+        VoiceMissingDialog(
+            onInstall = {
+                askForVoice = false
+                try {
+                    context.startActivity(vm.installVoiceIntent())
+                } catch (e: android.content.ActivityNotFoundException) {
+                    Toast.makeText(context, Strings.AUDIO_NO_ENGINE, Toast.LENGTH_LONG).show()
+                }
+            },
+            onDismiss = { askForVoice = false },
+        )
     }
 
     BackHandler { vm.onEvent(FlowEvent.BackPressed) }

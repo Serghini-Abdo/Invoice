@@ -9,6 +9,8 @@ import android.speech.tts.Voice
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import ma.workshop.invoice.domain.settings.SpeechRate
+import ma.workshop.invoice.domain.speech.VoiceState
 import java.util.Locale
 
 enum class SpeechProblem { NO_ENGINE, NO_ARABIC, INIT_FAILED }
@@ -26,8 +28,8 @@ sealed interface SpeechStatus {
  * Arabic speech through the phone's own text-to-speech engine, with no network needed when an
  * offline voice is installed.
  *
- * It looks for an installed Arabic voice (preferring Moroccan Arabic, `ar-MA`, then any other Arabic
- * voice, offline before online). It does not promise Darija pronunciation: that depends entirely on
+ * It looks for an installed offline Arabic voice (preferring Moroccan Arabic, `ar-MA`, then any other
+ * Arabic voice); voices that need the network are never used. It does not promise Darija pronunciation: that depends entirely on
  * which voice the phone has. When no usable voice exists the status says so, the UI shows a clear
  * message, and the app carries on silently, since speech is only ever an aid.
  */
@@ -41,6 +43,13 @@ class SpeechController(private val context: Context) {
     private var utterance = 0
 
     val isReady: Boolean get() = _status.value is SpeechStatus.Ready
+
+    val voiceState: VoiceState
+        get() = when (_status.value) {
+            SpeechStatus.Checking -> VoiceState.CHECKING
+            is SpeechStatus.Ready -> VoiceState.READY
+            is SpeechStatus.Unavailable -> VoiceState.MISSING
+        }
 
     /** Starts the engine on first use. Safe to call repeatedly. */
     fun ensureStarted() {
@@ -75,34 +84,43 @@ class SpeechController(private val context: Context) {
     private fun hasEngine(): Boolean =
         context.packageManager.queryIntentServices(Intent(TextToSpeech.Engine.INTENT_ACTION_TTS_SERVICE), 0).isNotEmpty()
 
+    /**
+     * Offline voices only: the app must speak with no internet. Moroccan Arabic (ar-MA) is preferred,
+     * then any other Arabic voice. A voice that needs the network counts as missing.
+     */
     private fun selectArabicVoice(tts: TextToSpeech): SpeechStatus {
         val installed: List<Voice> = tts.voices.orEmpty().filter { voice ->
             voice.locale.language == "ar" &&
+                !voice.isNetworkConnectionRequired &&
                 voice.features?.contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED) != true
         }
-        val best = installed.minWithOrNull(
-            compareBy<Voice>({ it.locale.country != "MA" }, { it.isNetworkConnectionRequired }, { -it.quality }),
-        )
+        val best = installed.minWithOrNull(compareBy<Voice>({ it.locale.country != "MA" }, { -it.quality }))
         if (best != null && tts.setVoice(best) == TextToSpeech.SUCCESS) {
             return SpeechStatus.Ready(best.name)
         }
-        for (tag in listOf("ar-MA", "ar-DZ", "ar-TN", "ar")) {
+        // Engines that do not list voices: fall back to the language, but still refuse a network voice.
+        for (tag in listOf("ar-MA", "ar")) {
             val locale = Locale.forLanguageTag(tag)
             if (tts.isLanguageAvailable(locale) >= TextToSpeech.LANG_AVAILABLE &&
-                tts.setLanguage(locale) >= TextToSpeech.LANG_AVAILABLE
+                tts.setLanguage(locale) >= TextToSpeech.LANG_AVAILABLE &&
+                tts.voice?.isNetworkConnectionRequired != true
             ) {
-                return SpeechStatus.Ready(tts.defaultVoice?.name ?: tag)
+                return SpeechStatus.Ready(tts.voice?.name ?: tag)
             }
         }
         return SpeechStatus.Unavailable(SpeechProblem.NO_ARABIC)
     }
 
-    /** Speaks [text], replacing anything still being spoken. Does nothing if no Arabic voice works. */
-    fun speak(text: String) {
+    /**
+     * Speaks [text] at [rate]. QUEUE_FLUSH cuts off whatever is still being spoken, so tapping another
+     * speaker always stops the previous one. Does nothing if no offline Arabic voice works.
+     */
+    fun speak(text: String, rate: SpeechRate = SpeechRate.NORMAL) {
         ensureStarted()
         val tts = engine ?: return
         if (!isReady || text.isBlank()) return
         utterance += 1
+        tts.setSpeechRate(rate.multiplier)
         tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "invoice-$utterance")
     }
 

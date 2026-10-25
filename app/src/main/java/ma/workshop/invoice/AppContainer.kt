@@ -12,6 +12,8 @@ import ma.workshop.invoice.data.ProductRepository
 import ma.workshop.invoice.data.SettingsRepository
 import ma.workshop.invoice.data.db.AppDatabase
 import ma.workshop.invoice.platform.RestoreSafety
+import ma.workshop.invoice.platform.Dictation
+import ma.workshop.invoice.platform.Speaker
 import ma.workshop.invoice.platform.SpeechController
 import ma.workshop.invoice.platform.backup.AppFolderBackupStore
 import ma.workshop.invoice.platform.backup.BackupPrefs
@@ -72,6 +74,8 @@ class AppContainer(val application: Application) {
     var startupNotice: String? = null
 
     val speech: SpeechController by lazy { SpeechController(application) }
+    val speaker: Speaker by lazy { Speaker(speech) }
+    val dictation: Dictation by lazy { Dictation(application) }
     val exporter: InvoiceExporter by lazy { InvoiceExporter(application) }
 
     /** For work that must outlive a screen, such as saving a draft while the user leaves. */

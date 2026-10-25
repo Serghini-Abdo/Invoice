@@ -8,8 +8,14 @@
     <!-- Android 7 to 9 only: needed to create the Documents/Fawatir Warsha backup folder. Android 10+ needs no permission. -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 
-    <!-- Lets the app find the device's text-to-speech engine on Android 11+. -->
+    <!-- Speak-to-fill on text fields. Asked on the first mic tap only; nothing is recorded or stored. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Lets the app find the device's text-to-speech engine and speech recognizer on Android 11+. -->
     <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>

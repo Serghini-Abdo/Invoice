@@ -1,6 +1,7 @@
 package ma.workshop.invoice.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
@@ -41,6 +43,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import ma.workshop.invoice.domain.settings.AppSettings
 import ma.workshop.invoice.domain.settings.ExportFormat
+import ma.workshop.invoice.domain.settings.SpeechRate
 import ma.workshop.invoice.platform.SpeechProblem
 import ma.workshop.invoice.platform.SpeechStatus
 import ma.workshop.invoice.ui.Strings
@@ -91,6 +94,31 @@ internal fun FormatOption(title: String, hint: String, selected: Boolean, onClic
                 Text(title, style = MaterialTheme.typography.titleMedium)
                 Text(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
+        }
+    }
+}
+
+/** One of the three speech-rate choices. The chosen one has a check mark and a thick border, not only a colour. */
+@Composable
+private fun RateOption(label: String, selected: Boolean, enabled: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    Surface(
+        modifier = modifier
+            .heightIn(min = 56.dp)
+            .strictClickable(enabled = enabled, role = Role.RadioButton, onClickLabel = label, onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+        border = if (selected) BorderStroke(3.dp, MaterialTheme.colorScheme.primary) else null,
+    ) {
+        Row(Modifier.padding(horizontal = 8.dp, vertical = 8.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+            if (selected) {
+                Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(4.dp))
+            }
+            Text(
+                label,
+                style = MaterialTheme.typography.titleSmall,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
+            )
         }
     }
 }
@@ -200,6 +228,18 @@ fun SettingsScreen(
             SectionCard {
                 Text(Strings.AUDIO, style = MaterialTheme.typography.titleLarge)
                 SwitchRow(Strings.AUDIO_ENABLED, settings.audioEnabled) { v -> onUpdate { it.copy(audioEnabled = v) } }
+                Text(Strings.SPEECH_RATE, style = MaterialTheme.typography.titleMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    for ((rate, label) in listOf(
+                        SpeechRate.SLOW to Strings.SPEECH_RATE_SLOW,
+                        SpeechRate.NORMAL to Strings.SPEECH_RATE_NORMAL,
+                        SpeechRate.FAST to Strings.SPEECH_RATE_FAST,
+                    )) {
+                        RateOption(label, selected = settings.speechRate == rate, enabled = settings.audioEnabled, modifier = Modifier.weight(1f)) {
+                            onUpdate { it.copy(speechRate = rate) }
+                        }
+                    }
+                }
                 SwitchRow(Strings.AUDIO_ITEM_TOTALS, settings.speakItemTotals, enabled = settings.audioEnabled) { v ->
                     onUpdate { it.copy(speakItemTotals = v) }
                 }

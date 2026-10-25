@@ -2,7 +2,7 @@
 
 Local storage is Room over SQLite (`ma.workshop.invoice.data.db`). Everything works offline.
 
-## Tables (schema version 1)
+## Tables (schema version 2)
 
 | Table | Purpose | Notes |
 |---|---|---|
@@ -10,7 +10,7 @@ Local storage is Room over SQLite (`ma.workshop.invoice.data.db`). Everything wo
 | `invoices` | One row per invoice | Stable text id (UUID), unique sequential `number`, created/updated timestamps, `revision`, customer name/phone **snapshot**, total / deposit / remaining (centimes), item count. Indexed on number, createdAt, customerName. |
 | `invoice_items` | Items of an invoice | FK to `invoices` (`CASCADE`), optional FK to `products` (`SET NULL`). Product name, illustration, formula, original dimensions + units, normalised micrometres, quantity, unit rate, rate basis, exact base amount, total: all snapshots. |
 | `invoice_revisions` | Audit trail | One row per saved edit: what changed, old/new totals and deposits, and the **complete previous version** of the invoice as JSON. |
-| `app_settings` | Single row | Workshop name/phone, export format, audio switches, thank-you text, next invoice number, "starter catalog seeded" flag. |
+| `app_settings` | Single row | Workshop name/phone, export format, audio switches, speech rate (`slow` / `normal` / `fast`, added in version 2), thank-you text, next invoice number, "starter catalog seeded" flag. |
 | `drafts` | Auto-saved unfinished invoice | JSON of the in-progress workflow state; removed when the invoice is saved or discarded. |
 
 ## Transactions
@@ -33,6 +33,13 @@ Local storage is Room over SQLite (`ma.workshop.invoice.data.db`). Everything wo
   that opens version N with data in it.
 * Backups carry their own `version` (see `BackupFormat`). Older backups must remain restorable; a backup
   from a *newer* app is refused with a clear message instead of being half-understood.
+
+## Version history
+
+| Version | Change | Migration |
+|---|---|---|
+| 1 | Initial schema. | - |
+| 2 | `app_settings.speechRate TEXT NOT NULL DEFAULT 'normal'` (Day 2, sprint 3). Backups gained an optional `speechRate`; older backups restore with `normal`. | `MIGRATION_1_2` |
 
 ## Adding a column (example)
 

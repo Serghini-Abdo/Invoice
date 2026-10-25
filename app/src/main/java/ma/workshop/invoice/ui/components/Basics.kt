@@ -20,7 +20,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
@@ -174,6 +176,43 @@ fun ConfirmDialog(
                 Icon(Icons.Filled.Close, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text(dismissText, style = MaterialTheme.typography.labelLarge)
+            }
+        },
+    )
+}
+
+/**
+ * Shown the first time a speaker is tapped on a phone without an offline Arabic voice. Nothing is lost
+ * by closing it: every figure stays on screen.
+ */
+@Composable
+fun VoiceMissingDialog(onInstall: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.AutoMirrored.Filled.VolumeOff, contentDescription = null, modifier = Modifier.size(36.dp)) },
+        title = { Text(Strings.VOICE_MISSING_TITLE, style = MaterialTheme.typography.titleLarge) },
+        text = { Text(Strings.VOICE_MISSING_MESSAGE, style = MaterialTheme.typography.bodyLarge) },
+        confirmButton = {
+            StrictButton(
+                onClick = onInstall,
+                modifier = Modifier.defaultMinSize(minHeight = 56.dp),
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = Color.White,
+            ) {
+                Icon(Icons.Filled.Download, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(Strings.AUDIO_INSTALL, style = MaterialTheme.typography.labelLarge)
+            }
+        },
+        dismissButton = {
+            StrictButton(
+                onClick = onDismiss,
+                modifier = Modifier.defaultMinSize(minHeight = 56.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+            ) {
+                Icon(Icons.Filled.Close, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(Strings.LATER, style = MaterialTheme.typography.labelLarge)
             }
         },
     )

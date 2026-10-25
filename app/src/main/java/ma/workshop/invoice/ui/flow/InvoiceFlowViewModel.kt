@@ -24,13 +24,14 @@ import ma.workshop.invoice.domain.flow.FlowEffect
 import ma.workshop.invoice.domain.flow.FlowEvent
 import ma.workshop.invoice.domain.flow.FlowState
 import ma.workshop.invoice.domain.flow.InvoiceFlow
-import ma.workshop.invoice.domain.format.SpokenText
 import ma.workshop.invoice.domain.invoice.Invoice
 import ma.workshop.invoice.domain.invoice.InvoiceDraft
 import ma.workshop.invoice.domain.invoice.PaymentSummary
 import ma.workshop.invoice.domain.invoice.ProductDefinition
 import ma.workshop.invoice.domain.money.Money
 import ma.workshop.invoice.domain.settings.AppSettings
+import ma.workshop.invoice.domain.speech.DarijaSpeech
+import ma.workshop.invoice.platform.SpeakResult
 import ma.workshop.invoice.platform.SpeechStatus
 import ma.workshop.invoice.platform.export.ExportFiles
 import ma.workshop.invoice.platform.export.PdfPrintAdapter
@@ -43,8 +44,6 @@ import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
 
 enum class LoadError { NOT_FOUND, UNREADABLE }
-
-enum class SpeakResult { SPOKEN, AUDIO_OFF, UNAVAILABLE }
 
 /**
  * Hosts the invoice workflow. All navigation and calculation rules live in the pure [InvoiceFlow]
@@ -221,45 +220,54 @@ class InvoiceFlowViewModel(
 
     // ---- speech ----
 
-    /** The speaker next to a product: speaks when audio is on and a voice exists. */
-    fun speakProductName(name: String): SpeakResult = speakIf(settings.value.audioEnabled, name)
+    /** The speaker on a product card: speaks the name only; it never selects the product. */
+    fun speakProductName(name: String): SpeakResult = container.speaker.say(name, settings.value)
 
     fun replayItemTotal(): SpeakResult {
-        val pending = _state.value?.pending
-        val pricing = pending?.confirmedPricing ?: return SpeakResult.UNAVAILABLE
-        return speakIf(settings.value.audioEnabled, SpokenText.itemTotal(pending.product.name, pricing.total))
+        val text = itemTotalText() ?: return SpeakResult.UNAVAILABLE
+        return container.speaker.say(text, settings.value)
     }
 
     fun autoSpeakItemTotal() {
-        if (settings.value.speakItemTotals) replayItemTotal()
+        if (settings.value.speakItemTotals) itemTotalText()?.let { container.speaker.sayIfReady(it, settings.value) }
     }
 
     fun replayInvoiceSummary(): SpeakResult {
-        val state = _state.value ?: return SpeakResult.UNAVAILABLE
-        val deposit = state.deposit ?: Money.ZERO
-        val summary = PaymentSummary(state.total, deposit, state.total - deposit)
-        return speakIf(settings.value.audioEnabled, SpokenText.invoiceSummary(summary))
+        val text = invoiceSummaryText() ?: return SpeakResult.UNAVAILABLE
+        return container.speaker.say(text, settings.value)
     }
 
     fun autoSpeakInvoiceSummary() {
-        if (settings.value.speakInvoiceTotals) replayInvoiceSummary()
+        if (settings.value.speakInvoiceTotals) invoiceSummaryText()?.let { container.speaker.sayIfReady(it, settings.value) }
     }
+
+    private fun itemTotalText(): String? {
+        val pending = _state.value?.pending
+        val pricing = pending?.confirmedPricing ?: return null
+        return DarijaSpeech.itemTotal(pending.product.name, pricing.total)
+    }
+
+    private fun invoiceSummaryText(): String? {
+        val state = _state.value ?: return null
+        val deposit = state.deposit ?: Money.ZERO
+        return DarijaSpeech.paymentSummary(PaymentSummary(state.total, deposit, state.total - deposit))
+    }
+
+    /** After the user came back from installing a voice, look for it again. */
+    fun recheckVoiceIfMissing() {
+        if (container.speech.status.value is SpeechStatus.Unavailable) container.speech.recheck()
+    }
+
+    fun installVoiceIntent() = container.speech.installVoiceDataIntent()
 
     /** The quick mute switch: also silences anything currently being spoken. */
     fun toggleAudio() {
-        container.speech.stop()
+        container.speaker.stop()
         viewModelScope.launch { container.settings.update { it.copy(audioEnabled = !it.audioEnabled) } }
     }
 
-    private fun speakIf(allowed: Boolean, text: String): SpeakResult {
-        if (!allowed) return SpeakResult.AUDIO_OFF
-        if (!container.speech.isReady) return SpeakResult.UNAVAILABLE
-        container.speech.speak(text)
-        return SpeakResult.SPOKEN
-    }
-
     override fun onCleared() {
-        container.speech.stop()
+        container.speaker.stop()
         super.onCleared()
     }
 }
