@@ -11,6 +11,7 @@ class InvoiceApp : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
+        if (container.restoreSafety.consumeInterrupted()) container.startupNotice = ma.workshop.invoice.ui.Strings.RESTORE_INTERRUPTED
         container.appScope.launch { container.products.ensureSeeded() }
     }
 }
