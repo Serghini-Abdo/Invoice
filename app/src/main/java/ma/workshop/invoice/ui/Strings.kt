@@ -56,7 +56,7 @@ object Strings {
     // item entry
     const val WIDTH = "العرض"
     const val HEIGHT = "الارتفاع"
-    const val QUANTITY = "الكمية"
+    const val QUANTITY = "العدد"
     const val METER_UNIT = "م"
     const val CM_UNIT = "سم"
     const val TOTAL = "المجموع"
@@ -214,7 +214,7 @@ object Strings {
     const val FORMULA_PERIMETER = "بالمتر الطولي"
     const val FORMULA_PERIMETER_HINT = "محيط الإطار"
     const val FORMULA_PIECE = "بالقطعة"
-    const val FORMULA_PIECE_HINT = "الكمية فقط"
+    const val FORMULA_PIECE_HINT = "العدد فقط"
     const val DEFAULT_UNIT = "وحدة القياس"
     const val ACTIVE = "مفعل"
     const val INACTIVE = "غير مفعل"

@@ -49,7 +49,7 @@ Approved by the owner on 2026-10-25 after four design rounds. The mock-ups are i
 ## Units
 
 * One global setting: cm or m. The per-item m/cm switch is removed; the field shows only the unit from
-  Settings, where the switch was. Labels (العرض, الارتفاع, الثمن للمتر المربع, الكمية) sit on the right,
+  Settings, where the switch was. Labels (العرض, الارتفاع, الثمن للمتر المربع, العدد) sit on the right,
   directly above their icons.
 * Second setting: unit label script, Arabic (سم / م) or Latin (cm / m); labels only, digits unchanged.
   It applies to screens, printed invoices, and re-exports of old invoices.

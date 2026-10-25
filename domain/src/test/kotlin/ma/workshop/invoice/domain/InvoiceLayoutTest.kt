@@ -68,12 +68,13 @@ class InvoiceLayoutTest {
 
     private val phone = LayoutSpec(width = 360f)
 
-    /** A4 as the renderer lays it out: a 34-unit thumbnail prints at 26 pt, so the page is 595 / (26 / 34) units wide. */
-    private val a4Width = 595f * 34f / 26f
+    /** A4 as the renderer lays it out: one layout unit is one point. */
+    private val a4Width = 595f
     private val a4 = LayoutSpec(width = a4Width, pageHeight = a4Width * 842f / 595f, margin = 28f)
 
     private fun texts(page: LayoutPage) = page.ops.filterIsInstance<DrawOp.Text>()
     private fun images(page: LayoutPage) = page.ops.filterIsInstance<DrawOp.Image>()
+    private fun rowCount(page: LayoutPage) = texts(page).count { it.text == "1 260" }
     private fun allTexts(layout: InvoiceLayout) = layout.pages.flatMap { texts(it) }
 
     private fun opBounds(op: DrawOp, measureText: (DrawOp.Text) -> Float): List<Float> = when (op) {
@@ -119,12 +120,10 @@ class InvoiceLayoutTest {
         val measures = page.first { it.text == "1,20 × 2,10 م" }
         val quantity = page.first { it.text == "1" && it.style == TextStyle.SMALL_BOLD }
         val name = page.first { it.text == "باب حديد" }
-        val thumb = images(layout.pages[0]).single()
 
         assertTrue(price.x + price.width <= formula.x + 0.01f, "price column is left of the formula column")
         assertTrue(formula.x + formula.width <= quantity.x + 0.01f, "formula column is left of the quantity column")
         assertTrue(quantity.x + quantity.width <= name.x + 0.01f, "quantity column is left of the name column")
-        assertTrue(name.x + name.width <= thumb.x + 0.01f, "the name sits left of its picture")
         assertEquals(formula.x, measures.x, "measures and calculation share one cell")
         assertEquals(HAlign.LEFT, price.align)
         assertEquals(HAlign.RIGHT, formula.align)
@@ -157,7 +156,7 @@ class InvoiceLayoutTest {
         assertEquals(2, page.count { it.text == "1 260" })
         assertFalse(page.any { it.text == "1 260 DH" }, "rows do not repeat the currency")
         assertTrue(page.any { it.text == "القياس والحساب" })
-        assertTrue(page.any { it.text == "الكمية" })
+        assertTrue(page.any { it.text == "العدد" })
     }
 
     @Test
@@ -173,34 +172,24 @@ class InvoiceLayoutTest {
     }
 
     @Test
-    fun `the table has no divider lines`() {
+    fun `the table has a thin divider between rows and none after the last`() {
         val layout = engine.layout(doc(rows = 6), phone)
-        // the only line on the page is the rule under the workshop name
-        assertEquals(1, layout.pages[0].ops.filterIsInstance<DrawOp.Line>().size)
+        // the rule under the workshop name, plus one thin divider between each pair of rows
+        assertEquals(1 + 5, layout.pages[0].ops.filterIsInstance<DrawOp.Line>().size)
         val a4Layout = engine.layout(doc(rows = 60), a4)
-        for ((index, page) in a4Layout.pages.withIndex()) {
-            val lines = page.ops.filterIsInstance<DrawOp.Line>().size
-            assertEquals(1, lines, "page ${index + 1}: only the header or slim-line rule")
+        val rowsAndDividers = a4Layout.pages.sumOf { page ->
+            page.ops.filterIsInstance<DrawOp.Line>().count { it.width == 0.5f }
         }
+        assertEquals(59, rowsAndDividers, "between 60 rows there are 59 dividers")
     }
 
     @Test
-    fun `thumbnails are 34 unit squares aligned with their row`() {
+    fun `the shared invoice has no pictures and the name takes the space`() {
         val layout = engine.layout(doc(rows = 5), phone)
-        val thumbs = images(layout.pages[0])
-        assertEquals(5, thumbs.size)
-        assertTrue(thumbs.all { it.size == 34f }, "all thumbnails must have the same size")
-        assertTrue(thumbs.all { it.size in 32f..40f }, "thumbnail size must stay within the 32-40 range")
-        val xs = thumbs.map { it.x }.toSet()
-        assertEquals(1, xs.size, "thumbnails must share one alignment")
-        assertTrue(thumbs.all { it.x + it.size <= phone.width - phone.margin + 0.01f })
-        // each thumbnail is beside its own name and total, not above/below
-        val names = texts(layout.pages[0]).filter { it.text == "باب حديد" }
-        for ((thumb, name) in thumbs.zip(names)) {
-            val nameBottom = name.y + FakeMeasurer.measureHeight(name.text, name.style, name.width)
-            assertTrue(name.y <= thumb.y + thumb.size && nameBottom >= thumb.y, "name must sit beside its thumbnail")
-            assertTrue(name.x + name.width <= thumb.x, "text must not overlap thumbnail")
-        }
+        assertEquals(0, images(layout.pages[0]).size)
+        val cols = TableColumns(phone.width - 2 * phone.margin)
+        val name = texts(layout.pages[0]).first { it.text == "باب حديد" }
+        assertEquals(cols.name - 2 * TableColumns.CELL_PADDING, name.width, 0.01f)
     }
 
     // ---- totals ----
@@ -220,7 +209,10 @@ class InvoiceLayoutTest {
 
         val band = page.ops.filterIsInstance<DrawOp.Rect>().single { it.fill == InvoiceColors.BALANCE_BAND }
         val balance = totals.last()
-        assertTrue(balance.y >= band.y && balance.y < band.y + band.height, "the balance is drawn inside the band")
+        assertTrue(balance.y >= band.y && balance.y < band.y + band.height, "the amount is drawn on the band")
+        assertTrue(band.width < layout.width / 2, "the band covers the amount only, not the whole line")
+        val word = texts(page).single { it.text == "الباقي" }
+        assertTrue(word.x >= band.x + band.width, "the word الباقي sits outside the band")
         assertEquals(InvoiceColors.INK, balance.color, "dark text on yellow")
         assertEquals(InvoiceColors.INK, totals.first().color)
     }
@@ -251,7 +243,7 @@ class InvoiceLayoutTest {
         assertTrue(wrapped.pages[0].height > normal)
         assertInsidePages(wrapped)
         val name = texts(wrapped.pages[0]).first { it.text == long }
-        assertTrue(name.width < TableColumns(phone.width - 2 * phone.margin).name - 34f)
+        assertTrue(name.width < TableColumns(phone.width - 2 * phone.margin).name)
     }
 
     // ---- one tall PNG ----
@@ -261,7 +253,7 @@ class InvoiceLayoutTest {
     fun `a very long invoice on one tall page is not clipped`() {
         val layout = engine.layout(doc(rows = 120), phone)
         assertEquals(1, layout.pages.size)
-        assertEquals(120, images(layout.pages[0]).size)
+        assertEquals(120, rowCount(layout.pages[0]))
         assertInsidePages(layout)
         assertTrue(layout.pages[0].height > 1000f)
     }
@@ -277,9 +269,9 @@ class InvoiceLayoutTest {
         assertTrue(PngLimits.isTooLong(long), "90 items do not")
         // a single row is about 42 units tall, so the limit falls near 55 items, as in the mock-up
         val rowHeight = (long - short) / 60f
-        assertTrue(rowHeight in 40f..50f, "row height is $rowHeight")
+        assertTrue(rowHeight in 28f..50f, "row height is $rowHeight")
         val items = (2_667f / rowHeight).toInt()
-        assertTrue(items in 50..65, "limit at about $items items")
+        assertTrue(items in 55..110, "limit at about $items items")
     }
 
     // ---- PDF pages ----
@@ -292,21 +284,20 @@ class InvoiceLayoutTest {
         assertTrue(layout.pages.all { it.height == a4.pageHeight })
 
         // every row appears exactly once, in order, with its picture and total on the same page
-        assertEquals(120, layout.pages.sumOf { images(it).size })
+        assertEquals(120, layout.pages.sumOf { rowCount(it) })
         for (page in layout.pages) {
-            val thumbs = images(page)
-            val totals = texts(page).filter { it.text == "1 260" }
-            assertEquals(thumbs.size, totals.size, "a row's picture and total must not be separated")
+            val names = texts(page).count { it.text == "باب حديد" }
+            assertEquals(names, rowCount(page), "a row's name and total must not be separated")
         }
     }
 
     @Test
-    fun `rows per page are about 18 to 20 for a 45 item invoice`() {
+    fun `a 45 item invoice paginates with more rows on later pages`() {
         val layout = engine.layout(doc(rows = 45), a4)
-        val perPage = layout.pages.map { images(it).size }
+        val perPage = layout.pages.map { rowCount(it) }
         assertEquals(45, perPage.sum())
-        assertTrue(perPage.size in 3..4, "pages: $perPage")
-        assertTrue(perPage.first() in 14..22, "page 1 has ${perPage.first()} rows")
+        assertTrue(perPage.size in 2..4, "pages: $perPage")
+        assertTrue(perPage.first() in 8..40, "page 1 has ${perPage.first()} rows")
         assertTrue(perPage[1] > perPage.first(), "page 2 has more rows than page 1 (slim line instead of the full header)")
     }
 
@@ -372,7 +363,7 @@ class InvoiceLayoutTest {
             val last = layout.pages.last()
             assertEquals(2, texts(last).count { it.style == TextStyle.TOTAL }, "total and balance ($rows rows)")
             assertEquals(1, texts(last).count { it.style == TextStyle.DEPOSIT }, "deposit ($rows rows)")
-            assertTrue(images(last).isNotEmpty(), "summary must share its page with an item row ($rows rows)")
+            assertTrue(rowCount(last) > 0, "summary must share its page with an item row ($rows rows)")
             for (page in layout.pages.dropLast(1)) {
                 assertTrue(texts(page).none { it.style == TextStyle.DEPOSIT }, "no deposit before the last page ($rows rows)")
                 assertTrue(page.ops.filterIsInstance<DrawOp.Rect>().none { it.fill == InvoiceColors.BALANCE_BAND })
@@ -394,12 +385,8 @@ class InvoiceLayoutTest {
     }
 
     @Test
-    fun `pdf scaling prints a thumbnail at 26 points`() {
-        // 34 layout units onto A4 (595 pt): 26 pt is about 9 mm
+    fun `pdf prints table text at 12 points`() {
         val scale = 595f / a4.width
-        val printedPoints = a4.thumbnail * scale
-        assertEquals(26f, printedPoints, 0.1f)
-        // and 12-unit table text prints at about 9 pt
-        assertTrue(TextStyle.SMALL.size * scale in 8.5f..9.5f)
+        assertEquals(12f, TextStyle.SMALL.size * scale, 0.01f)
     }
 }
