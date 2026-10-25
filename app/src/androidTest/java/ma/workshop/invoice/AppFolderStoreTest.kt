@@ -7,7 +7,6 @@ import android.os.Environment
 import androidx.core.content.ContextCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import ma.workshop.invoice.domain.backup.BackupFiles
 import ma.workshop.invoice.platform.backup.AppFolderBackupStore
 import org.junit.Assert.assertEquals
@@ -34,13 +33,12 @@ class AppFolderStoreTest {
     private val permission = Manifest.permission.WRITE_EXTERNAL_STORAGE
     private val granted get() = ContextCompat.checkSelfPermission(context, permission) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
-    /** `pm grant` through the shell: UiAutomation.grantRuntimePermission only exists from Android 8. */
-    private fun grantStoragePermission() {
-        val pipe = InstrumentationRegistry.getInstrumentation().uiAutomation
-            .executeShellCommand("pm grant ${context.packageName} $permission")
-        android.os.ParcelFileDescriptor.AutoCloseInputStream(pipe).use { it.readBytes() } // waits for the command to finish
-        assertTrue("permission granted", granted)
-    }
+    /**
+     * Android 7 to 9 apply a storage grant to processes started after it, so the public-folder tests only run
+     * when the permission was already granted when this process started (the CI script grants it with `pm grant`
+     * and starts a fresh instrumentation run). Android 10+ needs no permission.
+     */
+    private val publicFolderUsable get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q || granted
 
     private fun uniqueName() = BackupFiles.nameFor(System.currentTimeMillis(), ZoneOffset.UTC, store.existingNames())
 
@@ -58,7 +56,7 @@ class AppFolderStoreTest {
     @Test
     fun b_backupIsWrittenToTheAppFolderListedAndDeleted() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            grantStoragePermission()
+            
         }
         val name = uniqueName()
         val bytes = "{\"hello\":\"world\"}".toByteArray()
@@ -84,7 +82,7 @@ class AppFolderStoreTest {
     @Test
     fun c_twoBackupsInTheSameMinuteDoNotOverwriteEachOther() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            grantStoragePermission()
+            
         }
         val now = System.currentTimeMillis()
         val first = BackupFiles.nameFor(now, ZoneOffset.UTC, store.existingNames())

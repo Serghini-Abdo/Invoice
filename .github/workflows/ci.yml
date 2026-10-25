@@ -117,7 +117,9 @@ jobs:
           target: google_apis
           profile: pixel_5
           disable-animations: true
-          script: ./gradlew :app:connectedDebugAndroidTest --console=plain
+          script: |
+            ./gradlew :app:connectedDebugAndroidTest --console=plain
+            if [ ${{ matrix.api }} -lt 29 ]; then ./gradlew :app:installDebug :app:installDebugAndroidTest --console=plain && ./scripts/legacy-storage-test.sh; fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
