@@ -1,5 +1,6 @@
 package ma.workshop.invoice
 
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.view.View
 import androidx.activity.ComponentActivity
@@ -11,6 +12,12 @@ import ma.workshop.invoice.ui.theme.InvoiceTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Phones stay in portrait (the keypad layouts are designed for it); tablets may rotate.
+        requestedOrientation = if (resources.configuration.smallestScreenWidthDp >= 600) {
+            ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        }
         enableEdgeToEdge()
         // The app is Arabic-only: lay out right-to-left whatever the phone's language is.
         window.decorView.layoutDirection = View.LAYOUT_DIRECTION_RTL

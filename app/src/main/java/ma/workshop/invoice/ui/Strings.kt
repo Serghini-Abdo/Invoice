@@ -167,6 +167,8 @@ object Strings {
     const val AUDIO_INSTALL = "تثبيت صوت عربي"
     const val AUDIO_READY = "الصوت العربي جاهز"
     const val AUDIO_UNAVAILABLE_TOAST = "الصوت غير متوفر"
+    const val SOUND_ON = "الصوت"
+    const val SOUND_OFF = "بدون صوت"
     const val REPLAY = "إعادة النطق"
     const val MUTE = "إيقاف الصوت"
     const val BACKUP = "النسخ الاحتياطي"

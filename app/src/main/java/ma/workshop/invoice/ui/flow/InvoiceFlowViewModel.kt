@@ -237,6 +237,12 @@ class InvoiceFlowViewModel(
         if (settings.value.speakInvoiceTotals) replayInvoiceSummary()
     }
 
+    /** The quick mute switch: also silences anything currently being spoken. */
+    fun toggleAudio() {
+        container.speech.stop()
+        viewModelScope.launch { container.settings.update { it.copy(audioEnabled = !it.audioEnabled) } }
+    }
+
     private fun speakIf(allowed: Boolean, text: String): SpeakResult {
         if (!allowed) return SpeakResult.AUDIO_OFF
         if (!container.speech.isReady) return SpeakResult.UNAVAILABLE

@@ -53,6 +53,7 @@ import ma.workshop.invoice.domain.settings.ExportFormat
 import ma.workshop.invoice.ui.Strings
 import ma.workshop.invoice.ui.arabic
 import ma.workshop.invoice.ui.components.AmountRow
+import ma.workshop.invoice.ui.components.AudioToggle
 import ma.workshop.invoice.ui.components.BannerKind
 import ma.workshop.invoice.ui.components.BigButton
 import ma.workshop.invoice.ui.components.ButtonKind
@@ -71,6 +72,8 @@ import ma.workshop.invoice.ui.theme.AppColors
 fun ReviewScreen(
     state: FlowState,
     speechAvailable: Boolean,
+    audioEnabled: Boolean,
+    onToggleAudio: () -> Unit,
     onSpeakSummary: () -> Unit,
     onReplay: () -> Unit,
     onDepositChange: (String) -> Unit,
@@ -91,7 +94,7 @@ fun ReviewScreen(
     val fullyPaid = remaining != null && remaining.isZero && total.isPositive
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        ScreenHeader(Strings.REVIEW_TITLE, onBack)
+        ScreenHeader(Strings.REVIEW_TITLE, onBack, actions = { AudioToggle(audioEnabled, onToggleAudio) })
 
         Column(
             modifier = Modifier
