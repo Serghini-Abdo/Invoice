@@ -12,7 +12,9 @@ import ma.workshop.invoice.data.ProductRepository
 import ma.workshop.invoice.data.SettingsRepository
 import ma.workshop.invoice.data.db.AppDatabase
 import ma.workshop.invoice.platform.RestoreSafety
+import ma.workshop.invoice.domain.catalog.PhotoKey
 import ma.workshop.invoice.platform.Dictation
+import ma.workshop.invoice.platform.PhotoStore
 import ma.workshop.invoice.platform.Speaker
 import ma.workshop.invoice.platform.SpeechController
 import ma.workshop.invoice.platform.backup.AppFolderBackupStore
@@ -77,6 +79,14 @@ class AppContainer(val application: Application) {
     val speaker: Speaker by lazy { Speaker(speech) }
     val dictation: Dictation by lazy { Dictation(application) }
     val exporter: InvoiceExporter by lazy { InvoiceExporter(application) }
+    val photos: PhotoStore by lazy { PhotoStore(application) }
+
+    /** Deletes photo files that no product, invoice item, revision snapshot or draft refers to. */
+    suspend fun sweepPhotos() {
+        val texts = database.products().illustrations() + database.invoices().itemIllustrations() +
+            database.invoices().revisionSnapshots() + database.drafts().allJson()
+        photos.sweep(PhotoKey.referencedIn(texts))
+    }
 
     /** For work that must outlive a screen, such as saving a draft while the user leaves. */
     val appScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

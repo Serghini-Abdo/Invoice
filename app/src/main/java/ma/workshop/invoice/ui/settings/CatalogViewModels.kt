@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ma.workshop.invoice.AppContainer
 import ma.workshop.invoice.domain.invoice.ProductDefinition
 import ma.workshop.invoice.domain.pricing.LengthUnit
@@ -78,6 +80,21 @@ class ProductEditViewModel(private val container: AppContainer, private val prod
         }
     }
 
+    val photoFailed = MutableStateFlow(false)
+
+    /** Copies the picked photo into the app and makes it the product picture. */
+    fun importPhoto(uri: android.net.Uri) {
+        viewModelScope.launch {
+            val key = withContext(Dispatchers.IO) { container.photos.import(uri) }
+            if (key == null) {
+                photoFailed.value = true
+            } else {
+                photoFailed.value = false
+                edit { it.copy(illustration = key) }
+            }
+        }
+    }
+
     fun edit(transform: (ProductForm) -> ProductForm) {
         val current = _state.value as? ProductEditState.Editing ?: return
         _state.value = current.copy(form = transform(current.form), nameMissing = false)
@@ -105,6 +122,7 @@ class ProductEditViewModel(private val container: AppContainer, private val prod
                 updatedAt = 0,
             )
             container.products.save(definition)
+            withContext(Dispatchers.IO) { container.sweepPhotos() }
             exitChannel.trySend(Unit)
         }
     }
@@ -113,6 +131,7 @@ class ProductEditViewModel(private val container: AppContainer, private val prod
         val id = existing?.id ?: return
         viewModelScope.launch {
             container.products.delete(id)
+            withContext(Dispatchers.IO) { container.sweepPhotos() }
             exitChannel.trySend(Unit)
         }
     }

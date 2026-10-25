@@ -34,6 +34,7 @@ import ma.workshop.invoice.domain.speech.SpeechText
 import ma.workshop.invoice.domain.speech.SpeechTexts
 import ma.workshop.invoice.platform.SpeakResult
 import ma.workshop.invoice.platform.SpeechStatus
+import ma.workshop.invoice.domain.catalog.PhotoKey
 import ma.workshop.invoice.platform.export.ExportFiles
 import ma.workshop.invoice.platform.export.PdfPrintAdapter
 import ma.workshop.invoice.platform.export.ShareHelper
@@ -126,7 +127,15 @@ class InvoiceFlowViewModel(
     }
 
     fun onEvent(event: FlowEvent) {
-        val current = _state.value ?: return
+        var current = _state.value ?: return
+        // A new item keeps its own literal copy of the product photo, so later edits never change it.
+        val pending = current.pending
+        if (event == FlowEvent.ItemConfirmed && pending != null && pending.editingItemId == null &&
+            PhotoKey.isPhoto(pending.product.illustration)
+        ) {
+            val copy = container.photos.copyFor(pending.product.illustration)
+            current = current.copy(pending = pending.copy(product = pending.product.copy(illustration = copy)))
+        }
         val transition = flow.reduce(current, event)
         _state.value = transition.state
         when (val effect = transition.effect) {

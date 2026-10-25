@@ -21,6 +21,9 @@ interface ProductDao {
     @Query("SELECT * FROM products ORDER BY sortOrder, id")
     suspend fun getAll(): List<ProductEntity>
 
+    @Query("SELECT illustration FROM products")
+    suspend fun illustrations(): List<String>
+
     @Query("SELECT COUNT(*) FROM products")
     suspend fun count(): Int
 
@@ -62,6 +65,12 @@ interface InvoiceDao {
 
     @Query("SELECT * FROM invoice_items WHERE invoiceId = :invoiceId ORDER BY position")
     suspend fun getItems(invoiceId: String): List<InvoiceItemEntity>
+
+    @Query("SELECT illustration FROM invoice_items")
+    suspend fun itemIllustrations(): List<String>
+
+    @Query("SELECT previousSnapshotJson FROM invoice_revisions")
+    suspend fun revisionSnapshots(): List<String>
 
     @Query("SELECT * FROM invoice_items ORDER BY invoiceId, position")
     suspend fun getAllItems(): List<InvoiceItemEntity>
@@ -116,6 +125,9 @@ interface DraftDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(draft: DraftEntity)
+
+    @Query("SELECT json FROM drafts")
+    suspend fun allJson(): List<String>
 
     @Query("DELETE FROM drafts WHERE draftKey = :key")
     suspend fun delete(key: String)

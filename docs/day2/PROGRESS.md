@@ -335,6 +335,26 @@ page, PDF fallback for a too-long invoice, every earlier test.
 * PDF text is bigger: one layout unit = one point (table text 12 pt, was about 9 pt), so fewer rows per page.
 * **Verification:** domain tests, build and lint pass, and the full instrumented suite was rerun on the Samsung SM-S931B after these tweaks: **OK (57 tests)**. Still to check by eye: PNG/PDF divider weight, the yellow patch width (estimated from the digit count) and the quantity column. `ExportInstrumentedTest` no longer looks for thumbnails.
 
+### Second round of tweaks and photo import (pulled forward from sprint 6, step 6)
+
+* Balance amount is **yellow text, no patch** (dark yellow `#A67C00`, because pure `#F2B705` is unreadable on
+  white paper; change `InvoiceColors.BALANCE_TEXT` for the bright one). PDF scale 1.1 pt per unit: table text
+  prints at 13.2 pt (was 12).
+* **Photo import (product edit only):** "اختيار صورة من الهاتف" opens the system photo picker; the photo is
+  downscaled to 512 px and stored in `filesDir/photos` (`PhotoStore`). It is kept in the existing
+  `illustration` text as `photo:<file>.jpg` (`PhotoKey`), so **no Room change or migration**: this differs from
+  the sprint-6 plan, which wanted `products.imageFile` / `invoice_items.imageFile` columns.
+  * Confirming a new item copies the file for that item (`copyFor`), so editing or deleting the product photo
+    never changes an invoice. Photos nothing refers to (products, items, revision snapshots, drafts) are swept
+    after a product save/delete and at app start.
+  * `IllustrationImage` shows the photo on the product list, catalogue, item bar, and the item/review/detail
+    tables; a missing file falls back to the generic picture. The shared PNG/PDF has no pictures at all now.
+* **Not done from sprint 6:** backups do **not** include the photo files yet (step 7). A restore on another phone
+  keeps the names but shows the generic picture. Do not rely on photos surviving a restore until step 7.
+* Tests: `PhotoKeyTest` (JVM), `PhotoStoreTest` (device: 512 px downscale, private storage, literal copy, sweep).
+  Domain tests pass; full instrumented suite on the Samsung: **OK (61 tests)**. By hand: pick a real photo in
+  product edit (picker UI, rotation of a portrait photo), see it in the catalogue and item list.
+
 ### Notes for the next sprints
 
 * Latin unit labels and photos will reach the table through `DocumentRow` / `IllustrationImage` (sprint 6).

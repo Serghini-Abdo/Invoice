@@ -213,6 +213,7 @@ fun AppNav(container: AppContainer) {
                 val productId = entry.arguments?.getLong("productId") ?: 0L
                 val vm: ProductEditViewModel = viewModel(key = "product-$productId", factory = VmFactory { ProductEditViewModel(container, productId) })
                 val state by vm.state.collectAsStateWithLifecycle()
+                val photoFailed by vm.photoFailed.collectAsStateWithLifecycle()
                 val goBack by rememberUpdatedState { nav.popBackStack() }
                 LaunchedEffect(vm) { vm.exits.collect { goBack() } }
                 ProductEditScreen(
@@ -221,6 +222,8 @@ fun AppNav(container: AppContainer) {
                     onSave = vm::save,
                     onDelete = vm::delete,
                     onDeactivateInstead = vm::deactivateInstead,
+                    onPickPhoto = vm::importPhoto,
+                    photoFailed = photoFailed,
                     onBack = { nav.popBackStack() },
                 )
             }

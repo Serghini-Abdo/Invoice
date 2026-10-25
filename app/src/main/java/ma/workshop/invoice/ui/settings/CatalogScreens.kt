@@ -1,5 +1,8 @@
 package ma.workshop.invoice.ui.settings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Save
@@ -38,11 +42,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ma.workshop.invoice.domain.catalog.Illustrations
+import ma.workshop.invoice.domain.catalog.PhotoKey
 import ma.workshop.invoice.domain.invoice.ProductDefinition
 import ma.workshop.invoice.domain.pricing.PricingFormula
 import ma.workshop.invoice.ui.Strings
@@ -148,8 +154,13 @@ fun ProductEditScreen(
     onSave: () -> Unit,
     onDelete: () -> Unit,
     onDeactivateInstead: () -> Unit,
+    onPickPhoto: (android.net.Uri) -> Unit,
+    photoFailed: Boolean,
     onBack: () -> Unit,
 ) {
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) onPickPhoto(uri)
+    }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
@@ -186,6 +197,17 @@ fun ProductEditScreen(
 
                     SectionCard {
                         ArabicText(Strings.PRODUCT_PICTURE, style = MaterialTheme.typography.titleMedium)
+                        if (PhotoKey.isPhoto(form.illustration)) {
+                            IllustrationImage(form.illustration, Modifier.size(120.dp).testTag("product-photo"))
+                        }
+                        BigButton(
+                            Strings.PICK_PHOTO,
+                            Icons.Filled.AddPhotoAlternate,
+                            { photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                            Modifier.testTag("pick-photo"),
+                            kind = ButtonKind.Secondary,
+                        )
+                        if (photoFailed) StatusBanner(Strings.PHOTO_FAILED, BannerKind.Warning)
                         val pictures = Illustrations.all
                         for (row in pictures.chunked(4)) {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

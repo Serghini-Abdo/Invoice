@@ -89,8 +89,7 @@ object InvoiceColors {
     const val PANEL = Palette.SURFACE
     const val PAID = Palette.PRIMARY
     const val PAID_BG = Palette.PRIMARY_CONTAINER
-    const val BALANCE_BAND = Palette.SECONDARY
-    const val BALANCE_EDGE = Palette.SECONDARY_BORDER
+    const val BALANCE_TEXT = Palette.SECONDARY_BORDER
     const val WHITE = Palette.CARD
 }
 
@@ -370,7 +369,7 @@ class InvoiceLayoutEngine(private val measurer: TextMeasurer) {
 
     /**
      * Total, deposit and balance. The deposit is green and a little smaller than the total; the balance sits in
-     * a yellow patch behind the amount only (the word stays on the panel), at the total's size, with dark text. A fully paid invoice also gets the "خالص" badge.
+     * a yellow amount (no patch) at the total's size. A fully paid invoice also gets the "خالص" badge.
      */
     private fun summaryBlock(doc: InvoiceDocument, spec: LayoutSpec, contentWidth: Float): Block {
         val inner = 12f
@@ -408,16 +407,9 @@ class InvoiceLayoutEngine(private val measurer: TextMeasurer) {
                 add(text(labelX, ly, labelWidth, ArabicTerms.DEPOSIT, TextStyle.BODY_BOLD, HAlign.RIGHT))
                 add(text(valueX, ly, valueWidth, doc.deposit, TextStyle.DEPOSIT, HAlign.LEFT, InvoiceColors.PAID))
                 ly += depositHeight + rowGap
-                // Only the amount sits on the yellow; the word stays on the panel.
-                val bandWidth = minOf(valueWidth + inner / 2, doc.remaining.length * TextStyle.TOTAL.size * 0.62f + 2 * bandPad + 8f)
-                add(
-                    DrawOp.Rect(
-                        spec.margin + inner / 2, ly, bandWidth, bandHeight,
-                        fill = InvoiceColors.BALANCE_BAND, stroke = InvoiceColors.BALANCE_EDGE, strokeWidth = 1f, cornerRadius = 6f,
-                    ),
-                )
+                // No patch: the balance amount itself is yellow (a dark yellow, so it still reads on paper).
                 add(text(labelX, ly + bandPad, labelWidth, ArabicTerms.REMAINING, TextStyle.HEADING, HAlign.RIGHT))
-                add(text(valueX, ly + bandPad, valueWidth, doc.remaining, TextStyle.TOTAL, HAlign.LEFT))
+                add(text(valueX, ly + bandPad, valueWidth, doc.remaining, TextStyle.TOTAL, HAlign.LEFT, InvoiceColors.BALANCE_TEXT))
                 ly += bandHeight + rowGap
                 if (doc.isFullyPaid) {
                     val badgeWidth = boxWidth - 2 * inner
