@@ -1,7 +1,7 @@
 package ma.workshop.invoice.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -66,13 +67,14 @@ import ma.workshop.invoice.ui.components.IllustrationImage
 import ma.workshop.invoice.ui.components.ProductCard
 import ma.workshop.invoice.ui.components.ScreenHeader
 import ma.workshop.invoice.ui.components.StatusBanner
+import ma.workshop.invoice.ui.components.StrictButton
+import ma.workshop.invoice.ui.components.strictClickable
 import ma.workshop.invoice.ui.theme.AppColors
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 
 /** Step 1: optional customer details. Both fields can stay empty; continuing is always allowed. */
@@ -170,12 +172,28 @@ fun ItemCard(item: InvoiceItem, onEdit: () -> Unit, onRemove: () -> Unit, modifi
     }
 }
 
+/** Category filter. The selected one is filled, so the choice never relies on colour alone. */
+@Composable
+private fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    StrictButton(
+        onClick = onClick,
+        modifier = Modifier.heightIn(min = 48.dp),
+        shape = RoundedCornerShape(8.dp),
+        containerColor = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
+        contentColor = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        Text(label, style = MaterialTheme.typography.titleSmall)
+    }
+}
+
 @Composable
 private fun SmallAction(text: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit, modifier: Modifier, danger: Boolean = false) {
     Surface(
         modifier = modifier
             .heightIn(min = 48.dp)
-            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClickLabel = text, onClick = onClick),
+            .strictClickable(role = androidx.compose.ui.semantics.Role.Button, onClickLabel = text, onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         color = if (danger) AppColors.RedPale else MaterialTheme.colorScheme.secondaryContainer,
         contentColor = if (danger) AppColors.Red else MaterialTheme.colorScheme.onSecondaryContainer,
@@ -214,7 +232,7 @@ fun ItemListScreen(
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable(role = androidx.compose.ui.semantics.Role.Button, onClickLabel = Strings.ADD_PRODUCT, onClick = onAdd),
+                        .strictClickable(role = androidx.compose.ui.semantics.Role.Button, onClickLabel = Strings.ADD_PRODUCT, onClick = onAdd),
                     shape = RoundedCornerShape(28.dp),
                     color = MaterialTheme.colorScheme.primaryContainer,
                 ) {
@@ -240,7 +258,7 @@ fun ItemListScreen(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClickLabel = Strings.EDIT_CUSTOMER, onClick = onEditCustomer),
+                            .strictClickable(role = androidx.compose.ui.semantics.Role.Button, onClickLabel = Strings.EDIT_CUSTOMER, onClick = onEditCustomer),
                         shape = RoundedCornerShape(14.dp),
                         color = MaterialTheme.colorScheme.secondaryContainer,
                     ) {
@@ -326,19 +344,17 @@ fun CatalogPickerScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 item {
-                    FilterChip(
+                    CategoryChip(
+                        label = Strings.ALL_CATEGORIES,
                         selected = selectedCategory == null,
                         onClick = { selectedCategory = null },
-                        label = { Text(Strings.ALL_CATEGORIES, style = MaterialTheme.typography.titleSmall) },
-                        modifier = Modifier.heightIn(min = 48.dp),
                     )
                 }
                 items(categories) { category ->
-                    FilterChip(
+                    CategoryChip(
+                        label = category,
                         selected = selectedCategory == category,
                         onClick = { selectedCategory = category },
-                        label = { Text(category, style = MaterialTheme.typography.titleSmall) },
-                        modifier = Modifier.heightIn(min = 48.dp),
                     )
                 }
             }

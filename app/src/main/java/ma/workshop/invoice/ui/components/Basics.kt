@@ -2,7 +2,6 @@ package ma.workshop.invoice.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,21 +24,15 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -63,8 +56,8 @@ fun ScreenHeader(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (onBack != null) {
-            IconButton(onClick = onBack, modifier = Modifier.size(TouchTarget)) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = Strings.BACK, modifier = Modifier.size(32.dp))
+            StrictIconButton(onClick = onBack, contentDescription = Strings.BACK, modifier = Modifier.size(TouchTarget)) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.size(32.dp))
             }
         } else {
             Spacer(Modifier.width(12.dp))
@@ -107,13 +100,15 @@ fun BigButton(
         .defaultMinSize(minHeight = 64.dp)
     // Tighter than Material's 24dp so a two-word label fits beside its icon in a half-width button.
     val padding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+    val disabledContent = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
     when (kind) {
-        ButtonKind.Secondary -> OutlinedButton(
+        ButtonKind.Secondary -> StrictButton(
             onClick = onClick,
             modifier = buttonModifier,
             enabled = enabled,
             shape = shape,
             contentPadding = padding,
+            contentColor = if (enabled) MaterialTheme.colorScheme.primary else disabledContent,
             border = BorderStroke(2.dp, if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
             content = content,
         )
@@ -123,13 +118,14 @@ fun BigButton(
                 ButtonKind.Danger -> AppColors.Red
                 else -> MaterialTheme.colorScheme.primary
             }
-            Button(
+            StrictButton(
                 onClick = onClick,
                 modifier = buttonModifier,
                 enabled = enabled,
                 shape = shape,
                 contentPadding = padding,
-                colors = ButtonDefaults.buttonColors(containerColor = container, contentColor = Color.White),
+                containerColor = if (enabled) container else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                contentColor = if (enabled) Color.White else disabledContent,
                 content = content,
             )
         }
@@ -158,13 +154,11 @@ fun ConfirmDialog(
             }
         },
         confirmButton = {
-            Button(
+            StrictButton(
                 onClick = onConfirm,
                 modifier = Modifier.defaultMinSize(minHeight = 56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (danger) AppColors.Red else MaterialTheme.colorScheme.primary,
-                    contentColor = Color.White,
-                ),
+                containerColor = if (danger) AppColors.Red else MaterialTheme.colorScheme.primary,
+                contentColor = Color.White,
             ) {
                 Icon(Icons.Filled.Check, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
@@ -172,7 +166,11 @@ fun ConfirmDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss, modifier = Modifier.defaultMinSize(minHeight = 56.dp)) {
+            StrictButton(
+                onClick = onDismiss,
+                modifier = Modifier.defaultMinSize(minHeight = 56.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+            ) {
                 Icon(Icons.Filled.Close, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text(dismissText, style = MaterialTheme.typography.labelLarge)
@@ -261,7 +259,7 @@ fun SectionCard(modifier: Modifier = Modifier, content: @Composable () -> Unit) 
 }
 
 /** Makes a whole row tappable with a proper role for accessibility. */
-fun Modifier.tappable(onClick: () -> Unit): Modifier = this.clickable(role = Role.Button, onClick = onClick)
+fun Modifier.tappable(onClick: () -> Unit): Modifier = this.strictClickable(onClick = onClick)
 
 @Composable
 fun Gap(height: Int) {
