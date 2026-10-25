@@ -22,6 +22,7 @@ import kotlin.test.assertTrue
 class FormatAndDocumentTest {
 
     private val nb = ArabicFormat.NBSP
+    private val rlm = ArabicFormat.RLM
     private val zone = ZoneId.of("Africa/Casablanca")
 
     @Test
@@ -66,10 +67,10 @@ class FormatAndDocumentTest {
         assertEquals("1,20 × 2,10 م", ItemDescriber.measures(pricing))
         assertEquals("500${nb}DH / م²", ItemDescriber.rate(pricing))
         assertEquals("2,52 م²", ItemDescriber.baseAmount(pricing))
-        assertEquals("2,52 م² × 500${nb}DH × 1", ItemDescriber.calculation(pricing))
+        assertEquals("2,52 م² × 500${nb}DH$rlm × 1", ItemDescriber.calculation(pricing))
         val lines = ItemDescriber.breakdown(pricing)
         assertEquals("1,20 × 2,10 = 2,52 م²", lines.first { it.label == "المساحة" }.value)
-        assertEquals("2,52 م² × 500${nb}DH × 1 = 1${nb}260${nb}DH", lines.last().value)
+        assertEquals("2,52 م² × 500${nb}DH$rlm × 1 = 1${nb}260${nb}DH", lines.last().value)
     }
 
     @Test

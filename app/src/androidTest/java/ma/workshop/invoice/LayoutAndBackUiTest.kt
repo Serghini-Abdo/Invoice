@@ -1,8 +1,11 @@
 package ma.workshop.invoice
 
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
@@ -128,6 +131,40 @@ class LayoutAndBackUiTest {
         for (key in listOf("1", "5", "0", "decimal", "backspace", "next")) {
             rule.onNodeWithTag("key-$key").assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
         }
+    }
+
+    private fun assertField(tag: String, shown: String) {
+        try {
+            rule.onNodeWithTag(tag).assert(hasAnyDescendant(hasText(shown)))
+        } catch (e: AssertionError) {
+            throw AssertionError("field $tag should show \"$shown\"; the screen shows: ${rule.screenSummary()}", e)
+        }
+    }
+
+    @Test
+    fun typingOnTheKeypadFillsEachFieldWithoutWipingTheOthers() {
+        goToCatalog()
+        rule.onNodeWithText("باب حديد").performClick()
+        waitForText(Strings.WIDTH)
+
+        for (key in listOf("1", "decimal", "2", "0")) rule.onNodeWithTag("key-$key").performClick()
+        assertField("field-width", "1,20")
+
+        rule.onNodeWithTag("key-next").performClick()
+        for (key in listOf("2", "decimal", "1")) rule.onNodeWithTag("key-$key").performClick()
+        assertField("field-height", "2,1")
+        assertField("field-width", "1,20") // typing the height must not touch the width
+
+        rule.onNodeWithTag("key-next").performClick()
+        for (key in listOf("5", "0", "0")) rule.onNodeWithTag("key-$key").performClick()
+        assertField("field-rate", "500")
+        assertField("field-width", "1,20")
+        assertField("field-height", "2,1")
+
+        rule.onNodeWithTag("key-backspace").performClick()
+        assertField("field-rate", "50")
+        rule.onNodeWithTag("key-clear").performClick()
+        assertField("field-rate", "0") // empty shows the grey 0 placeholder
     }
 
     @Test

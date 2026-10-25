@@ -22,6 +22,7 @@ object Strings {
     const val CLOSE = "إغلاق"
     const val NEXT = "التالي"
     const val CLEAR = "مسح"
+    const val BACKSPACE = "حذف رقم"
     const val OPTIONAL = "اختياري"
     const val YES = "نعم"
     const val NO = "لا"

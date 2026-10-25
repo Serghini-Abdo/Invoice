@@ -10,9 +10,12 @@ import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
 import android.text.Layout
+import android.text.SpannableString
+import android.text.Spanned
 import android.text.StaticLayout
 import android.text.TextDirectionHeuristics
 import android.text.TextPaint
+import android.text.style.LineHeightSpan
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.PathParser
 import ma.workshop.invoice.R
@@ -41,20 +44,40 @@ class AndroidTextMeasurer(private val regular: Typeface, private val bold: Typef
 
     companion object {
         /**
-         * Cairo's line box is about 1.87 em tall (ascent 1.30 em + descent 0.57 em), roughly 40% more than
-         * Arabic text needs. Scaling the line spacing trims the unused descent area; the baseline stays
-         * put and descenders simply overlap the empty ascent area of the next line. Measuring and drawing
-         * share this builder, so they always agree.
+         * Cairo's line box is about 1.87 em tall (ascent 1.30 em + descent 0.57 em), far more than Arabic
+         * text needs, and a plain line-spacing multiplier is ignored for the last (often only) line of a
+         * paragraph. This span sets every line to [LINE_HEIGHT_FACTOR] em by trimming the empty space
+         * above the glyphs. Measuring and drawing share this builder, so they always agree.
          */
-        const val LINE_SPACING = 0.7f
+        const val LINE_HEIGHT_FACTOR = 1.4f
 
-        fun buildLayout(text: CharSequence, paint: TextPaint, width: Float, alignment: Layout.Alignment): StaticLayout =
-            StaticLayout.Builder.obtain(text, 0, text.length, paint, ceil(width).toInt().coerceAtLeast(1))
+        private class FixedLineHeight(private val target: Int) : LineHeightSpan {
+            override fun chooseHeight(
+                text: CharSequence,
+                start: Int,
+                end: Int,
+                spanstartv: Int,
+                lineHeight: Int,
+                fm: Paint.FontMetricsInt,
+            ) {
+                if (fm.descent - fm.ascent <= target) return
+                fm.ascent = fm.descent - target
+                fm.top = fm.ascent
+                fm.bottom = fm.descent
+            }
+        }
+
+        fun buildLayout(text: CharSequence, paint: TextPaint, width: Float, alignment: Layout.Alignment): StaticLayout {
+            val styled = SpannableString(text)
+            val target = ceil(paint.textSize * LINE_HEIGHT_FACTOR).toInt()
+            styled.setSpan(FixedLineHeight(target), 0, styled.length, Spanned.SPAN_INCLUSIVE_INCLUSIVE)
+            return StaticLayout.Builder.obtain(styled, 0, styled.length, paint, ceil(width).toInt().coerceAtLeast(1))
                 .setAlignment(alignment)
                 .setTextDirection(TextDirectionHeuristics.RTL)
                 .setIncludePad(false)
-                .setLineSpacing(0f, LINE_SPACING)
+                .setLineSpacing(0f, 1f)
                 .build()
+        }
     }
 }
 
