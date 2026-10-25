@@ -233,16 +233,8 @@ fun ExportPanel(
                 BigButton(Strings.RETRY, Icons.Filled.Refresh, onRetry, kind = ButtonKind.Secondary)
             }
             ExportStatus.READY -> {
-                export.preview?.let { bitmap ->
-                    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface, shadowElevation = 3.dp) {
-                        Image(
-                            bitmap = bitmap,
-                            contentDescription = Strings.PREVIEW,
-                            contentScale = ContentScale.FillWidth,
-                            modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp),
-                        )
-                    }
-                }
+                // The share buttons come first so they are on screen the moment the invoice is saved;
+                // the preview follows and can be scrolled in full.
                 when (format) {
                     ExportFormat.PNG -> BigButton(Strings.SHARE_IMAGE, Icons.Filled.Share, { onShare(ShareChoice.PNG) }, kind = ButtonKind.Success)
                     ExportFormat.PDF -> BigButton(Strings.SHARE_PDF, Icons.Filled.Share, { onShare(ShareChoice.PDF) }, kind = ButtonKind.Success)
@@ -256,6 +248,16 @@ fun ExportPanel(
                     BigButton(Strings.PRINT, Icons.Filled.Print, onPrint, kind = ButtonKind.Secondary)
                 }
                 Text(Strings.SHARE_HINT, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                export.preview?.let { bitmap ->
+                    Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface, shadowElevation = 3.dp) {
+                        Image(
+                            bitmap = bitmap,
+                            contentDescription = Strings.PREVIEW,
+                            contentScale = ContentScale.FillWidth,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
             }
         }
         export.message?.let { StatusBanner(it, BannerKind.Info) }
