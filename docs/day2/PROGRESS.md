@@ -392,6 +392,24 @@ page, PDF fallback for a too-long invoice, every earlier test.
 * By hand: the Latin labels in the PDF/PNG (order of "120 × 85 cm" and "2,52 m² × 500 DH"), the pictures' look and
   alignment, and the unit label position on the entry screen.
 
+### Speakers placed, and the width / height pictures fixed
+
+* The width / height pictures were Material's two offset arrows (see the owner's photo); they are now the mock-up's
+  single double-headed ↔ and ↕ (`FieldIcons`).
+* **Every speaker is behind the Settings switch now** (off = none anywhere): the catalogue-card speakers, the replay
+  speakers on confirmation and review and the add-product tile used to be always visible and are hidden too.
+* New with the switch on: a speaker inside each Home card (own target, corner), on every field label (customer
+  name/phone, width, height, price, quantity, deposit), on dialog titles, in front of the customer chip, one for the
+  calculation card on confirmation, one for the payment card on the invoice detail, one per history card, one per
+  product-list row, one for the empty-list message (the empty card is a message now, not a button), and the disabled
+  "متابعة" tile says "أضف منتوجاً واحداً على الأقل للمتابعة".
+* Still missing: a speaker in the review sub-bar and one for the review totals card besides the replay (the replay
+  speaker reads the invoice summary), the mic (customer name / product name) and its status line in Settings.
+* Tests: `SpeakerToggleUiTest` (none with the switch off, including catalogue cards and the add tile; home cards,
+  message, add tile, disabled continue and catalogue cards when on; tapping the message speaker does not open the
+  catalogue); `SpeakerTapTest` and the layout tests now provide / set the switch on. Full suite on the phone:
+  **OK (71 tests)**. (Two earlier runs failed only because the phone's screen went off.)
+
 ### Notes for the next sprints
 
 * Latin unit labels and photos will reach the table through `DocumentRow` / `IllustrationImage` (sprint 6).

@@ -20,8 +20,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,7 +56,10 @@ import ma.workshop.invoice.ui.components.ArabicText
 import ma.workshop.invoice.ui.components.SpeakerButton
 import ma.workshop.invoice.ui.components.StatusBanner
 import ma.workshop.invoice.ui.components.CoinPicture
+import ma.workshop.invoice.ui.components.FieldIcons
 import ma.workshop.invoice.ui.components.IconPicture
+import ma.workshop.invoice.ui.components.RoundSpeaker
+import ma.workshop.invoice.ui.components.LocalSpeakers
 import ma.workshop.invoice.ui.components.LocalUnitScript
 import ma.workshop.invoice.ui.rateLabel
 import ma.workshop.invoice.ui.rateUnit
@@ -183,7 +184,7 @@ fun ItemEntryScreen(
                     onClick = { select(ActiveField.WIDTH) },
                     error = errorFor(Field.WIDTH),
                     trailing = { UnitLabel(form.widthUnit) },
-                    picture = { IconPicture(Icons.Filled.SwapHoriz) },
+                    picture = { IconPicture(FieldIcons.Width) },
                 )
                 FieldBox(
                     label = Strings.HEIGHT,
@@ -193,7 +194,7 @@ fun ItemEntryScreen(
                     onClick = { select(ActiveField.HEIGHT) },
                     error = errorFor(Field.HEIGHT),
                     trailing = { UnitLabel(form.heightUnit) },
-                    picture = { IconPicture(Icons.Filled.SwapVert) },
+                    picture = { IconPicture(FieldIcons.Height) },
                 )
             }
             FieldBox(
@@ -307,7 +308,10 @@ fun ItemConfirmScreen(
                 shadowElevation = 2.dp,
             ) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp), horizontalAlignment = Alignment.End) {
-                    ArabicText(Strings.CALCULATION, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                        RoundSpeaker(LocalSpeakers.current.texts.calculation(pricing))
+                        ArabicText(Strings.CALCULATION, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                     for (line in ItemDescriber.breakdown(pricing, LocalUnitScript.current)) {
                         Column(horizontalAlignment = Alignment.End) {
                             ArabicText(line.label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

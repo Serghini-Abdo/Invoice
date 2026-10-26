@@ -35,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import ma.workshop.invoice.ui.components.RoundSpeaker
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -83,9 +84,11 @@ fun CatalogManagementScreen(
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             items(products, key = { it.id }) { product ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RoundSpeaker(product.name)
                 Surface(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .weight(1f)
                         .strictClickable(role = Role.Button, onClickLabel = Strings.EDIT_PRODUCT) { onEdit(product.id) },
                     shape = RoundedCornerShape(18.dp),
                     color = if (product.isActive) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant,
@@ -117,6 +120,7 @@ fun CatalogManagementScreen(
                         Spacer(Modifier.width(12.dp))
                         IllustrationImage(product.illustration, Modifier.size(64.dp))
                     }
+                }
                 }
             }
         }

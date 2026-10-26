@@ -122,6 +122,7 @@ fun AppTextField(
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         if (label != null) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                RoundSpeaker(label)
                 if (hint != null) {
                     ArabicText(hint, style = MaterialTheme.typography.bodyMedium, color = palette.grayStrong)
                     Spacer(Modifier.width(6.dp))
@@ -315,6 +316,10 @@ fun SpokenButton(
     speechAvailable: Boolean = true,
     buttonModifier: Modifier = Modifier,
 ) {
+    if (!LocalSpeakers.current.show) {
+        BigButton(text, icon, onClick, modifier.then(buttonModifier), kind = kind, enabled = enabled, spokenTile = false)
+        return
+    }
     Row(modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         SpeakerTile(kind, onSpeak, "${Strings.SPEAK_LABEL}: $text", buttonEnabled = enabled, speechAvailable = speechAvailable)
         BigButton(text, icon, onClick, buttonModifier.weight(1f), kind = kind, enabled = enabled, spokenTile = false)
@@ -365,4 +370,19 @@ fun CoinPicture(modifier: Modifier = Modifier) {
             Text("DH", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
         }
     }
+}
+
+/** The mock-up's ↔ (width) and ↕ (height): one straight double-headed arrow each. */
+object FieldIcons {
+    private fun arrows(name: String, path: String): ImageVector =
+        ImageVector.Builder(name, 24.dp, 24.dp, 24f, 24f).addPath(
+            pathData = androidx.compose.ui.graphics.vector.addPathNodes(path),
+            stroke = SolidColor(Color.Black),
+            strokeLineWidth = 2.4f,
+            strokeLineCap = androidx.compose.ui.graphics.StrokeCap.Round,
+            strokeLineJoin = androidx.compose.ui.graphics.StrokeJoin.Round,
+        ).build()
+
+    val Width: ImageVector by lazy { arrows("width", "M3 12h18M7 7.5L2.5 12 7 16.5M17 7.5l4.5 4.5-4.5 4.5") }
+    val Height: ImageVector by lazy { arrows("height", "M12 3v18M7.5 7L12 2.5 16.5 7M7.5 17l4.5 4.5 4.5-4.5") }
 }

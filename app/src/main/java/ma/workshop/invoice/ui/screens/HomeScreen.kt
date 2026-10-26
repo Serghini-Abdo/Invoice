@@ -20,6 +20,8 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.Box
+import ma.workshop.invoice.ui.components.RoundSpeaker
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,26 +49,32 @@ private fun HomeCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 132.dp)
-            .strictClickable(role = Role.Button, onClickLabel = text, onClick = onClick),
+            .heightIn(min = 132.dp),
         shape = RoundedCornerShape(28.dp),
         color = container,
         contentColor = content,
         border = border,
         shadowElevation = 4.dp,
     ) {
-        // The label right-aligned with its icon on the right.
-        Row(
-            Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            ArabicText(text, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
-            Spacer(Modifier.width(20.dp))
-            Surface(shape = RoundedCornerShape(50), color = content.copy(alpha = 0.14f), modifier = Modifier.size(84.dp)) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                    Icon(icon, contentDescription = null, modifier = Modifier.size(52.dp))
+        Box {
+            // The label right-aligned with its icon on the right. The card's own tap area is the row; the speaker
+            // sits on top in the corner as a separate target, so it only speaks.
+            Row(
+                Modifier
+                    .fillMaxSize()
+                    .strictClickable(role = Role.Button, onClickLabel = text, onClick = onClick)
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                ArabicText(text, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
+                Spacer(Modifier.width(20.dp))
+                Surface(shape = RoundedCornerShape(50), color = content.copy(alpha = 0.14f), modifier = Modifier.size(84.dp)) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                        Icon(icon, contentDescription = null, modifier = Modifier.size(52.dp))
+                    }
                 }
             }
+            RoundSpeaker(text, Modifier.align(Alignment.BottomStart).padding(4.dp), tint = content)
         }
     }
 }

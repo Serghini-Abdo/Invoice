@@ -81,4 +81,43 @@ class SpeakerToggleUiTest {
         rule.waitForTextOrExplain(Strings.SHOW_SPEAKERS)
         assertEquals(0, speakers())
     }
+
+    private fun openItemList() {
+        openCustomerScreen()
+        rule.onNodeWithText(Strings.CONTINUE).performClick()
+        rule.waitForTextOrExplain(Strings.ADD_FIRST_PRODUCT)
+    }
+
+    private fun described(text: String) = rule.onAllNodesWithContentDescription(text, substring = true).fetchSemanticsNodes().size
+
+    @Test
+    fun withTheSwitchOffNoSpeakerExistsAnywhereOnTheFlow() {
+        launch(showSpeakers = false)
+        rule.waitForTextOrExplain(Strings.NEW_INVOICE)
+        assertEquals("home cards", 0, speakers())
+        openItemList()
+        assertEquals(0, speakers())
+        assertEquals("the add button has no tile", 0, described("${Strings.SPEAK_LABEL}: ${Strings.ADD_PRODUCT}"))
+        rule.onNodeWithText(Strings.ADD_PRODUCT).performClick()
+        rule.waitForTextOrExplain(Strings.CHOOSE_PRODUCT)
+        assertEquals("catalogue cards have no speaker", 0, described(Strings.SPEAK_NAME))
+    }
+
+    @Test
+    fun withTheSwitchOnHomeCardsMessagesCataloguecardsAndTheDisabledContinueSpeak() {
+        launch(showSpeakers = true)
+        rule.waitForTextOrExplain(Strings.NEW_INVOICE)
+        assertTrue("one speaker in each home card and the title", speakers() >= 3)
+        openItemList()
+        assertTrue("the empty-list message has its own speaker", speakers() >= 2)
+        assertEquals("the add button keeps its tile", 1, described("${Strings.SPEAK_LABEL}: ${Strings.ADD_PRODUCT}"))
+        assertEquals("the disabled continue still has a tile", 1, described("${Strings.SPEAK_LABEL}: ${Strings.CONTINUE}"))
+        // a tap on the message speaker does not open the catalogue
+        rule.onAllNodesWithTag("round-speaker")[1].performClick()
+        rule.waitForIdle()
+        assertEquals(0, rule.onAllNodesWithText(Strings.CHOOSE_PRODUCT).fetchSemanticsNodes().size)
+        rule.onNodeWithText(Strings.ADD_PRODUCT).performClick()
+        rule.waitForTextOrExplain(Strings.CHOOSE_PRODUCT)
+        assertTrue("catalogue cards have their speaker", described(Strings.SPEAK_NAME) >= 4)
+    }
 }
