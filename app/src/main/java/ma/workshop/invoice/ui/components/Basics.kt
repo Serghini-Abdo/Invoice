@@ -97,7 +97,7 @@ fun BigButton(
     val pressed by interaction.collectIsPressedAsState()
     val colors = buttonColors(kind, enabled, pressed)
     val content: @Composable RowScope.() -> Unit = {
-        ArabicText(text, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center, modifier = Modifier.weight(1f, fill = false))
+        FitText(text, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center, modifier = Modifier.weight(1f, fill = false))
         if (icon != null) {
             Spacer(Modifier.width(10.dp))
             if (kind == ButtonKind.Accent) {
@@ -142,7 +142,7 @@ private fun DialogButton(text: String, icon: ImageVector, onClick: () -> Unit, c
         contentColor = content,
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
     ) {
-        ArabicText(text, style = MaterialTheme.typography.labelLarge)
+        FitText(text, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f, fill = false))
         Spacer(Modifier.width(8.dp))
         Icon(icon, contentDescription = null)
     }

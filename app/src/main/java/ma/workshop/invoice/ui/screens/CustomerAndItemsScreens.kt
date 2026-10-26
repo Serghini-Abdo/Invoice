@@ -69,6 +69,7 @@ import ma.workshop.invoice.ui.components.InvoiceTableHeader
 import ma.workshop.invoice.ui.components.LocalSpeakers
 import ma.workshop.invoice.ui.components.RoundSpeaker
 import ma.workshop.invoice.ui.components.LocalUnitScript
+import ma.workshop.invoice.ui.components.FitText
 import ma.workshop.invoice.ui.components.IconPicture
 import ma.workshop.invoice.ui.components.InvoiceTableRow
 import ma.workshop.invoice.ui.components.TablePicture
@@ -184,7 +185,7 @@ private fun CategoryChip(label: String, selected: Boolean, onClick: () -> Unit) 
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
     ) {
-        ArabicText(label, style = MaterialTheme.typography.titleSmall)
+        FitText(label, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f, fill = false))
     }
 }
 
@@ -199,7 +200,7 @@ private fun SmallAction(text: String, icon: androidx.compose.ui.graphics.vector.
         contentColor = if (danger) MaterialTheme.appPalette.onErrorContainer else MaterialTheme.colorScheme.onSecondaryContainer,
     ) {
         Row(Modifier.padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-            ArabicText(text, style = MaterialTheme.typography.titleSmall)
+            FitText(text, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f, fill = false))
             Spacer(Modifier.width(8.dp))
             Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp))
         }

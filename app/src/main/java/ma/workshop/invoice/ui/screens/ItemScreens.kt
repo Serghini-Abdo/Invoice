@@ -57,6 +57,7 @@ import ma.workshop.invoice.ui.components.SpeakerButton
 import ma.workshop.invoice.ui.components.StatusBanner
 import ma.workshop.invoice.ui.components.CoinPicture
 import ma.workshop.invoice.ui.components.FieldIcons
+import ma.workshop.invoice.ui.components.FitText
 import ma.workshop.invoice.ui.components.IconPicture
 import ma.workshop.invoice.ui.components.RoundSpeaker
 import ma.workshop.invoice.ui.components.LocalSpeakers
@@ -150,12 +151,12 @@ fun ItemEntryScreen(
                     text = Strings.CONTINUE,
                     icon = Icons.AutoMirrored.Filled.ArrowForward,
                     onClick = onSubmit,
-                    modifier = Modifier.width(170.dp).testTag("entry-continue"),
+                    modifier = Modifier.width(if (LocalSpeakers.current.show) 190.dp else 170.dp).testTag("entry-continue"),
                 )
                 Spacer(Modifier.width(8.dp))
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                     ArabicText(Strings.ITEM_TOTAL, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                    ArabicText(
+                    FitText(
                         evaluation.pricing?.let { ArabicFormat.amount(it.total) } ?: "-",
                         style = MaterialTheme.typography.headlineMedium,
                     )
@@ -323,9 +324,17 @@ fun ItemConfirmScreen(
         }
 
         Surface(shadowElevation = 12.dp, color = MaterialTheme.colorScheme.surface) {
-            Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                BigButton(Strings.CANCEL, Icons.Filled.Close, onCancel, Modifier.weight(1f), kind = ButtonKind.Secondary)
-                BigButton(Strings.CONFIRM, Icons.Filled.Check, onConfirm, Modifier.weight(1f), kind = ButtonKind.Success)
+            if (LocalSpeakers.current.show) {
+                // With the speaker tiles two buttons no longer fit side by side: stacked, each full width.
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    BigButton(Strings.CONFIRM, Icons.Filled.Check, onConfirm, Modifier.fillMaxWidth().testTag("confirm-item"), kind = ButtonKind.Success)
+                    BigButton(Strings.CANCEL, Icons.Filled.Close, onCancel, Modifier.fillMaxWidth().testTag("cancel-item"), kind = ButtonKind.Secondary)
+                }
+            } else {
+                Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    BigButton(Strings.CANCEL, Icons.Filled.Close, onCancel, Modifier.weight(1f), kind = ButtonKind.Secondary)
+                    BigButton(Strings.CONFIRM, Icons.Filled.Check, onConfirm, Modifier.weight(1f), kind = ButtonKind.Success)
+                }
             }
         }
     }

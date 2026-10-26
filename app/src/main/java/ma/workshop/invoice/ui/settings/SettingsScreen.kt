@@ -57,6 +57,7 @@ import ma.workshop.invoice.ui.components.IconBadge
 import ma.workshop.invoice.ui.components.AppTextField
 import ma.workshop.invoice.ui.components.AppTopBar
 import ma.workshop.invoice.ui.components.ArabicText
+import ma.workshop.invoice.ui.components.FitText
 import ma.workshop.invoice.ui.components.SectionCard
 import ma.workshop.invoice.ui.components.StatusBanner
 import ma.workshop.invoice.ui.components.strictClickable
@@ -116,10 +117,11 @@ private fun ChoiceOption(label: String, selected: Boolean, enabled: Boolean, mod
         border = if (selected) BorderStroke(3.dp, MaterialTheme.colorScheme.primary) else null,
     ) {
         Row(Modifier.padding(horizontal = 8.dp, vertical = 8.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-            ArabicText(
+            FitText(
                 label,
                 style = MaterialTheme.typography.titleSmall,
                 color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
+                modifier = Modifier.weight(1f, fill = false),
             )
             if (selected) {
                 Spacer(Modifier.width(4.dp))
