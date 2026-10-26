@@ -410,6 +410,23 @@ page, PDF fallback for a too-long invoice, every earlier test.
   catalogue); `SpeakerTapTest` and the layout tests now provide / set the switch on. Full suite on the phone:
   **OK (71 tests)**. (Two earlier runs failed only because the phone's screen went off.)
 
+### Tight text with the speaker icons on (owner's photo of the confirm screen)
+
+* **Cause:** each tile takes 52 dp, so two buttons in a row broke their labels inside a word ("إلغا / ء", "تأكي / د"),
+  and the title was cut ("تأكيد ال…").
+* **Fixes:** `FitText` (shrinks the type to 70 % to stay on one line, then wraps only at word boundaries, at most two
+  lines with "…") is used for every button label, small row actions, dialog buttons, category and choice chips,
+  table titles and amounts, title-bar titles and the item-entry total. On bars with a centred picture the title
+  speaker moves to the left of the picture, so the title keeps its room. With speakers on, confirm / cancel are
+  stacked full width (confirm above cancel; side by side as before when off), the entry bar's Continue is 190 dp, and
+  a table row's speaker sits under its amount instead of taking a column.
+* **Test:** `SpeakerLayoutSweepTest` walks home, customer, empty list, catalogue, entry (empty and filled),
+  confirmation, item list, review, save dialog, saved, history, detail and settings with the switch on and fails on any
+  word broken in the middle (it caught the entry total "1 260 DH" before the last fix); it also checks the stacked
+  confirm buttons. Full suite: **OK (73 tests)**, domain tests and lint pass.
+* Not covered by the sweep: the product list and product edit screens, the voice dialogs, and anything that needs
+  data the sweep does not create (several items, a long customer name). Look at those by hand with the icons on.
+
 ### Notes for the next sprints
 
 * Latin unit labels and photos will reach the table through `DocumentRow` / `IllustrationImage` (sprint 6).

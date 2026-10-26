@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,6 +40,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -230,6 +234,10 @@ fun AppTopBar(
                         contentAlignment = Alignment.Center,
                     ) { centerIcon() }
                 }
+                if (centerIcon != null && speaker == null) {
+                    // The speaker is pushed to the left of the picture so it never takes room from the title.
+                    Box(Modifier.align(Alignment.Center).offset(x = (-50).dp)) { RoundSpeaker(title) }
+                }
                 val titleMax = if (centerIcon != null) maxWidth / 2 - 26.dp else maxWidth - TouchTarget - 8.dp
                 Row(
                     Modifier
@@ -237,12 +245,10 @@ fun AppTopBar(
                         .widthIn(max = titleMax),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (speaker != null) speaker() else RoundSpeaker(title)
-                    ArabicText(
+                    if (speaker != null) speaker() else if (centerIcon == null) RoundSpeaker(title)
+                    FitText(
                         text = title,
                         style = if (centerIcon != null) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
                             .weight(1f, fill = false)
                             .padding(end = 10.dp),
@@ -385,4 +391,41 @@ object FieldIcons {
 
     val Width: ImageVector by lazy { arrows("width", "M3 12h18M7 7.5L2.5 12 7 16.5M17 7.5l4.5 4.5-4.5 4.5") }
     val Height: ImageVector by lazy { arrows("height", "M12 3v18M7.5 7L12 2.5 16.5 7M7.5 17l4.5 4.5 4.5-4.5") }
+}
+
+/**
+ * Text for tight places (button labels, column titles, amounts). It never breaks inside a word: it first shrinks
+ * the type step by step (down to [minScale]) to stay on one line, and only then wraps at word boundaries
+ * (at most [maxLines] lines, ending with "…").
+ */
+@Composable
+fun FitText(
+    text: String,
+    modifier: Modifier = Modifier,
+    style: TextStyle = LocalTextStyle.current,
+    color: Color = Color.Unspecified,
+    fontWeight: FontWeight? = null,
+    textAlign: TextAlign = TextAlign.Right,
+    minScale: Float = 0.7f,
+    maxLines: Int = 2,
+) {
+    var scale by remember(text, style) { mutableStateOf(1f) }
+    var wrap by remember(text, style) { mutableStateOf(false) }
+    val base = if (style.fontSize.isSpecified) style.fontSize else 16.sp
+    Text(
+        text = text,
+        modifier = modifier,
+        color = color,
+        fontWeight = fontWeight,
+        textAlign = textAlign,
+        softWrap = wrap,
+        maxLines = if (wrap) maxLines else 1,
+        overflow = TextOverflow.Ellipsis,
+        style = style.merge(TextStyle(textDirection = TextDirection.Rtl, fontSize = base * scale)),
+        onTextLayout = { result ->
+            if (!wrap && result.hasVisualOverflow) {
+                if (scale > minScale + 0.01f) scale = maxOf(minScale, scale - 0.08f) else wrap = true
+            }
+        },
+    )
 }
