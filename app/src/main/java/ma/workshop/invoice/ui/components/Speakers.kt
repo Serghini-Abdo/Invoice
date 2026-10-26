@@ -32,7 +32,7 @@ val LocalSpeakers = staticCompositionLocalOf { SpeakerUi(false, DarijaSpeech) {}
 
 /** The round speaker beside a title or a table row (no label of its own); at least a 48 dp target. */
 @Composable
-fun RoundSpeaker(text: String, modifier: Modifier = Modifier) {
+fun RoundSpeaker(text: String, modifier: Modifier = Modifier, tint: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color.Unspecified) {
     val ui = LocalSpeakers.current
     if (!ui.show) return
     StrictIconButton(
@@ -40,7 +40,7 @@ fun RoundSpeaker(text: String, modifier: Modifier = Modifier) {
         contentDescription = "${Strings.SPEAK_LABEL}: $text",
         modifier = modifier.size(48.dp).testTag("round-speaker"),
     ) {
-        Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(26.dp))
+        Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = null, tint = if (tint == androidx.compose.ui.graphics.Color.Unspecified) MaterialTheme.colorScheme.primary else tint, modifier = Modifier.size(26.dp))
     }
 }
 

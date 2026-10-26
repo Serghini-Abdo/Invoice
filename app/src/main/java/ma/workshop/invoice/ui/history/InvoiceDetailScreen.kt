@@ -49,6 +49,7 @@ import ma.workshop.invoice.ui.components.ButtonKind
 import ma.workshop.invoice.ui.components.ConfirmDialog
 import ma.workshop.invoice.ui.components.InvoiceTable
 import ma.workshop.invoice.ui.components.LocalSpeakers
+import ma.workshop.invoice.ui.components.RoundSpeaker
 import ma.workshop.invoice.ui.components.LocalUnitScript
 import ma.workshop.invoice.ui.components.TablePicture
 import ma.workshop.invoice.ui.components.AppTopBar
@@ -172,6 +173,8 @@ private fun InvoiceHeaderCard(invoice: Invoice, zone: ZoneId) {
 private fun PaymentCard(invoice: Invoice) {
     val payment = invoice.payment
     SectionCard {
+        // one speaker for the card: total, deposit and balance as one sentence
+        Row(Modifier.fillMaxWidth()) { RoundSpeaker(LocalSpeakers.current.texts.paymentSummary(payment)) }
         AmountRow(Strings.INVOICE_TOTAL, ArabicFormat.amount(payment.total), emphasized = true)
         AmountRow(Strings.DEPOSIT_SHORT, ArabicFormat.amount(payment.deposit))
         AmountRow(

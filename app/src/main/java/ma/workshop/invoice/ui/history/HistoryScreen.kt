@@ -31,6 +31,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberDatePickerState
+import ma.workshop.invoice.ui.components.LocalSpeakers
+import ma.workshop.invoice.ui.components.RoundSpeaker
+import ma.workshop.invoice.domain.format.ArabicTerms
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -127,7 +130,17 @@ fun HistoryScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(invoices, key = { it.id }) { invoice ->
-                    InvoiceSummaryCard(invoice, zone) { onOpen(invoice.id) }
+                    val ui = LocalSpeakers.current
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RoundSpeaker(
+                            listOf(
+                                "${ArabicTerms.INVOICE} ${ArabicTerms.NUMBER} ${ArabicFormat.invoiceNumber(invoice.number)}",
+                                invoice.customerName.trim(),
+                                "${ArabicTerms.TOTAL} ${ui.texts.amount(invoice.total)}",
+                            ).filter { it.isNotEmpty() }.joinToString("، "),
+                        )
+                        Box(Modifier.weight(1f)) { InvoiceSummaryCard(invoice, zone) { onOpen(invoice.id) } }
+                    }
                 }
             }
         }

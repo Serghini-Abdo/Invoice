@@ -67,6 +67,7 @@ import ma.workshop.invoice.ui.components.ConfirmDialog
 import ma.workshop.invoice.ui.components.IllustrationImage
 import ma.workshop.invoice.ui.components.InvoiceTableHeader
 import ma.workshop.invoice.ui.components.LocalSpeakers
+import ma.workshop.invoice.ui.components.RoundSpeaker
 import ma.workshop.invoice.ui.components.LocalUnitScript
 import ma.workshop.invoice.ui.components.IconPicture
 import ma.workshop.invoice.ui.components.InvoiceTableRow
@@ -231,9 +232,7 @@ fun ItemListScreen(
                 verticalArrangement = Arrangement.Center,
             ) {
                 Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .strictClickable(role = androidx.compose.ui.semantics.Role.Button, onClickLabel = Strings.ADD_PRODUCT, onClick = onAdd),
+                    modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(28.dp),
                     color = MaterialTheme.colorScheme.primaryContainer,
                 ) {
@@ -244,7 +243,10 @@ fun ItemListScreen(
                     ) {
                         IllustrationImage("door", Modifier.size(120.dp))
                         Icon(Icons.Filled.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(64.dp))
-                        ArabicText(Strings.ADD_FIRST_PRODUCT, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                            RoundSpeaker("${Strings.ADD_FIRST_PRODUCT}. ${Strings.NO_ITEMS_HINT}")
+                            ArabicText(Strings.ADD_FIRST_PRODUCT, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+                        }
                         ArabicText(Strings.NO_ITEMS_HINT, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
                     }
                 }
@@ -256,9 +258,14 @@ fun ItemListScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 item(key = "customer") {
-                    Surface(
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RoundSpeaker(
+                            listOf(state.customer.name.trim(), state.customer.phone.trim()).filter { it.isNotEmpty() }
+                                .joinToString("، ").ifEmpty { Strings.EDIT_CUSTOMER },
+                        )
+                        Surface(
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .weight(1f)
                             .strictClickable(role = androidx.compose.ui.semantics.Role.Button, onClickLabel = Strings.EDIT_CUSTOMER, onClick = onEditCustomer),
                         shape = RoundedCornerShape(14.dp),
                         color = MaterialTheme.colorScheme.secondaryContainer,
@@ -277,6 +284,7 @@ fun ItemListScreen(
                             Spacer(Modifier.width(10.dp))
                             Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(28.dp))
                         }
+                    }
                     }
                 }
                 item(key = "table-title") { InvoiceTableHeader(Modifier.testTag("invoice-table")) }
@@ -300,6 +308,7 @@ fun ItemListScreen(
                     Icons.AutoMirrored.Filled.ArrowForward,
                     onContinue,
                     enabled = state.items.isNotEmpty(),
+                    spokenText = if (state.items.isEmpty()) Strings.NEED_ONE_ITEM else null,
                 )
             }
         }

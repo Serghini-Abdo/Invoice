@@ -175,7 +175,10 @@ fun FieldBox(
         verticalArrangement = Arrangement.spacedBy(2.dp),
         horizontalAlignment = Alignment.End,
     ) {
-        ArabicText(label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.appPalette.grayStrong)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+            RoundSpeaker(label)
+            ArabicText(label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.appPalette.grayStrong)
+        }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Surface(
             modifier = Modifier
@@ -261,7 +264,10 @@ fun QuantityStepper(
     picture: @Composable (() -> Unit)? = null,
 ) {
     Column(modifier.bringIntoViewWhen(selected), verticalArrangement = Arrangement.spacedBy(2.dp), horizontalAlignment = Alignment.End) {
-        ArabicText(Strings.QUANTITY, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.appPalette.grayStrong)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+            RoundSpeaker(Strings.QUANTITY)
+            ArabicText(Strings.QUANTITY, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.appPalette.grayStrong)
+        }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             RoundAction(Icons.Filled.Remove, Strings.DECREASE, enabled = quantity > 1, onClick = onMinus)
             Surface(
@@ -298,6 +304,7 @@ fun QuantityStepper(
 /** Speaker target. Separate from the card's selection target so a tap here never selects the product. */
 @Composable
 fun SpeakerButton(onClick: () -> Unit, available: Boolean, modifier: Modifier = Modifier, description: String = Strings.SPEAK_NAME) {
+    if (!LocalSpeakers.current.show) return
     StrictIconButton(onClick = onClick, contentDescription = description, modifier = modifier.size(TouchTarget)) {
         Icon(
             imageVector = if (available) Icons.Filled.VolumeUp else Icons.Filled.VolumeOff,

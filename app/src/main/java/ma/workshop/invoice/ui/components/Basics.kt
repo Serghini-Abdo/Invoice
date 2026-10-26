@@ -82,11 +82,13 @@ fun BigButton(
     enabled: Boolean = true,
     /** With "show speaker icons" on, a tile of this button's style sits on its left and speaks the label. */
     spokenTile: Boolean = true,
+    /** What the tile says when it is not the label itself (the disabled "continue" explains why). */
+    spokenText: String? = null,
 ) {
     val speakers = LocalSpeakers.current
     if (spokenTile && speakers.show) {
         Row(modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            SpeakerTile(kind, { speakers.speak(text) }, "${Strings.SPEAK_LABEL}: $text", buttonEnabled = enabled)
+            SpeakerTile(kind, { speakers.speak(spokenText ?: text) }, "${Strings.SPEAK_LABEL}: $text", buttonEnabled = enabled)
             BigButton(text, icon, onClick, Modifier.weight(1f), kind, enabled, spokenTile = false)
         }
         return
@@ -160,7 +162,12 @@ fun ConfirmDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { ArabicText(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.fillMaxWidth()) },
+        title = {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                RoundSpeaker(title)
+                ArabicText(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f, fill = false))
+            }
+        },
         text = {
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.End) {
                 if (message.isNotEmpty()) ArabicText(message, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth())

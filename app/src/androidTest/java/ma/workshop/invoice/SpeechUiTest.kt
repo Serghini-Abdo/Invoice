@@ -32,6 +32,15 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+/** These components are composed on their own, so the "show speaker icons" switch is provided as on. */
+private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.setSpokenContent(content: @androidx.compose.runtime.Composable () -> Unit) =
+    setContent {
+        androidx.compose.runtime.CompositionLocalProvider(
+            ma.workshop.invoice.ui.components.LocalSpeakers provides
+                ma.workshop.invoice.ui.components.SpeakerUi(true, ma.workshop.invoice.domain.speech.DarijaSpeech) {},
+        ) { content() }
+    }
+
 /** A speaker tap only speaks: it never selects, confirms or navigates. */
 @RunWith(AndroidJUnit4::class)
 class SpeakerTapTest {
@@ -43,7 +52,7 @@ class SpeakerTapTest {
     fun speakerOnAProductCardNeverSelectsTheProduct() {
         var selected = 0
         var spoken = 0
-        rule.setContent {
+        rule.setSpokenContent {
             InvoiceTheme {
                 ProductCard(name = "باب حديد", illustration = "door", onSelect = { selected++ }, onSpeak = { spoken++ }, speechAvailable = true)
             }
@@ -76,7 +85,7 @@ class SpeakerTapTest {
         )
         var spoken = 0
         var leftScreen = 0
-        rule.setContent {
+        rule.setSpokenContent {
             InvoiceTheme {
                 ItemConfirmScreen(
                     pending = pending,
@@ -111,7 +120,7 @@ class VoiceOffFlowTest {
         val container = ApplicationProvider.getApplicationContext<InvoiceApp>().container
         runBlocking {
             container.database.clearAllTables()
-            container.settings.update { it.copy(audioEnabled = false) }
+            container.settings.update { it.copy(audioEnabled = false, showSpeakers = true) }
             container.products.ensureSeeded()
         }
         ActivityScenario.launch(MainActivity::class.java).use {

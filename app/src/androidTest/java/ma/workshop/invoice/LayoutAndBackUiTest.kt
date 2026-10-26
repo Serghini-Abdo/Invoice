@@ -49,7 +49,7 @@ class LayoutAndBackUiTest {
         container = ApplicationProvider.getApplicationContext<InvoiceApp>().container
         runBlocking {
             container.database.clearAllTables()
-            container.settings.update { it.copy(audioEnabled = false) }
+            container.settings.update { it.copy(audioEnabled = false, showSpeakers = true) }
             container.products.ensureSeeded()
         }
         scenario = ActivityScenario.launch(MainActivity::class.java)
