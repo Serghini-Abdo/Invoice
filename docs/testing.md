@@ -117,7 +117,7 @@ These were real bugs in code that all 145 JVM tests passed:
 ```bash
 ./gradlew -p domain test                  # JDK 17 only
 ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease
-./gradlew :app:connectedDebugAndroidTest  # with an emulator or phone attached
+./gradlew :app:connectedDebugAndroidTest -PdeviceTests  # OPTIONAL: emulator or phone attached; skipped without -PdeviceTests
 ```
 
 Screenshots of the real screens and of the exported invoice are published by CI to the throwaway

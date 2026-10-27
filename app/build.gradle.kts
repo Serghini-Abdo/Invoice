@@ -124,3 +124,13 @@ dependencies {
     androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.work.testing)
 }
+
+// The on-device suite (emulator or phone) is opt-in: it needs hardware, takes long and rewrites app data.
+// Run it with -PdeviceTests (CI does). Without the flag the connected*AndroidTest tasks are skipped, not failed.
+tasks.matching { it.name.startsWith("connected") && it.name.endsWith("AndroidTest") }.configureEach {
+    val enabledByFlag = providers.gradleProperty("deviceTests").isPresent
+    onlyIf {
+        if (!enabledByFlag) logger.lifecycle("Skipping $path: device tests are opt-in, add -PdeviceTests to run them.")
+        enabledByFlag
+    }
+}

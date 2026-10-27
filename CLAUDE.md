@@ -3,6 +3,8 @@
 Offline-first Android invoicing app for a small Moroccan metal workshop. Kotlin, Jetpack Compose,
 Room. The owner reads little: large type, pictures, one decision per screen, optional speech.
 
+`AGENTS.md` carries the same rules for Codex and other agents; keep the two files in step when you change one.
+
 ## Read first
 
 * `docs/day2/DECISIONS.md`: every product decision for the Day 2 upgrade. Do not re-ask what is there.
@@ -15,7 +17,7 @@ Room. The owner reads little: large type, pictures, one decision per screen, opt
 ```bash
 ./gradlew -p domain test                  # pure JVM tests (most logic lives here)
 ./gradlew :app:assembleDebug
-./gradlew :app:connectedDebugAndroidTest  # needs an emulator or phone
+./gradlew :app:connectedDebugAndroidTest -PdeviceTests  # OPTIONAL: needs an emulator or phone; skipped without the flag
 ```
 
 Room exports its schema to `app/schemas/`; commit the new JSON whenever the version changes, and add a

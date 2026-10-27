@@ -94,7 +94,7 @@ signed with a different, throw-away key: moving to this build needs one uninstal
 ```bash
 ./gradlew -p domain test                  # pure-Kotlin unit tests, needs only a JDK (no Android SDK)
 ./gradlew :app:testDebugUnitTest          # (no app-level JVM tests; the logic lives in :domain)
-./gradlew :app:connectedDebugAndroidTest  # emulator/device: Room, migrations, PDF/PNG export, full UI workflow
+./gradlew :app:connectedDebugAndroidTest -PdeviceTests  # OPTIONAL, emulator/phone: Room, migrations, PDF/PNG export, full UI workflow
 ```
 
 ## Architecture
