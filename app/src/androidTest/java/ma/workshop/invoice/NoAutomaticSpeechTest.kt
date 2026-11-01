@@ -1,7 +1,8 @@
 package ma.workshop.invoice
 
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -43,7 +44,7 @@ class NoAutomaticSpeechTest {
             container.database.clearAllTables()
             // Both old "speak totals" settings stay on: the behaviour they used to switch on must not come back.
             container.settings.update {
-                it.copy(audioEnabled = true, showSpeakers = false, speakItemTotals = true, speakInvoiceTotals = true)
+                it.copy(audioEnabled = true, showSpeakers = true, speakItemTotals = true, speakInvoiceTotals = true)
             }
             container.products.ensureSeeded()
         }
@@ -71,7 +72,7 @@ class NoAutomaticSpeechTest {
             Thread.sleep(2_000) // anything delayed would have started by now
             assertEquals("confirming a line and opening review speak nothing", before, container.speech.utteranceCount)
 
-            rule.onNodeWithContentDescription(Strings.REPLAY).performClick()
+            rule.onAllNodesWithContentDescription(Strings.REPLAY).onFirst().performClick()
             rule.waitForIdle()
             assertEquals("a speaker tap speaks", before + 1, container.speech.utteranceCount)
         }

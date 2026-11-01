@@ -11,10 +11,10 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
 * Room schema **version 6** (no change in chapter 1). Every version has a migration, a `MigrationTest` case
   and its committed JSON.
 * Tests at the last run (2026-11-01): **214 domain tests pass**; `:app:assembleDebug`,
-  `:app:compileDebugAndroidTestKotlin` and `:app:lintDebug` pass after step 1.7. The instrumented suite last
-  ran after step 1.1 on the owner's Samsung SM-S931B (Android 16, test data only): 82 of 83 passed, 1 skipped,
-  1 failed (a test timing problem, fixed since, see Sprint 1). **Device suite not run** after steps 1.2 to 1.7, including the new
-  `NoAutomaticSpeechTest`, which needs an offline Arabic voice on the device or it skips.
+  `:app:compileDebugAndroidTestKotlin` and `:app:lintDebug` pass after step 1.7. The instrumented suite ran
+  after step 1.7 on the owner's Samsung SM-S931B (Android 16, test data only): **84 tests, 0 failed,
+  1 skipped** (the old-Android storage test). That includes the new `NoAutomaticSpeechTest`, which ran with a
+  real Arabic voice (it skips on a phone without one).
 
 ## What is built
 
@@ -91,17 +91,17 @@ Still open (owner tasks):
 
 ### Sprint 1: layout, palette, name
 
-1. ~~Settings as categories with parent / child options~~ (plan step 1.0): built; compiles, lint clean, domain tests (211) pass; device suite run on a Samsung SM-S931B (Android 16): 82 of 83 pass, 1 skipped (old-Android test), 1 fails (see below). Hand check still to do.
+1. ~~Settings as categories with parent / child options~~ (plan step 1.0): built; compiles, lint clean, domain tests pass; the device suite passes on a Samsung SM-S931B (Android 16, 84 tests, 0 failed). Hand check still to do.
 2. ~~Right-to-left app layout~~ (plan step 1.1): built; same device run as above, the layout tests pass. Hand check still to do.
-   * `LayoutAndBackUiTest.leavingWithUnsavedWorkAsksFirst` failed on the phone (and on a5bffd2, so not caused by Sprint 1). The app is right: on the entry screens a Back press while the keyboard is still on screen only closes the keyboard, and the test pressed Back while the keyboard was still animating away after the Done action. The test now waits for the keyboard to be hidden before every system Back. **Fixed in the test; not yet re-run on a device.**
+   * `LayoutAndBackUiTest.leavingWithUnsavedWorkAsksFirst` used to fail on the phone (and on a5bffd2, so not caused by Sprint 1). The app was right: on the entry screens a Back press while the keyboard is open only closes the keyboard, and a real phone keeps its keyboard up after a width is typed. The test's system Back now closes the keyboard first when it is open. Passes on the phone.
 3. ~~Blue palette tokens and a blue launcher icon; green only for paid~~ (steps 1.2, 1.3): built; compiles and
-   lint passes; the receipt colours are pinned by a domain test; not run on a device. Hand check still to do.
+   lint passes; the receipt colours are pinned by a domain test; the device suite passes. Hand check still to do.
 4. ~~Rename invoice to receipt (وصل)~~ (step 1.4): built; domain tests pass; the Arabic wording needs the
    owner's review.
 5. ~~Fix the known issues: the product "not found" message, the unused string~~ (step 1.5): built.
-6. ~~No arrows on buttons and cards~~ (step 1.6): built; not run on a device.
+6. ~~No arrows on buttons and cards~~ (step 1.6): built; the device suite passes. Hand check still to do.
 7. ~~No automatic speech; remove the two automatic-totals switches~~ (step 1.7): built; the new
-   `NoAutomaticSpeechTest` has not run on a device.
+   `NoAutomaticSpeechTest` passes on the phone.
 
 ### Sprint 2: fewer taps
 

@@ -64,24 +64,30 @@ class LayoutAndBackUiTest {
 
     private fun waitForText(text: String) = rule.waitForTextOrExplain(text)
 
-    /**
-     * Back while the keyboard is still on screen only closes the keyboard (by design, on the entry screens),
-     * so wait for it to be gone first; on a real phone it is still animating away right after a Done action.
-     */
-    private fun waitForKeyboardHidden() {
-        rule.waitUntil(10_000) {
-            var visible = true
-            scenario!!.onActivity { activity ->
-                visible = ViewCompat.getRootWindowInsets(activity.window.decorView)?.isVisible(WindowInsetsCompat.Type.ime()) == true
-            }
-            !visible
+    private fun keyboardVisible(): Boolean {
+        var visible = false
+        scenario!!.onActivity { activity ->
+            visible = ViewCompat.getRootWindowInsets(activity.window.decorView)?.isVisible(WindowInsetsCompat.Type.ime()) == true
         }
+        return visible
     }
 
-    private fun systemBack() {
-        waitForKeyboardHidden()
+    private fun pressBack() {
         scenario!!.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         rule.waitForIdle()
+    }
+
+    /**
+     * The system Back button. On the entry screens, Back while the keyboard is open only closes the keyboard
+     * (by design), so when it is open the first press is that one and the real Back follows it. A real phone
+     * keeps its keyboard up after typing a width; an emulator without one never needed this.
+     */
+    private fun systemBack() {
+        if (keyboardVisible()) {
+            pressBack()
+            rule.waitUntil(10_000) { !keyboardVisible() }
+        }
+        pressBack()
     }
 
     private fun goToCatalog() {
