@@ -12,6 +12,8 @@ there are no real receipts on any phone yet.
   but not built. Do not re-ask what is there; check its Open questions before guessing.
 * `docs/day2/PROGRESS.md`: current state, what is verified, known issues, and the roadmap. Start there to
   find the next sprint.
+* `docs/day3/PLAN.md`: how to build each Day 3 sprint, step by step. Follow it exactly, one chapter per
+  session, and end with its hand-off report (Part F).
 * `README.md` (the app as built), `docs/calculation-rules.md`, `docs/data-and-migrations.md`, `docs/testing.md`.
 * Mock-ups: `docs/day2/design-review.html` (Day 2).
 

@@ -62,6 +62,8 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
 ## Roadmap (Day 3, from the 2026-11-01 review)
 
 Each sprint: branch `day3/sprint-N` from `main`, build only what is listed, then the definition of done below.
+**Step-by-step instructions for every sprint are in [../day3/PLAN.md](../day3/PLAN.md)** (files, steps,
+tests, stop conditions, hand-off format). The list below is the summary.
 
 ### Sprint 0: safety (before anything else)
 
