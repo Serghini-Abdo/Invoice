@@ -184,7 +184,7 @@ fun ProductEditScreen(
             ProductEditState.NotFound -> {
                 AppTopBar(Strings.EDIT_PRODUCT, onBack)
                 Box(Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
-                    ArabicText(Strings.INVOICE_NOT_FOUND, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
+                    ArabicText(Strings.PRODUCT_NOT_FOUND, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
                 }
             }
             is ProductEditState.Editing -> {

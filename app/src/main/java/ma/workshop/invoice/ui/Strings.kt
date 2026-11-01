@@ -161,6 +161,7 @@ object Strings {
     const val CHANGE_DEPOSIT = "تغيير التسبيق"
     const val DELETE_FAILED = "تعذر حذف الوصل. لم يتغير أي شيء"
     const val INVOICE_NOT_FOUND = "الوصل غير موجود"
+    const val PRODUCT_NOT_FOUND = "المنتوج غير موجود"
     const val INVOICE_UNREADABLE = "تعذر قراءة هذا الوصل"
 
     // settings
@@ -186,7 +187,6 @@ object Strings {
     const val AUDIO_ITEM_TOTALS = "نطق مجموع المنتوج"
     const val AUDIO_INVOICE_TOTALS = "نطق مجموع الفاتورة والباقي"
     const val AUDIO_TEST = "تجربة الصوت"
-    const val AUDIO_TEST_SENTENCE = "ألف ومائتان وستون درهم"
     const val AUDIO_CHECKING = "جارٍ فحص الصوت..."
     const val AUDIO_OFF = "الصوت متوقف. كل المعلومات تبقى ظاهرة على الشاشة"
     const val AUDIO_NO_ENGINE = "لا يوجد محرك نطق في هذا الهاتف"

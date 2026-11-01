@@ -62,8 +62,6 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
 
 ## Known issues
 
-* Product edit's "not found" state shows "الفاتورة غير موجودة" (the receipt message).
-* `Strings.AUDIO_TEST_SENTENCE` is unused.
 * Backups do not include photo files: a restore on another phone shows the generic picture.
 * A receipt's unit is derived from its first measured item, not stored; a per-piece-only receipt follows the
   current Settings unit.
