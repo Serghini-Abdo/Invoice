@@ -6,13 +6,14 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
 
 ## Current state (2026-11-01)
 
-* Branch `main`, commit `7926659` (multi-size entry, new pricing methods, fixed charges, Room v6).
-  **Not pushed.** The last patch ("another size" only for products with a width or height) has not been
-  compiled.
+* Branch `day3/sprint-0` (from `main` at `4a7dd70`). **Not pushed.** Chapter 0 of the Day 3 plan is in place
+  except the owner tasks below.
 * Room schema **version 6**. Every version has a migration, a `MigrationTest` case and its committed JSON.
-* Tests at the last run: **210 domain tests pass**; build and lint pass. The instrumented suite last ran
-  before the 2026-10-27 entry update: **OK (73 tests)** on the owner's Samsung SM-S931B, Android 16
-  (test data only). The entry update has **not** run on a device yet.
+* Tests at the last run (2026-11-01): **211 domain tests pass**; `:app:assembleDebug`,
+  `:app:assembleDebugAndroidTest` and `:app:lintDebug` pass, so the multi-size entry patch compiles.
+  The instrumented suite last ran before the 2026-10-27 entry update: **OK (73 tests)** on the owner's
+  Samsung SM-S931B, Android 16 (test data only). **Device suite not run** for the entry update or for the
+  Google consent change below.
 
 ## What is built
 
@@ -26,7 +27,8 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
 * **Settings:** product catalogue (with photo import), workshop name / phone / thank-you line, output
   format, units and unit labels, audio (on / off, rate, spoken language, speaker icons switch), backup.
 * **Backup:** automatic (off / daily / weekly) to the phone and / or Google Drive, back up now, staged and
-  validated restore.
+  validated restore. When Google's consent screen fails, the real reason is shown: a closed screen says so
+  (no home banner); anything else shows Google's code, for example `api 10`.
 * **Speech:** offline TextToSpeech in Darija or standard Arabic, speakers behind a switch (off by default),
   dictation on customer name and product name.
 * **Layout:** forced left-to-right with right-aligned Arabic (to be replaced, see the roadmap), green palette.
@@ -36,6 +38,9 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
 * Voice quality in Darija and standard Arabic, speech rates, the voice download flow, a speaker stopping the
   previous one.
 * Dictation with and without the offline ar-MA pack, and the microphone permission flow.
+* Google sign-in messages: on a phone without the Google Cloud setup, choosing an account shows "setup
+  incomplete" with `api 10`; pressing Back on Google's screen shows "you closed the Google screen" and no banner
+  appears on the home screen.
 * The new entry flow end to end: several sizes, the yellow copied rate, custom charge, editing a line.
 * PNG and PDF of a real receipt: divider weight, Latin unit labels ("120 × 85 cm"), bidi order of
   "2,52 م² × 500 DH" and "صفحة 2 / 3", balance colour.
@@ -67,7 +72,10 @@ tests, stop conditions, hand-off format). The list below is the summary.
 
 ### Sprint 0: safety (before anything else)
 
-1. Compile, run the domain tests, lint, and the instrumented suite on one targeted device for the entry update.
+Done: compile, domain tests and lint for the entry update; the real reason for a failed Google consent.
+Still open (owner tasks):
+
+1. The instrumented suite on one targeted device (entry update and consent change).
 2. One real backup and one restore on the owner's phone (phone folder, and Google Drive after its setup),
    before the owner keeps any real receipts.
 3. Push `main`.

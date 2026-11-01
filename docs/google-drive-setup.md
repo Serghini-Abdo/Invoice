@@ -75,7 +75,8 @@ for whoever is helping.
 
 | Code shown | Meaning | What to do |
 | --- | --- | --- |
-| `api 10` | Google found no OAuth client for this package + SHA-1 (or it is still being applied) | Check steps 6 and 7; confirm the SHA-1 of the installed APK (below); wait a few minutes |
+| `api 10` | Google found no OAuth client for this package + SHA-1 (or it is still being applied). It also appears right after choosing an account when the setup is missing | Check steps 6 and 7; confirm the SHA-1 of the installed APK (below); wait a few minutes |
+| `cancelled` ("you closed the Google screen") | The owner pressed Back or closed Google's screen before tapping Allow. Not a setup problem | Tap the button again and choose "Allow" |
 | `HTTP 403 accessNotConfigured` | The Drive API is not enabled in the project | Step 2 |
 | `HTTP 403 storageQuotaExceeded` | The Drive is full | Free space on Drive |
 | `HTTP 401` | Google rejected the permission | Tap "reconnect" |

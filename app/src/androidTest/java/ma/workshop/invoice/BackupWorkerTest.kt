@@ -65,7 +65,8 @@ private class FakeDrive(private val context: android.content.Context) : DriveBac
     val calls = ArrayList<String>()
 
     override suspend fun authorize(useSavedAccount: Boolean) = auth
-    override fun tokenFromConsent(data: Intent?): DriveAuthResult.Token? = null
+    override fun consentResult(resultCode: Int, data: Intent?): DriveAuthResult =
+        DriveAuthResult.Failed(BackupFailure.CONSENT_CANCELLED, "cancelled")
     override suspend fun list(token: String): List<RemoteBackup> = remote.toList()
 
     override suspend fun create(token: String, name: String, json: String): RemoteBackup {

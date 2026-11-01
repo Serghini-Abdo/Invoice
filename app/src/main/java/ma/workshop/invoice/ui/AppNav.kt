@@ -2,7 +2,6 @@ package ma.workshop.invoice.ui
 
 import ma.workshop.invoice.ui.components.LocalDictation
 
-import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -294,7 +293,7 @@ fun AppNav(container: AppContainer) {
                 val alerts = BackupHealth.alerts(plan, status, System.currentTimeMillis())
 
                 val consentLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-                    vm.onConsentResult(if (result.resultCode == Activity.RESULT_OK) result.data else null)
+                    vm.onConsentResult(result.resultCode, result.data)
                 }
                 LaunchedEffect(vm) {
                     vm.consentRequests.collect { pending ->

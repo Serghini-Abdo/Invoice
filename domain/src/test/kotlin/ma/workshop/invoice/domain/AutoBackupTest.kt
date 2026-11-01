@@ -130,6 +130,8 @@ class AutoBackupTest {
         assertEquals(BackupFailure.NO_ACCOUNT, DriveFailureMapper.fromPlayStatus(4))
         assertEquals(BackupFailure.NO_NETWORK, DriveFailureMapper.fromPlayStatus(7))
         assertEquals(BackupFailure.CONSENT_NEEDED, DriveFailureMapper.fromPlayStatus(6))
+        assertEquals(BackupFailure.CONSENT_CANCELLED, DriveFailureMapper.fromPlayStatus(16))
+        assertEquals(BackupFailure.CONSENT_CANCELLED, DriveFailureMapper.fromPlayStatus(12501))
         assertEquals(BackupFailure.DRIVE_UNKNOWN, DriveFailureMapper.fromPlayStatus(99999))
     }
 
@@ -153,6 +155,7 @@ class AutoBackupTest {
         assertTrue(BackupFailure.NO_NETWORK.retryable)
         assertTrue(BackupFailure.DEVELOPER_ERROR.needsUser)
         assertTrue(BackupFailure.CONSENT_NEEDED.needsUser)
+        assertTrue(BackupFailure.CONSENT_CANCELLED.needsUser)
     }
 
     // ---- health ----
@@ -209,6 +212,17 @@ class AutoBackupTest {
         assertEquals(BackupDestination.DRIVE, alert.destination)
         assertEquals(AlertKind.NEEDS_ACTION, alert.kind)
         assertEquals(BackupFailure.CONSENT_NEEDED, alert.failure)
+    }
+
+    @Test
+    fun closingGoogleScreenIsNeverABannerButStillGoesOverdue() {
+        val status = BackupStatus(
+            local = DestinationStatus(lastSuccessAt = 5 * day),
+            drive = DestinationStatus(lastSuccessAt = 5 * day, lastFailure = BackupFailure.CONSENT_CANCELLED),
+        )
+        assertTrue(BackupHealth.alerts(plan, status, 5 * day + 1000).isEmpty())
+        val later = BackupHealth.alerts(plan, status, 8 * day)
+        assertEquals(AlertKind.OVERDUE, later.single { it.destination == BackupDestination.DRIVE }.kind)
     }
 
     @Test

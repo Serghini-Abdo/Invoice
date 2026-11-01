@@ -1,6 +1,7 @@
 package ma.workshop.invoice.platform.drive
 
 import android.accounts.Account
+import android.app.Activity
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
@@ -46,8 +47,12 @@ interface DriveBackupApi {
     /** Silent when the user already agreed once; otherwise [DriveAuthResult.NeedsConsent]. Never shows UI itself. */
     suspend fun authorize(useSavedAccount: Boolean): DriveAuthResult
 
-    /** Reads the token from the result of the consent screen; null if the user declined. */
-    fun tokenFromConsent(data: Intent?): DriveAuthResult.Token?
+    /**
+     * Reads the result of the consent screen. Always receives both [resultCode] and [data], whatever the code, and
+     * returns [DriveAuthResult.Token] or [DriveAuthResult.Failed]: a closed screen is CONSENT_CANCELLED, anything
+     * Google reports is classified like [authorize] does, with the raw code as the detail (for example "api 10").
+     */
+    fun consentResult(resultCode: Int, data: Intent?): DriveAuthResult
 
     suspend fun list(token: String): List<RemoteBackup>
 
@@ -109,16 +114,22 @@ class DriveBackupClient(
         }
     }
 
-    override fun tokenFromConsent(data: Intent?): DriveAuthResult.Token? {
-        if (data == null) return null
+    override fun consentResult(resultCode: Int, data: Intent?): DriveAuthResult {
+        if (data == null) {
+            return if (resultCode == Activity.RESULT_OK) {
+                DriveAuthResult.Failed(BackupFailure.CONSENT_NEEDED, "no token")
+            } else {
+                DriveAuthResult.Failed(BackupFailure.CONSENT_CANCELLED, "cancelled")
+            }
+        }
         return try {
             val result = Identity.getAuthorizationClient(context).getAuthorizationResultFromIntent(data)
-            val token = result.accessToken ?: return null
+            val token = result.accessToken ?: return DriveAuthResult.Failed(BackupFailure.CONSENT_NEEDED, "no token")
             val email = runCatching { result.toGoogleSignInAccount()?.email }.getOrNull()
             if (email != null) saveAccount(email)
             DriveAuthResult.Token(token, email)
         } catch (e: ApiException) {
-            null
+            DriveAuthResult.Failed(DriveFailureMapper.fromPlayStatus(e.statusCode), "api ${e.statusCode}")
         }
     }
 

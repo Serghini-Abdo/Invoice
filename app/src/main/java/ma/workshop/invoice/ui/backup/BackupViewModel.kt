@@ -178,15 +178,14 @@ class BackupViewModel(private val container: AppContainer) : ViewModel() {
         }
     }
 
-    /** Called with the result of Google's consent screen. */
-    fun onConsentResult(data: Intent?) {
+    /** Called with the result of Google's consent screen: the real reason is kept, not "declined" for everything. */
+    fun onConsentResult(resultCode: Int, data: Intent?) {
         val action = pendingAction ?: return
-        val token = container.drive.tokenFromConsent(data)
-        if (token == null) {
-            viewModelScope.launch { onDriveFailure(action, BackupFailure.CONSENT_NEEDED, "consent declined") }
-            return
+        when (val auth = container.drive.consentResult(resultCode, data)) {
+            is DriveAuthResult.Token -> viewModelScope.launch { runDrive(action, auth.accessToken) }
+            is DriveAuthResult.Failed -> onDriveFailure(action, auth.failure, auth.detail)
+            is DriveAuthResult.NeedsConsent -> onDriveFailure(action, BackupFailure.CONSENT_NEEDED, "consent screen required")
         }
-        viewModelScope.launch { runDrive(action, token.accessToken) }
     }
 
     private fun onDriveFailure(action: DriveAction, failure: BackupFailure, detail: String) {

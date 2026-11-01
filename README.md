@@ -91,6 +91,8 @@ export INVOICE_KEYSTORE_PASSWORD=...  INVOICE_KEY_ALIAS=...  INVOICE_KEY_PASSWOR
 
 Google Drive backup needs a one-time Google Cloud OAuth setup: see [docs/google-drive-setup.md](docs/google-drive-setup.md).
 Without it, switching Drive on shows the exact reason in Arabic and backups to the phone keep working.
+If the owner closes Google's screen before tapping Allow, the app says so (a separate message, no banner on
+the home screen); any other Google failure is shown with its real code, for example `api 10`.
 
 **Debug signing key.** The debug build is signed with the committed `app/debug.keystore` (standard public debug
 credentials), so every build, local or CI, has the same certificate. That is what lets the Google OAuth client

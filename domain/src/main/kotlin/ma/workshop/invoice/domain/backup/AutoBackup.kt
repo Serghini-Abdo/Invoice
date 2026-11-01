@@ -45,6 +45,9 @@ enum class BackupFailure(val needsUser: Boolean, val retryable: Boolean) {
     DRIVE_API_DISABLED(true, false),
     NO_ACCOUNT(true, false),
     CONSENT_NEEDED(true, false),
+
+    /** The owner closed Google's screen (Back) before allowing. Shown once on the backup screen, never as a banner. */
+    CONSENT_CANCELLED(true, false),
     TOKEN_REJECTED(false, true),
     ACCESS_DENIED(true, false),
     NO_NETWORK(false, true),
@@ -79,14 +82,17 @@ object DriveFailureMapper {
     private const val NETWORK_ERROR = 7
     private const val DEVELOPER_ERROR = 10
     private const val SERVICE_INVALID = 9
+    private const val CANCELED = 16
     private const val TIMEOUT = 15
     private const val SIGN_IN_FAILED = 12500
+    private const val SIGN_IN_CANCELLED = 12501
 
     fun fromPlayStatus(code: Int): BackupFailure = when (code) {
         DEVELOPER_ERROR -> BackupFailure.DEVELOPER_ERROR
         SERVICE_MISSING, SERVICE_VERSION_UPDATE_REQUIRED, SERVICE_DISABLED, SERVICE_INVALID -> BackupFailure.NO_PLAY_SERVICES
         SIGN_IN_REQUIRED, INVALID_ACCOUNT -> BackupFailure.NO_ACCOUNT
         RESOLUTION_REQUIRED -> BackupFailure.CONSENT_NEEDED
+        CANCELED, SIGN_IN_CANCELLED -> BackupFailure.CONSENT_CANCELLED
         NETWORK_ERROR, TIMEOUT -> BackupFailure.NO_NETWORK
         SIGN_IN_FAILED -> BackupFailure.DEVELOPER_ERROR
         else -> BackupFailure.DRIVE_UNKNOWN
@@ -213,7 +219,8 @@ object BackupHealth {
             if (!plan.isEnabled(destination)) continue
             val s = status[destination]
             val failure = s.lastFailure
-            if (failure != null && failure.needsUser) {
+            // Closing Google's screen is the owner's own choice, not a problem to nag about on the home screen.
+            if (failure != null && failure.needsUser && failure != BackupFailure.CONSENT_CANCELLED) {
                 result += BackupAlert(destination, AlertKind.NEEDS_ACTION, failure)
             } else if (isOverdue(plan, s, now)) {
                 result += BackupAlert(destination, AlertKind.OVERDUE, failure)
