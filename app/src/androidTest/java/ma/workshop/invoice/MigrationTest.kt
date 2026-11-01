@@ -17,6 +17,27 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class MigrationTest {
 
+    @Test
+    fun version5ProductsKeepTheirPricingAndGetTheExistingMeasurementVisibility() {
+        val name = "migration-products-6.db"
+        helper.createDatabase(name, 5).use { db ->
+            for ((id, formula) in listOf(1 to "area", 2 to "perimeter", 3 to "per_item")) {
+                db.execSQL("INSERT INTO products (id, name, illustration, formula, defaultUnit, category, isActive, sortOrder, createdAt, updatedAt) " +
+                    "VALUES ($id, 'منتوج', 'door', '$formula', 'cm', NULL, 1, $id, 10, 20)")
+            }
+        }
+        helper.runMigrationsAndValidate(name, 6, true, AppDatabase.MIGRATION_5_6).use { db ->
+            db.query("SELECT formula, defaultUnit, measurements FROM products ORDER BY id").use { cursor ->
+                for ((formula, measurements) in listOf("area" to "both", "perimeter" to "both", "per_item" to "none")) {
+                    assertTrue(cursor.moveToNext())
+                    org.junit.Assert.assertEquals(formula, cursor.getString(0))
+                    org.junit.Assert.assertEquals("cm", cursor.getString(1))
+                    org.junit.Assert.assertEquals(measurements, cursor.getString(2))
+                }
+            }
+        }
+    }
+
     @get:Rule
     val helper = MigrationTestHelper(InstrumentationRegistry.getInstrumentation(), AppDatabase::class.java)
 

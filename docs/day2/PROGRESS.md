@@ -583,3 +583,40 @@ build first, stop Gradle, then run the APKs with adb shell am instrument.
 Before ending: build, run all tests, update docs/day2/PROGRESS.md, commit on day2/sprint-5 (do not
 push), and tell me what was verified on a device and what I must check by hand.
 ```
+
+
+## Entry and pricing update — 2026-10-27
+
+Requested by the owner after the Day 2 work; see the matching section in DECISIONS.md.
+
+### Delivered
+
+* Multiple size lines for one selected product, independent quantities and rates, one inline confirmation.
+* A copied unchanged rate stays yellow with a text cue until edited, confirmed or accepted by adding a line.
+* Native dismissible numeric keyboards for dimensions, rate, quantity and deposit; the custom keypad is removed.
+* Per-product measurement visibility (none / width / height / both) for per-piece products.
+* Width-only, height-only and fixed pricing, plus custom named labour charges without catalogue entries.
+* Snapshot, invoice output, speech, backup and draft support for the new methods and variations.
+* Room version 6 migration retains previous product visibility and leaves saved invoice rows untouched.
+
+### Verification
+
+* 210 domain tests pass, including batch totals, independent edits, copied-price acknowledgement,
+  incomplete-line rejection, draft recovery, informational measurements, fixed charges and validated backups.
+* Debug APK and instrumentation APK build; Android lint passes with no errors.
+* Device checks: pending isolated-emulator run. No tests were run against the owner's phone or existing AVD data.
+
+## Entry-flow design prototype — 2026-10-29
+
+* Review-only standalone prototype: [product-entry-flow.html](prototypes/product-entry-flow.html).
+  Reuses the approved design-review illustrations, field layout, speaker placement and green/yellow styling.
+* Proposed flow: optional customer details directly to the illustrated picker; one expanded size at a time;
+  compact editable size summaries; carried-forward rate acknowledgement; grouped products with newest additions
+  first; editing replaces the existing group; optional deposit and remaining balance on review.
+* Includes quantity steppers, custom charges as a DH catalogue card, editable simulated dictation, manual-only
+  speech and settings options inside their parent categories. A sample invoice lets the owner explore editing.
+* All artwork and interaction code are embedded; no external script or image downloads are required.
+* Verification: 29 logic/event-handler checks pass, plus exported HTML structure, embedded SVG validation and
+  JavaScript syntax checks. Browser visual verification remains unavailable because local-file browser access
+  was blocked. Microphone recognition, actual invoice saving and backup operations are simulations.
+* Awaiting design feedback. No Android implementation, data migration or device tests were performed for this prototype.

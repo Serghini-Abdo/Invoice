@@ -16,6 +16,9 @@ import java.math.RoundingMode
 
 /** Spoken words in standard Arabic, for owners who prefer it to Darija. Kept apart from screen text. */
 object StandardTerms {
+    const val METHOD_WIDTH = "حسب العرض"
+    const val METHOD_HEIGHT = "حسب الارتفاع"
+    const val METHOD_FIXED = "مبلغ ثابت"
     const val METER = "متر"
     const val TWO_METERS = "متران"
     const val METERS = "أمتار"
@@ -50,12 +53,16 @@ object StandardSpeech : SpeechText {
         PricingFormula.AREA to StandardTerms.METHOD_AREA,
         PricingFormula.PERIMETER to StandardTerms.METHOD_PERIMETER,
         PricingFormula.PER_ITEM to StandardTerms.METHOD_PIECE,
+        PricingFormula.WIDTH to StandardTerms.METHOD_WIDTH,
+        PricingFormula.HEIGHT to StandardTerms.METHOD_HEIGHT,
+        PricingFormula.FIXED to StandardTerms.METHOD_FIXED,
     )
 
     private val rateBases = mapOf(
         RateBasis.PER_SQUARE_METER to StandardTerms.PER_SQUARE_METER,
         RateBasis.PER_LINEAR_METER to StandardTerms.PER_METER,
         RateBasis.PER_PIECE to StandardTerms.PER_PIECE,
+        RateBasis.FIXED to "",
     )
 
     override fun amount(money: Money): String = SpokenText.amount(money)
@@ -67,12 +74,12 @@ object StandardSpeech : SpeechText {
         LengthUnit.CENTIMETER -> centimeters(length.value)
     }
 
-    override fun rate(pricing: ItemPricing): String = "${amount(pricing.unitRate)} ${rateBases.getValue(pricing.rateBasis)}"
+    override fun rate(pricing: ItemPricing): String = "${amount(pricing.unitRate)} ${rateBases.getValue(pricing.rateBasis)}".trim()
 
     override fun itemLine(productName: String, pricing: ItemPricing): String = listOfNotNull(
         productName,
         dimensions(pricing),
-        "${ArabicTerms.QUANTITY} ${quantity(pricing.quantity)}",
+        if (pricing.formula.usesQuantity) "${ArabicTerms.QUANTITY} ${quantity(pricing.quantity)}" else null,
         "${ArabicTerms.TOTAL} ${amount(pricing.total)}",
     ).joinToString(SEP)
 
@@ -85,7 +92,7 @@ object StandardSpeech : SpeechText {
         pricing.height?.let { parts += "${ArabicTerms.HEIGHT} ${length(it)}" }
         base(pricing)?.let { parts += it }
         parts += "${ArabicTerms.RATE} ${rate(pricing)}"
-        parts += "${ArabicTerms.QUANTITY} ${quantity(pricing.quantity)}"
+        if (pricing.formula.usesQuantity) parts += "${ArabicTerms.QUANTITY} ${quantity(pricing.quantity)}"
         parts += "${ArabicTerms.TOTAL} ${amount(pricing.total)}"
         return parts.joinToString(SEP)
     }
@@ -148,13 +155,18 @@ object StandardSpeech : SpeechText {
         val base = pricing.baseAmount?.setScale(4, RoundingMode.HALF_UP) ?: return null
         return when (pricing.rateBasis) {
             RateBasis.PER_SQUARE_METER -> "${ArabicTerms.AREA} ${decimal(base)} ${StandardTerms.METER} ${StandardTerms.SQUARE}"
-            else -> "${ArabicTerms.PERIMETER} ${meters(base)}"
+            else -> "${if (pricing.formula == PricingFormula.PERIMETER) ArabicTerms.PERIMETER else method(pricing.formula)} ${meters(base)}"
         }
     }
 
     private fun dimensions(pricing: ItemPricing): String? {
-        val width = pricing.width ?: return null
-        val height = pricing.height ?: return null
+        val width = pricing.width
+        val height = pricing.height
+        if (width == null || height == null) {
+            val dimension = width ?: height ?: return null
+            val label = if (width != null) ArabicTerms.WIDTH else ArabicTerms.HEIGHT
+            return "$label ${length(dimension)}"
+        }
         return "${length(width)} ${StandardTerms.BY} ${length(height)}"
     }
 }

@@ -59,29 +59,17 @@ class InvoiceTableUiTest {
         rule.onNodeWithText(text).performClick()
     }
 
-    private fun keys(vararg keys: String) {
-        try {
-            rule.waitUntil(5_000) { rule.onAllNodesWithTag("key-${keys.first()}").fetchSemanticsNodes().isNotEmpty() }
-        } catch (e: androidx.compose.ui.test.ComposeTimeoutException) {
-            throw AssertionError("no keypad; screen: ${rule.screenSummary()}", e)
-        }
-        for (key in keys) rule.onNodeWithTag("key-$key").performClick()
-    }
-
     private fun addTheDoor() {
         click(Strings.NEW_INVOICE)
         click(Strings.CONTINUE)
         click(Strings.ADD_PRODUCT)
         click("باب حديد")
         rule.waitForTextOrExplain(Strings.WIDTH)
-        keys("1", "decimal", "2", "0")
-        rule.onNodeWithTag("key-next").performClick()
-        keys("2", "decimal", "1", "0")
-        rule.onNodeWithTag("key-next").performClick()
-        keys("5", "0", "0")
-        rule.onNodeWithTag("entry-continue").performClick()
-        rule.waitForTextOrExplain(Strings.CONFIRM_ITEM_TITLE)
-        click(Strings.CONFIRM)
+        rule.enterNumber("field-width", "1.20")
+        rule.enterNumber("field-height", "2.10")
+        rule.enterNumber("field-rate", "500")
+        rule.showEntryControl("confirm-item")
+        rule.confirmEntry()
         // the empty list has the add button too: wait for the table itself
         rule.waitUntil(15_000) { rule.onAllNodesWithTag("invoice-table").fetchSemanticsNodes().isNotEmpty() }
     }
@@ -120,9 +108,8 @@ class InvoiceTableUiTest {
         rule.onNodeWithTag("paid-badge").assertDoesNotExist()
 
         // deposit equals the total: "0 DH" with the badge on the same line
-        rule.onNode(hasClickAction() and hasAnyAncestor(hasTestTag("deposit-field"))).performScrollTo().performClick()
         rule.waitForIdle()
-        keys("1", "2", "6", "0")
+        rule.enterNumber("deposit-field", "1260")
         rule.waitForIdle()
         rule.onNodeWithTag("paid-badge").performScrollTo().assertIsDisplayed()
         val badge = rule.onNodeWithTag("paid-badge").getUnclippedBoundsInRoot()

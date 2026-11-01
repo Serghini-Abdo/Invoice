@@ -63,12 +63,12 @@ class PricingEngineTest {
 
     // Scenario 4
     @Test
-    fun `per item is quantity times the entered unit price and drops dimensions`() {
+    fun `per item is quantity times the entered unit price and keeps informational dimensions`() {
         val pricing = success(PricingEngine.price(PricingFormula.PER_ITEM, m("9"), m("9"), 6, dh("35.50")))
         assertEquals(dh("213"), pricing.total)
         assertNull(pricing.baseAmount)
-        assertNull(pricing.width)
-        assertNull(pricing.height)
+        assertEquals(m("9"), pricing.width)
+        assertEquals(m("9"), pricing.height)
         assertEquals(RateBasis.PER_PIECE, pricing.rateBasis)
     }
 

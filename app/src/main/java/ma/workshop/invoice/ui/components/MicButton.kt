@@ -1,5 +1,7 @@
 package ma.workshop.invoice.ui.components
 
+import androidx.compose.runtime.staticCompositionLocalOf
+
 import android.Manifest
 import android.content.pm.PackageManager
 import android.widget.Toast
@@ -35,6 +37,9 @@ import ma.workshop.invoice.platform.DictationOutcome
 import ma.workshop.invoice.ui.Strings
 import ma.workshop.invoice.ui.theme.TouchTarget
 
+/** The phone's speech recognizer, provided once by AppNav. Null (previews, tests) means no mic buttons. */
+val LocalDictation = staticCompositionLocalOf<Dictation?> { null }
+
 /** The hint shown for each way speak-to-fill can fail. Typing always remains possible. */
 fun DictationProblem.hint(): String = when (this) {
     DictationProblem.NOT_AVAILABLE -> Strings.DICTATE_NOT_AVAILABLE
@@ -56,16 +61,16 @@ fun MicButton(dictation: Dictation, maxLength: Int, onText: (String) -> Unit, mo
     var explaining by remember { mutableStateOf(false) }
     var listening by remember { mutableStateOf(false) }
 
-    fun show(problem: DictationProblem) = Toast.makeText(context, problem.hint(), Toast.LENGTH_LONG).show()
+    fun show(problem: DictationProblem, code: Int? = null) =
+        Toast.makeText(context, problem.hint() + (code?.let { " ($it)" } ?: ""), Toast.LENGTH_LONG).show()
 
     fun start() {
         listening = true
-        dictation.checkOfflinePack { installed -> if (installed == false) show(DictationProblem.OFFLINE_PACK_MISSING) }
         dictation.listen(onListening = {}) { outcome ->
             listening = false
             when (outcome) {
                 is DictationOutcome.Text -> onText(DictationText.forField(outcome.text, maxLength))
-                is DictationOutcome.Problem -> show(outcome.problem)
+                is DictationOutcome.Problem -> show(outcome.problem, outcome.code)
             }
         }
     }

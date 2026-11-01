@@ -1,5 +1,11 @@
 package ma.workshop.invoice.ui.screens
 
+import androidx.compose.ui.draw.clip
+
+import ma.workshop.invoice.ui.components.MicButton
+
+import ma.workshop.invoice.ui.components.LocalDictation
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -101,6 +107,9 @@ fun CustomerScreen(
     onBack: () -> Unit,
 ) {
     val focus = LocalFocusManager.current
+    val dictation = LocalDictation.current
+    val mic: (@Composable () -> Unit)? =
+        if (dictation == null) null else ({ MicButton(dictation, 60, onText = { text -> onChange(text, customer.phone) }) })
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         AppTopBar(Strings.CUSTOMER_TITLE, onBack)
         Column(
@@ -120,6 +129,7 @@ fun CustomerScreen(
                 keyboardActions = KeyboardActions(onNext = { focus.moveFocus(FocusDirection.Down) }),
                 tag = "customer-name",
                 illustration = Icons.Filled.Person,
+                trailing = mic,
             )
             AppTextField(
                 value = customer.phone,
@@ -237,18 +247,24 @@ fun ItemListScreen(
                     shape = RoundedCornerShape(28.dp),
                     color = MaterialTheme.colorScheme.primaryContainer,
                 ) {
-                    Column(
-                        Modifier.padding(32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        IllustrationImage("door", Modifier.size(120.dp))
-                        Icon(Icons.Filled.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(64.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                            RoundSpeaker("${Strings.ADD_FIRST_PRODUCT}. ${Strings.NO_ITEMS_HINT}")
+                    // The whole card opens the catalogue; its speaker is a separate corner target that only speaks.
+                    Box {
+                        Column(
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(28.dp))
+                                .testTag("add-first-item")
+                                .strictClickable(onClickLabel = Strings.ADD_FIRST_PRODUCT, onClick = onAdd)
+                                .padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            IllustrationImage("door", Modifier.size(120.dp))
+                            Icon(Icons.Filled.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(64.dp))
                             ArabicText(Strings.ADD_FIRST_PRODUCT, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+                            ArabicText(Strings.NO_ITEMS_HINT, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
                         }
-                        ArabicText(Strings.NO_ITEMS_HINT, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
+                        RoundSpeaker("${Strings.ADD_FIRST_PRODUCT}. ${Strings.NO_ITEMS_HINT}", Modifier.align(Alignment.TopStart))
                     }
                 }
             }
@@ -289,8 +305,9 @@ fun ItemListScreen(
                     }
                 }
                 item(key = "table-title") { InvoiceTableHeader(Modifier.testTag("invoice-table")) }
-                itemsIndexed(state.items, key = { _, item -> item.id }) { index, item ->
-                    ItemCard(item, onEdit = { onEditItem(item.id) }, onRemove = { onRemoveItem(item.id) }, position = index + 1)
+                // Newest item on top; each keeps its own line number on the invoice.
+                itemsIndexed(state.items.asReversed(), key = { _, item -> item.id }) { index, item ->
+                    ItemCard(item, onEdit = { onEditItem(item.id) }, onRemove = { onRemoveItem(item.id) }, position = state.items.size - index)
                 }
             }
         }
@@ -339,6 +356,7 @@ fun CatalogPickerScreen(
     onSpeak: (String) -> Unit,
     speechAvailable: Boolean,
     onBack: () -> Unit,
+    onCustomCharge: () -> Unit,
 ) {
     val categories = products.mapNotNull { it.category?.trim()?.takeIf(String::isNotEmpty) }.distinct()
     var selectedCategory by rememberSaveable { mutableStateOf<String?>(null) }
@@ -399,5 +417,7 @@ fun CatalogPickerScreen(
                 }
             }
         }
+        BigButton(Strings.CUSTOM_CHARGE, Icons.Filled.Add, onCustomCharge,
+            Modifier.padding(16.dp).testTag("custom-charge"), kind = ButtonKind.Secondary)
     }
 }

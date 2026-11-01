@@ -24,7 +24,7 @@ import ma.workshop.invoice.domain.pricing.PricingFormula
 import ma.workshop.invoice.domain.pricing.PricingResult
 import ma.workshop.invoice.ui.Strings
 import ma.workshop.invoice.ui.components.ProductCard
-import ma.workshop.invoice.ui.screens.ItemConfirmScreen
+import ma.workshop.invoice.ui.screens.ItemEntryScreen
 import ma.workshop.invoice.ui.theme.InvoiceTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -33,11 +33,11 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /** These components are composed on their own, so the "show speaker icons" switch is provided as on. */
-private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.setSpokenContent(content: @androidx.compose.runtime.Composable () -> Unit) =
+private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.setSpokenContent(onSpeak: (String) -> Unit = {}, content: @androidx.compose.runtime.Composable () -> Unit) =
     setContent {
         androidx.compose.runtime.CompositionLocalProvider(
             ma.workshop.invoice.ui.components.LocalSpeakers provides
-                ma.workshop.invoice.ui.components.SpeakerUi(true, ma.workshop.invoice.domain.speech.DarijaSpeech) {},
+                ma.workshop.invoice.ui.components.SpeakerUi(true, ma.workshop.invoice.domain.speech.DarijaSpeech, onSpeak),
         ) { content() }
     }
 
@@ -85,22 +85,24 @@ class SpeakerTapTest {
         )
         var spoken = 0
         var leftScreen = 0
-        rule.setSpokenContent {
+        rule.setSpokenContent(onSpeak = { spoken++ }) {
             InvoiceTheme {
-                ItemConfirmScreen(
+                ItemEntryScreen(
                     pending = pending,
-                    speechAvailable = true,
                     audioEnabled = true,
                     onToggleAudio = {},
-                    onSpeakTotal = {},
-                    onReplay = { spoken++ },
-                    onConfirm = { leftScreen++ },
+                    onFormChange = { _, _ -> },
+                    onAddVariation = {},
+                    onRemoveVariation = {},
+                    onDescriptionChange = {},
+                    onSubmit = { leftScreen++ },
                     onCancel = { leftScreen++ },
                     onBack = { leftScreen++ },
                 )
             }
         }
-        rule.onNodeWithContentDescription(Strings.REPLAY).performClick()
+        rule.showEntryControl("confirm-item")
+        rule.onNodeWithContentDescription("${Strings.SPEAK_LABEL}: ${Strings.CONFIRM}").performClick()
         rule.runOnIdle {
             assertEquals(1, spoken)
             assertEquals(0, leftScreen)

@@ -157,18 +157,12 @@ class LayoutAndBackUiTest {
         assertTrue("the title stays in the right half, was $title, icon $icon", title.left >= icon.right)
         assertTrue("the back arrow is left of the picture", rule.onNodeWithContentDescription(Strings.BACK).getBoundsInRoot().right <= icon.left)
 
-        for (key in listOf("1", "decimal", "2")) rule.onNodeWithTag("key-$key").performClick()
-        rule.onNodeWithTag("key-next").performClick()
-        for (key in listOf("2")) rule.onNodeWithTag("key-$key").performClick()
-        rule.onNodeWithTag("key-next").performClick()
-        for (key in listOf("5", "0", "0")) rule.onNodeWithTag("key-$key").performClick()
-        rule.onNodeWithTag("entry-continue").performClick()
-        waitForText(Strings.CONFIRM_ITEM_TITLE)
+        rule.enterNumber("field-width", "1.2")
+        rule.enterNumber("field-height", "2")
+        rule.enterNumber("field-rate", "500")
+        rule.showEntryControl("field-width")
 
-        val back = rule.onNodeWithContentDescription(Strings.BACK).getBoundsInRoot()
-        val chip = rule.onNodeWithTag("audio-toggle").getBoundsInRoot()
-        assertTrue("the mute chip is in the sub-bar under the top bar, chip $chip, back $back", chip.top >= back.bottom)
-        assertTrue("the mute chip is on the left, was $chip", chip.right < width / 2)
+        rule.onNodeWithTag("audio-toggle").assertDoesNotExist()
         rule.onNodeWithTag("top-bar-icon").assertExists()
     }
 
@@ -220,47 +214,34 @@ class LayoutAndBackUiTest {
     }
 
     @Test
-    fun keypadKeysAreLargeTouchTargets() {
+    fun nativeNumberFieldsAndConfirmationAreAccessible() {
         goToCatalog()
         rule.onNodeWithText("باب حديد").performClick()
         waitForText(Strings.WIDTH)
-        for (key in listOf("1", "5", "0", "decimal", "backspace", "next")) {
-            rule.onNodeWithTag("key-$key").assertHeightIsAtLeast(48.dp).assertWidthIsAtLeast(48.dp)
+        for (field in listOf("width", "height", "rate", "quantity")) {
+            rule.showEntryControl("field-$field")
+            rule.onNodeWithTag("field-$field").assertWidthIsAtLeast(48.dp)
         }
-    }
-
-    private fun assertField(tag: String, shown: String) {
-        try {
-            rule.onNodeWithTag(tag).assert(hasAnyDescendant(hasText(shown)))
-        } catch (e: AssertionError) {
-            throw AssertionError("field $tag should show \"$shown\"; the screen shows: ${rule.screenSummary()}", e)
-        }
+        rule.showEntryControl("confirm-item")
+        rule.onNodeWithTag("confirm-item").assertHeightIsAtLeast(64.dp)
+        rule.onNodeWithTag("key-1").assertDoesNotExist()
     }
 
     @Test
-    fun typingOnTheKeypadFillsEachFieldWithoutWipingTheOthers() {
+    fun typingInNativeFieldsPreservesTheOtherValues() {
         goToCatalog()
         rule.onNodeWithText("باب حديد").performClick()
         waitForText(Strings.WIDTH)
-
-        for (key in listOf("1", "decimal", "2", "0")) rule.onNodeWithTag("key-$key").performClick()
-        assertField("field-width", "1,20")
-
-        rule.onNodeWithTag("key-next").performClick()
-        for (key in listOf("2", "decimal", "1")) rule.onNodeWithTag("key-$key").performClick()
-        assertField("field-height", "2,1")
-        assertField("field-width", "1,20") // typing the height must not touch the width
-
-        rule.onNodeWithTag("key-next").performClick()
-        for (key in listOf("5", "0", "0")) rule.onNodeWithTag("key-$key").performClick()
-        assertField("field-rate", "500")
-        assertField("field-width", "1,20")
-        assertField("field-height", "2,1")
-
-        rule.onNodeWithTag("key-backspace").performClick()
-        assertField("field-rate", "50")
-        rule.onNodeWithTag("key-clear").performClick()
-        assertField("field-rate", "0") // empty shows the grey 0 placeholder
+        rule.enterNumber("field-width", "1.20")
+        rule.enterNumber("field-height", "2.1")
+        rule.enterNumber("field-rate", "500")
+        rule.enterNumber("field-rate", "50")
+        for ((tag, text) in listOf("field-width" to "1.20", "field-height" to "2.1", "field-rate" to "50")) {
+            rule.showEntryControl(tag)
+            rule.onNodeWithTag(tag).assert(hasText(text))
+        }
+        rule.enterNumber("field-rate", "")
+        rule.onNodeWithTag("field-rate").assert(hasText(""))
     }
 
     @Test
@@ -282,7 +263,7 @@ class LayoutAndBackUiTest {
         goToCatalog()
         rule.onNodeWithText("باب حديد").performClick()
         waitForText(Strings.WIDTH)
-        rule.onNodeWithTag("key-1").performClick()
+        rule.enterNumber("field-width", "1")
         systemBack() // entry -> catalog (typed values are kept in the draft)
         waitForText(Strings.CHOOSE_PRODUCT)
         systemBack() // catalog -> item list

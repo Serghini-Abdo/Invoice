@@ -61,10 +61,6 @@ class ScreenshotTourTest {
         rule.onNodeWithText(text).performClick()
     }
 
-    private fun keys(vararg keys: String) {
-        for (key in keys) rule.onNodeWithTag("key-$key").performClick()
-    }
-
     private fun shot(name: String) {
         rule.waitForIdle()
         Shots.saveScaled(name, rule.onRoot().captureToImage().asAndroidBitmap())
@@ -77,14 +73,11 @@ class ScreenshotTourTest {
         waitForText(Strings.CHOOSE_PRODUCT)
         rule.onNodeWithText(product).performClick()
         waitForText(Strings.WIDTH)
-        for (c in width) keys(if (c == '.') "decimal" else c.toString())
-        rule.onNodeWithTag("key-next").performClick()
-        for (c in height) keys(if (c == '.') "decimal" else c.toString())
-        rule.onNodeWithTag("key-next").performClick()
-        for (c in rate) keys(c.toString())
-        repeat(plusClicks) { rule.onNodeWithContentDescription(Strings.INCREASE).performScrollTo().performClick() }
-        rule.onNodeWithTag("entry-continue").performClick()
-        waitForText(Strings.CONFIRM_ITEM_TITLE)
+        rule.enterNumber("field-width", width)
+        rule.enterNumber("field-height", height)
+        rule.enterNumber("field-rate", rate)
+        rule.enterNumber("field-quantity", (1 + plusClicks).toString())
+        rule.showEntryControl("confirm-item")
     }
 
     @Test
@@ -106,21 +99,18 @@ class ScreenshotTourTest {
         rule.onNodeWithText("باب حديد").performClick()
         waitForText(Strings.WIDTH)
         shot("05-entry-empty")
-        keys("1", "decimal", "2", "0")
-        rule.onNodeWithTag("key-next").performClick()
-        keys("2", "decimal", "1", "0")
-        rule.onNodeWithTag("key-next").performClick()
-        keys("5", "0", "0")
+        rule.enterNumber("field-width", "1.20")
+        rule.enterNumber("field-height", "2.10")
+        rule.enterNumber("field-rate", "500")
         shot("06-entry-filled")
-        rule.onNodeWithTag("entry-continue").performClick()
-        waitForText(Strings.CONFIRM_ITEM_TITLE)
+        rule.showEntryControl("confirm-item")
         shot("07-confirm-item")
-        click(Strings.CONFIRM)
+        rule.confirmEntry()
 
         waitForText(addButton())
         // one unit for the whole invoice now: 150 x 200 cm is typed as 1.5 x 2 m (the same price)
         addItem("إطار حديد", "1.5", "2", "80", plusClicks = 2)
-        click(Strings.CONFIRM)
+        rule.confirmEntry()
         waitForText(addButton())
         shot("08-items-list")
 

@@ -27,12 +27,16 @@ object DarijaSpeech : SpeechText {
         PricingFormula.AREA to DarijaTerms.METHOD_AREA,
         PricingFormula.PERIMETER to DarijaTerms.METHOD_PERIMETER,
         PricingFormula.PER_ITEM to DarijaTerms.METHOD_PIECE,
+        PricingFormula.WIDTH to DarijaTerms.METHOD_WIDTH,
+        PricingFormula.HEIGHT to DarijaTerms.METHOD_HEIGHT,
+        PricingFormula.FIXED to DarijaTerms.METHOD_FIXED,
     )
 
     private val rateBases = mapOf(
         RateBasis.PER_SQUARE_METER to DarijaTerms.PER_SQUARE_METER,
         RateBasis.PER_LINEAR_METER to DarijaTerms.PER_METER,
         RateBasis.PER_PIECE to DarijaTerms.PER_PIECE,
+        RateBasis.FIXED to "",
     )
 
     /** Short counting forms used before a plural noun: "تلت دراهم", "خمس دراهم", "عشر دراهم". */
@@ -64,7 +68,7 @@ object DarijaSpeech : SpeechText {
     }
 
     /** "خمس مية درهم للمتر مربع". */
-    override fun rate(pricing: ItemPricing): String = "${amount(pricing.unitRate)} ${rateBases.getValue(pricing.rateBasis)}"
+    override fun rate(pricing: ItemPricing): String = "${amount(pricing.unitRate)} ${rateBases.getValue(pricing.rateBasis)}".trim()
 
     /**
      * The area or perimeter of one piece; null for per-piece items. It is spoken with the same four
@@ -74,13 +78,18 @@ object DarijaSpeech : SpeechText {
         val base = pricing.baseAmount?.setScale(4, RoundingMode.HALF_UP) ?: return null
         return when (pricing.rateBasis) {
             RateBasis.PER_SQUARE_METER -> "${DarijaTerms.AREA} ${DarijaNumbers.decimal(base)} ${DarijaTerms.METER} ${DarijaTerms.SQUARE}"
-            else -> "${DarijaTerms.PERIMETER} ${DarijaNumbers.meters(base)}"
+            else -> "${if (pricing.formula == PricingFormula.PERIMETER) DarijaTerms.PERIMETER else method(pricing.formula)} ${DarijaNumbers.meters(base)}"
         }
     }
 
     private fun dimensions(pricing: ItemPricing): String? {
-        val width = pricing.width ?: return null
-        val height = pricing.height ?: return null
+        val width = pricing.width
+        val height = pricing.height
+        if (width == null || height == null) {
+            val dimension = width ?: height ?: return null
+            val label = if (width != null) DarijaTerms.WIDTH else DarijaTerms.HEIGHT
+            return "$label ${length(dimension)}"
+        }
         return "${length(width)} ${DarijaTerms.BY} ${length(height)}"
     }
 
@@ -88,7 +97,7 @@ object DarijaSpeech : SpeechText {
     override fun itemLine(productName: String, pricing: ItemPricing): String = listOfNotNull(
         productName,
         dimensions(pricing),
-        "${DarijaTerms.QUANTITY} ${quantity(pricing.quantity)}",
+        if (pricing.formula.usesQuantity) "${DarijaTerms.QUANTITY} ${quantity(pricing.quantity)}" else null,
         "${DarijaTerms.TOTAL} ${amount(pricing.total)}",
     ).joinToString(SEP)
 
@@ -103,7 +112,7 @@ object DarijaSpeech : SpeechText {
         pricing.height?.let { parts += "${DarijaTerms.HEIGHT} ${length(it)}" }
         base(pricing)?.let { parts += it }
         parts += "${DarijaTerms.PRICE} ${rate(pricing)}"
-        parts += "${DarijaTerms.QUANTITY} ${quantity(pricing.quantity)}"
+        if (pricing.formula.usesQuantity) parts += "${DarijaTerms.QUANTITY} ${quantity(pricing.quantity)}"
         parts += "${DarijaTerms.TOTAL} ${amount(pricing.total)}"
         return parts.joinToString(SEP)
     }

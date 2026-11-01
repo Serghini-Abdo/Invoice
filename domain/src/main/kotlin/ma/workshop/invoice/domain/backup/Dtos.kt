@@ -12,6 +12,7 @@ import ma.workshop.invoice.domain.pricing.ItemPricing
 import ma.workshop.invoice.domain.pricing.Length
 import ma.workshop.invoice.domain.pricing.LengthUnit
 import ma.workshop.invoice.domain.pricing.PricingFormula
+import ma.workshop.invoice.domain.pricing.Measurements
 import ma.workshop.invoice.domain.pricing.RateBasis
 import ma.workshop.invoice.domain.settings.AppSettings
 import ma.workshop.invoice.domain.settings.ExportFormat
@@ -59,6 +60,7 @@ data class ProductDto(
     val sortOrder: Int,
     val createdAt: Long,
     val updatedAt: Long,
+    val measurements: String? = null,
 )
 
 @Serializable
@@ -123,7 +125,7 @@ fun AppSettings.toDto() = SettingsDto(
 )
 
 fun ProductDefinition.toDto() = ProductDto(
-    id, name, illustration, formula.id, defaultUnit.id, category, isActive, sortOrder, createdAt, updatedAt,
+    id, name, illustration, formula.id, defaultUnit.id, category, isActive, sortOrder, createdAt, updatedAt, measurements.id,
 )
 
 fun InvoiceItem.toDto() = ItemDto(
@@ -186,17 +188,19 @@ fun SettingsDto.toDomain(): AppSettings? {
 }
 
 fun ProductDto.toDomain(): ProductDefinition? {
+    val method = PricingFormula.fromId(formula) ?: return null
     return ProductDefinition(
         id = id,
         name = name,
         illustration = illustration,
-        formula = PricingFormula.fromId(formula) ?: return null,
+        formula = method,
         defaultUnit = LengthUnit.fromId(defaultUnit) ?: return null,
         category = category,
         isActive = isActive,
         sortOrder = sortOrder,
         createdAt = createdAt,
         updatedAt = updatedAt,
+        measurements = measurements?.let { Measurements.fromId(it) ?: return null } ?: method.measurements,
     )
 }
 

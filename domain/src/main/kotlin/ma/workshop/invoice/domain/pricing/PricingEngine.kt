@@ -4,16 +4,34 @@ import ma.workshop.invoice.domain.money.Money
 import ma.workshop.invoice.domain.util.canonical
 import java.math.BigDecimal
 
-/** The three ways a catalog product can be priced. The price itself is always entered per item. */
+enum class Measurements(val id: String, val width: Boolean, val height: Boolean) {
+    NONE("none", false, false), WIDTH("width", true, false), HEIGHT("height", false, true), BOTH("both", true, true);
+
+    companion object {
+        fun fromId(id: String): Measurements? = entries.firstOrNull { it.id == id }
+        fun of(width: Boolean, height: Boolean): Measurements = entries.first { it.width == width && it.height == height }
+    }
+}
+
+/** Each method owns its required inputs and exact base calculation. */
 enum class PricingFormula(
     val id: String,
-    /** True when the formula needs width and height. */
-    val needsDimensions: Boolean,
+    val measurements: Measurements,
     val rateBasis: RateBasis,
+    val usesQuantity: Boolean = true,
+    val base: (Length?, Length?) -> BigDecimal?,
 ) {
-    AREA("area", true, RateBasis.PER_SQUARE_METER),
-    PERIMETER("perimeter", true, RateBasis.PER_LINEAR_METER),
-    PER_ITEM("per_item", false, RateBasis.PER_PIECE);
+    AREA("area", Measurements.BOTH, RateBasis.PER_SQUARE_METER, base = { w, h -> w!!.meters.multiply(h!!.meters) }),
+    PERIMETER("perimeter", Measurements.BOTH, RateBasis.PER_LINEAR_METER, base = { w, h -> w!!.meters.add(h!!.meters).multiply(BigDecimal(2)) }),
+    PER_ITEM("per_item", Measurements.NONE, RateBasis.PER_PIECE, base = { _, _ -> null }),
+    WIDTH("width", Measurements.WIDTH, RateBasis.PER_LINEAR_METER, base = { w, _ -> w!!.meters }),
+    HEIGHT("height", Measurements.HEIGHT, RateBasis.PER_LINEAR_METER, base = { _, h -> h!!.meters }),
+    FIXED("fixed", Measurements.NONE, RateBasis.FIXED, usesQuantity = false, base = { _, _ -> null });
+
+    val needsDimensions: Boolean get() = measurements != Measurements.NONE
+
+    fun visibleMeasurements(optional: Measurements): Measurements =
+        if (this == PER_ITEM) optional else measurements
 
     companion object {
         fun fromId(id: String): PricingFormula? = entries.firstOrNull { it.id == id }
@@ -23,7 +41,8 @@ enum class PricingFormula(
 enum class RateBasis(val id: String) {
     PER_SQUARE_METER("m2"),
     PER_LINEAR_METER("m"),
-    PER_PIECE("piece");
+    PER_PIECE("piece"),
+    FIXED("fixed");
 
     companion object {
         fun fromId(id: String): RateBasis? = entries.firstOrNull { it.id == id }
@@ -94,7 +113,7 @@ object PricingEngine {
      *
      * Centimetres are converted to metres exactly before any multiplication; the product is exact
      * and rounded once (HALF_UP, to centimes) at the very end.
-     * Dimensions are ignored (and dropped from the snapshot) for PER_ITEM.
+     * Per-piece measurements are informational; fixed charges have no quantity or measurements.
      */
     fun price(
         formula: PricingFormula,
@@ -105,9 +124,11 @@ object PricingEngine {
     ): PricingResult {
         val issues = mutableListOf<FieldIssue>()
 
-        if (formula.needsDimensions) {
-            checkDimension(Field.WIDTH, width, issues)
-            checkDimension(Field.HEIGHT, height, issues)
+        if (formula.measurements.width || width != null) checkDimension(Field.WIDTH, width, issues)
+        if (formula.measurements.height || height != null) checkDimension(Field.HEIGHT, height, issues)
+        if (!formula.usesQuantity && quantity != 1) issues += FieldIssue(Field.QUANTITY, Problem.MALFORMED)
+        if (formula == PricingFormula.FIXED && (width != null || height != null)) {
+            issues += FieldIssue(if (width != null) Field.WIDTH else Field.HEIGHT, Problem.MALFORMED)
         }
         when {
             quantity < 1 -> issues += FieldIssue(Field.QUANTITY, Problem.NOT_POSITIVE)
@@ -124,28 +145,14 @@ object PricingEngine {
         val rate = unitRate.toBigDecimal()
         val quantityDecimal = BigDecimal(quantity)
 
-        val base: BigDecimal?
-        val exactTotal: BigDecimal
-        when (formula) {
-            PricingFormula.AREA -> {
-                base = width!!.meters.multiply(height!!.meters)
-                exactTotal = base.multiply(rate).multiply(quantityDecimal)
-            }
-            PricingFormula.PERIMETER -> {
-                base = width!!.meters.add(height!!.meters).multiply(BigDecimal(2))
-                exactTotal = base.multiply(rate).multiply(quantityDecimal)
-            }
-            PricingFormula.PER_ITEM -> {
-                base = null
-                exactTotal = quantityDecimal.multiply(rate)
-            }
-        }
+        val base = formula.base(width, height)
+        val exactTotal = (base ?: BigDecimal.ONE).multiply(rate).multiply(quantityDecimal)
 
         return PricingResult.Success(
             ItemPricing(
                 formula = formula,
-                width = if (formula.needsDimensions) width else null,
-                height = if (formula.needsDimensions) height else null,
+                width = width,
+                height = height,
                 quantity = quantity,
                 unitRate = unitRate,
                 baseAmount = base?.canonical(),

@@ -47,7 +47,6 @@ import ma.workshop.invoice.ui.components.ArabicText
 import ma.workshop.invoice.ui.components.VoiceMissingDialog
 import ma.workshop.invoice.ui.screens.CatalogPickerScreen
 import ma.workshop.invoice.ui.screens.CustomerScreen
-import ma.workshop.invoice.ui.screens.ItemConfirmScreen
 import ma.workshop.invoice.ui.screens.ItemEntryScreen
 import ma.workshop.invoice.ui.screens.ItemListScreen
 import ma.workshop.invoice.ui.screens.ReviewScreen
@@ -148,27 +147,21 @@ fun InvoiceFlowRoute(
             FlowStep.Catalog -> CatalogPickerScreen(
                 products = products,
                 onPick = { vm.onEvent(FlowEvent.ProductChosen(it.toRef())) },
+                onCustomCharge = { vm.onEvent(FlowEvent.CustomChargePressed) },
                 onSpeak = { speakFeedback(vm.speakProductName(it)) },
                 speechAvailable = speechAvailable,
                 onBack = { vm.onEvent(FlowEvent.BackPressed) },
             )
-            FlowStep.ItemEntry -> current.pending?.let { pending ->
+            FlowStep.ItemEntry, FlowStep.ItemConfirm -> current.pending?.let { pending ->
                 ItemEntryScreen(
                     pending = pending,
-                    onFormChange = { vm.onEvent(FlowEvent.FormEdited(it)) },
-                    onSubmit = { vm.onEvent(FlowEvent.EntrySubmitted) },
-                    onBack = { vm.onEvent(FlowEvent.BackPressed) },
-                )
-            }
-            FlowStep.ItemConfirm -> current.pending?.let { pending ->
-                ItemConfirmScreen(
-                    pending = pending,
-                    speechAvailable = speechAvailable,
                     audioEnabled = settings.audioEnabled,
                     onToggleAudio = vm::toggleAudio,
-                    onSpeakTotal = { vm.autoSpeakItemTotal() },
-                    onReplay = { speakFeedback(vm.replayItemTotal()) },
-                    onConfirm = { vm.onEvent(FlowEvent.ItemConfirmed) },
+                    onFormChange = { form, index -> vm.onEvent(FlowEvent.FormEdited(form, index)) },
+                    onAddVariation = { vm.onEvent(FlowEvent.AddVariation) },
+                    onRemoveVariation = { vm.onEvent(FlowEvent.RemoveVariation(it)) },
+                    onDescriptionChange = { vm.onEvent(FlowEvent.CustomChargeEdited(it)) },
+                    onSubmit = vm::confirmEntries,
                     onCancel = { vm.onEvent(FlowEvent.ItemCancelled) },
                     onBack = { vm.onEvent(FlowEvent.BackPressed) },
                 )

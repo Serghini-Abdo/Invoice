@@ -1,9 +1,19 @@
 package ma.workshop.invoice.ui.components
 
+import kotlinx.coroutines.delay
+
+import androidx.compose.runtime.LaunchedEffect
+
+import androidx.compose.ui.text.TextRange
+
+import androidx.compose.ui.text.input.TextFieldValue
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.foundation.border
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Arrangement
@@ -119,10 +129,29 @@ fun AppTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     tag: String? = null,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    /** A button outside the box on its left / right (the quantity "-" and "+"). */
+    startButton: (@Composable () -> Unit)? = null,
+    endButton: (@Composable () -> Unit)? = null,
+    /** Lets the keyboard's Next key move to a chosen field. */
+    focusRequester: FocusRequester? = null,
+    /** A ready-made picture tile (the DH coin) used instead of [illustration]. */
+    picture: (@Composable () -> Unit)? = null,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     val palette = MaterialTheme.appPalette
+    // The cursor always starts at the END of the text (a French phone otherwise put it before the number, so
+    // backspace did nothing). The caller still owns the text; only the cursor lives here.
+    var field by remember { mutableStateOf(TextFieldValue(value, TextRange(value.length))) }
+    if (field.text != value) field = TextFieldValue(value, TextRange(value.length))
+    LaunchedEffect(focused) {
+        if (focused) {
+            delay(60) // after the tap has placed its own cursor
+            field = field.copy(selection = TextRange(field.text.length))
+        }
+    }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         if (label != null) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
@@ -135,10 +164,11 @@ fun AppTextField(
             }
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            startButton?.invoke()
             Surface(
                 modifier = Modifier.weight(1f).heightIn(min = 58.dp),
                 shape = RoundedCornerShape(14.dp),
-                color = MaterialTheme.colorScheme.surface,
+                color = containerColor,
                 border = BorderStroke(
                     width = if (focused || error != null) 3.dp else 1.dp,
                     color = when {
@@ -151,10 +181,13 @@ fun AppTextField(
                 Row(Modifier.padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                     trailing?.invoke()
                     BasicTextField(
-                        value = value,
-                        onValueChange = onValueChange,
+                        value = field,
+                        onValueChange = { next ->
+                            field = next
+                            if (next.text != value) onValueChange(next.text)
+                        },
                         textStyle = textStyle.merge(
-                            TextStyle(color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Right, textDirection = TextDirection.Content),
+                            TextStyle(color = contentColor, textAlign = TextAlign.Right, textDirection = TextDirection.Content),
                         ),
                         singleLine = true,
                         keyboardOptions = keyboardOptions,
@@ -164,7 +197,8 @@ fun AppTextField(
                         modifier = Modifier
                             .weight(1f)
                             .padding(horizontal = 8.dp, vertical = 10.dp)
-                            .then(if (tag != null) Modifier.testTag(tag) else Modifier),
+                            .then(if (tag != null) Modifier.testTag(tag) else Modifier)
+                            .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier),
                         decorationBox = { inner ->
                             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
                                 if (value.isEmpty() && placeholder != null) {
@@ -179,7 +213,10 @@ fun AppTextField(
                     }
                 }
             }
-            if (illustration != null) {
+            endButton?.invoke()
+            if (picture != null) {
+                picture()
+            } else if (illustration != null) {
                 Box(
                     Modifier
                         .size(width = 46.dp, height = 58.dp)

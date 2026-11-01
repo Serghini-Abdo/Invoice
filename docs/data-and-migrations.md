@@ -49,3 +49,16 @@ Local storage is Room over SQLite (`ma.workshop.invoice.data.db`). Everything wo
    and put it in `MIGRATIONS`.
 3. Build once so Room writes `app/schemas/.../2.json`; commit it.
 4. Extend `MigrationTest` for 1 -> 2.
+
+
+## Version 6: product measurement visibility (2026-10-27)
+
+`MIGRATION_5_6` adds `products.measurements` (`none`, `width`, `height`, `both`). Existing area and
+perimeter products migrate to `both`; existing per-piece products to `none`. Invoices and item snapshots
+are untouched. The schema is exported as `app/schemas/ma.workshop.invoice.data.db.AppDatabase/6.json`.
+
+Width-only, height-only and fixed pricing use new stable formula ids in the existing snapshot columns.
+Per-piece snapshots may now retain informational measurements. Fixed charges store quantity 1 internally
+but omit quantity in forms, speech and printed output. Backups include the measurement setting; old
+backups without it derive visibility from the original formula. Drafts retain all unfinished variations
+and copied-price acknowledgement state.

@@ -340,7 +340,7 @@ class InvoiceLayoutEngine(private val measurer: TextMeasurer) {
         val formulaHeights = formulaLines.map { (t, _) -> measurer.measureHeight(t, TextStyle.SMALL, formulaWidth) }
         val formulaStack = formulaHeights.sum() + 2f * (formulaLines.size - 1)
         val nameHeight = measurer.measureHeight(row.name, TextStyle.SMALL_BOLD, nameWidth)
-        val quantityText = row.quantity.toString()
+        val quantityText = row.quantity?.toString().orEmpty()
         val quantityHeight = measurer.measureHeight(quantityText, TextStyle.SMALL_BOLD, quantityWidth)
         val priceHeight = measurer.measureHeight(row.totalNumber, TextStyle.SMALL_BOLD, priceWidth)
 

@@ -1,5 +1,23 @@
 package ma.workshop.invoice.ui.screens
 
+import ma.workshop.invoice.domain.invoice.PaymentSummary
+
+import ma.workshop.invoice.ui.components.RoundSpeaker
+
+import ma.workshop.invoice.ui.components.CoinPicture
+
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import ma.workshop.invoice.ui.components.AppTextField
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -33,10 +51,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
@@ -48,10 +62,7 @@ import ma.workshop.invoice.domain.flow.FlowIssue
 import ma.workshop.invoice.domain.flow.FlowState
 import ma.workshop.invoice.domain.format.ArabicFormat
 import ma.workshop.invoice.domain.format.InvoiceDocumentBuilder
-import ma.workshop.invoice.domain.input.KeypadEditor
-import ma.workshop.invoice.domain.input.KeypadKey
 import ma.workshop.invoice.domain.money.Money
-import ma.workshop.invoice.domain.pricing.PricingLimits
 import ma.workshop.invoice.domain.settings.ExportFormat
 import ma.workshop.invoice.ui.Strings
 import ma.workshop.invoice.ui.arabic
@@ -61,14 +72,11 @@ import ma.workshop.invoice.ui.components.BannerKind
 import ma.workshop.invoice.ui.components.BigButton
 import ma.workshop.invoice.ui.components.ButtonKind
 import ma.workshop.invoice.ui.components.ConfirmDialog
-import ma.workshop.invoice.ui.components.FieldBox
 import ma.workshop.invoice.ui.components.InvoiceTable
 import ma.workshop.invoice.ui.components.LocalSpeakers
 import ma.workshop.invoice.ui.components.LocalUnitScript
-import ma.workshop.invoice.ui.components.CoinPicture
 import ma.workshop.invoice.ui.components.PaidBadge
 import ma.workshop.invoice.ui.components.TablePicture
-import ma.workshop.invoice.ui.components.NumericKeypad
 import ma.workshop.invoice.ui.components.AppSubBar
 import ma.workshop.invoice.ui.components.AppTopBar
 import ma.workshop.invoice.ui.components.ArabicText
@@ -93,8 +101,11 @@ fun ReviewScreen(
     onEditItems: () -> Unit,
     onBack: () -> Unit,
 ) {
-    var keypadOpen by rememberSaveable { mutableStateOf(false) }
-    var fresh by rememberSaveable { mutableStateOf(true) }
+    val focus = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    val keyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    fun dismissKeyboard() { keyboard?.hide(); focus.clearFocus() }
+    BackHandler(enabled = keyboardVisible) { dismissKeyboard() }
 
     LaunchedEffect(Unit) { onSpeakSummary() }
 
@@ -103,9 +114,8 @@ fun ReviewScreen(
     val remaining: Money? = if (deposit != null && deposit <= total && !deposit.isNegative) total - deposit else null
     val fullyPaid = remaining != null && remaining.isZero && total.isPositive
 
-    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).imePadding()) {
         AppTopBar(Strings.REVIEW_TITLE, onBack)
-        AppSubBar { AudioToggle(audioEnabled, onToggleAudio) }
 
         Column(
             modifier = Modifier
@@ -126,26 +136,28 @@ fun ReviewScreen(
             }
 
             SectionCard {
+                // One speaker for the whole card: total, deposit and balance as one sentence.
+                if (remaining != null) {
+                    Row(Modifier.fillMaxWidth()) {
+                        RoundSpeaker(LocalSpeakers.current.texts.paymentSummary(PaymentSummary(total, deposit ?: Money.ZERO, remaining)))
+                    }
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     SpeakerButton(onClick = onReplay, available = speechAvailable, description = Strings.REPLAY)
                     Column(Modifier.weight(1f)) {
                         AmountRow(Strings.INVOICE_TOTAL, ArabicFormat.amount(total), emphasized = true)
                     }
                 }
-                FieldBox(
+                AppTextField(
+                    value = state.depositText,
+                    onValueChange = { onDepositChange(it.take(30)) },
                     label = Strings.DEPOSIT,
                     tag = "deposit-field",
-                    picture = { CoinPicture() },
-                    value = state.depositText,
-                    selected = keypadOpen,
-                    onClick = {
-                        keypadOpen = true
-                        fresh = true
-                    },
                     error = state.depositProblem?.arabic(),
-                    trailing = {
-                        Text("DH", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    },
+                    hint = "DH",
+                    picture = { CoinPicture() },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { dismissKeyboard() }),
                 )
                 if (fullyPaid) {
                     // Paid: "0 DH" in green with the "خالص" badge on the same line. An open balance is bold ink.
@@ -172,33 +184,20 @@ fun ReviewScreen(
         }
 
         Surface(shadowElevation = 12.dp, color = MaterialTheme.colorScheme.surface) {
-            if (keypadOpen) {
-                NumericKeypad(
-                    onKey = { key ->
-                        val base = if (fresh && (key is KeypadKey.Digit || key == KeypadKey.Decimal)) "" else state.depositText
-                        onDepositChange(KeypadEditor.apply(base, key, PricingLimits.MAX_RATE_DECIMALS))
-                        fresh = false
-                    },
-                    modifier = Modifier.padding(12.dp),
-                    onNext = { keypadOpen = false },
-                    nextLabel = Strings.CONFIRM,
-                )
-            } else {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    if (state.saving) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.End,
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
-                        ) {
-                            ArabicText(Strings.SAVING, style = MaterialTheme.typography.titleMedium)
-                            Spacer(Modifier.width(12.dp))
-                            CircularProgressIndicator(Modifier.size(28.dp))
-                        }
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                if (state.saving) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                    ) {
+                        ArabicText(Strings.SAVING, style = MaterialTheme.typography.titleMedium)
+                        Spacer(Modifier.width(12.dp))
+                        CircularProgressIndicator(Modifier.size(28.dp))
                     }
-                    BigButton(Strings.SAVE_INVOICE, Icons.Filled.Save, onSave, enabled = !state.saving, kind = ButtonKind.Success)
-                    BigButton(Strings.EDIT_ITEMS, Icons.Filled.Edit, onEditItems, enabled = !state.saving, kind = ButtonKind.Secondary)
                 }
+                BigButton(Strings.SAVE_INVOICE, Icons.Filled.Save, { dismissKeyboard(); onSave() }, enabled = !state.saving, kind = ButtonKind.Success)
+                BigButton(Strings.EDIT_ITEMS, Icons.Filled.Edit, onEditItems, enabled = !state.saving, kind = ButtonKind.Secondary)
             }
         }
     }

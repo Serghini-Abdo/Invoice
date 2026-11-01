@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -13,6 +14,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.runBlocking
 import ma.workshop.invoice.domain.pricing.LengthUnit
+import ma.workshop.invoice.domain.pricing.Measurements
 import ma.workshop.invoice.domain.settings.UnitLabelScript
 import ma.workshop.invoice.ui.Strings
 import org.junit.After
@@ -52,10 +54,6 @@ class UnitsUiTest {
         rule.onNodeWithText(text).performClick()
     }
 
-    private fun keys(vararg keys: String) {
-        for (key in keys) rule.onNodeWithTag("key-$key").performClick()
-    }
-
     private fun openDoorEntry() {
         click(Strings.NEW_INVOICE)
         click(Strings.CONTINUE)
@@ -74,17 +72,14 @@ class UnitsUiTest {
         assertEquals(2, rule.onAllNodesWithText(Strings.CM_UNIT).fetchSemanticsNodes().size)
         assertEquals(0, rule.onAllNodesWithText(Strings.METER_UNIT).fetchSemanticsNodes().size)
 
-        keys("1", "2", "0")
-        rule.onNodeWithTag("key-next").performClick()
-        keys("2", "1", "0")
-        rule.onNodeWithTag("key-next").performClick()
-        keys("5", "0", "0")
-        rule.onNodeWithTag("entry-continue").performClick()
-        rule.waitForTextOrExplain(Strings.CONFIRM_ITEM_TITLE)
+        rule.enterNumber("field-width", "120")
+        rule.enterNumber("field-height", "210")
+        rule.enterNumber("field-rate", "500")
+        rule.showEntryControl("confirm-item")
         // 120 cm x 210 cm at 500 DH/m2 is the same 1 260 DH as 1.20 x 2.10 m
         rule.waitForTextOrExplain("1", substring = true)
         assertTrue(count("260") > 0)
-        click(Strings.CONFIRM)
+        rule.confirmEntry()
         rule.waitUntil(15_000) { rule.onAllNodesWithTag("invoice-table").fetchSemanticsNodes().isNotEmpty() }
         assertTrue("the list writes the measures in centimetres", count("120 × 210 سم") > 0)
     }
@@ -111,5 +106,32 @@ class UnitsUiTest {
         val settings = runBlocking { container.settings.get() }
         assertEquals(LengthUnit.CENTIMETER, settings.lengthUnit)
         assertEquals(UnitLabelScript.LATIN, settings.unitLabelScript)
+    }
+
+    @Test
+    fun perPieceProductCanShowWidthWithoutUsingItInThePrice() {
+        launch(LengthUnit.METER, UnitLabelScript.ARABIC)
+        click(Strings.SETTINGS)
+        click(Strings.PRODUCT_CATALOG)
+        rule.onNodeWithText("مفصلات").performScrollTo().performClick()
+        rule.waitForTextOrExplain(Strings.EDIT_PRODUCT)
+        rule.onNodeWithTag("show-measurements").performScrollTo().performClick()
+        rule.onNodeWithText(Strings.WIDTH).performScrollTo().performClick()
+        click(Strings.SAVE)
+        rule.waitForTextOrExplain(Strings.CATALOG_TITLE)
+        val product = runBlocking { container.database.products().getAll().first { it.name == "مفصلات" } }
+        assertEquals(Measurements.WIDTH.id, product.measurements)
+        repeat(2) { rule.onNodeWithContentDescription(Strings.BACK).performClick(); rule.waitForIdle() }
+        click(Strings.NEW_INVOICE)
+        click(Strings.CONTINUE)
+        click(Strings.ADD_PRODUCT)
+        click("مفصلات")
+        rule.enterNumber("field-width", "1.2")
+        rule.enterNumber("field-rate", "800")
+        rule.enterNumber("field-quantity", "2")
+        rule.onNodeWithTag("field-height").assertDoesNotExist()
+        rule.confirmEntry()
+        rule.waitUntil(15_000) { rule.onAllNodesWithTag("invoice-table").fetchSemanticsNodes().isNotEmpty() }
+        assertTrue(count("600") > 0) // 1 600 DH, without multiplying by 1.2 m
     }
 }

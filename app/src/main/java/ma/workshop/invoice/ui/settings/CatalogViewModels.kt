@@ -16,6 +16,7 @@ import ma.workshop.invoice.AppContainer
 import ma.workshop.invoice.domain.invoice.ProductDefinition
 import ma.workshop.invoice.domain.pricing.LengthUnit
 import ma.workshop.invoice.domain.pricing.PricingFormula
+import ma.workshop.invoice.domain.pricing.Measurements
 
 class CatalogViewModel(private val container: AppContainer) : ViewModel() {
 
@@ -35,6 +36,7 @@ data class ProductForm(
     val defaultUnit: LengthUnit = LengthUnit.METER,
     val category: String = "",
     val isActive: Boolean = true,
+    val measurements: Measurements = Measurements.NONE,
 )
 
 sealed interface ProductEditState {
@@ -72,6 +74,7 @@ class ProductEditViewModel(private val container: AppContainer, private val prod
                             defaultUnit = product.defaultUnit,
                             category = product.category.orEmpty(),
                             isActive = product.isActive,
+                            measurements = product.measurements,
                         ),
                         isNew = false,
                     )
@@ -120,6 +123,7 @@ class ProductEditViewModel(private val container: AppContainer, private val prod
                 sortOrder = base?.sortOrder ?: 0,
                 createdAt = base?.createdAt ?: 0,
                 updatedAt = 0,
+                measurements = form.formula.visibleMeasurements(form.measurements),
             )
             container.products.save(definition)
             withContext(Dispatchers.IO) { container.sweepPhotos() }

@@ -127,15 +127,7 @@ class InvoiceFlowViewModel(
     }
 
     fun onEvent(event: FlowEvent) {
-        var current = _state.value ?: return
-        // A new item keeps its own literal copy of the product photo, so later edits never change it.
-        val pending = current.pending
-        if (event == FlowEvent.ItemConfirmed && pending != null && pending.editingItemId == null &&
-            PhotoKey.isPhoto(pending.product.illustration)
-        ) {
-            val copy = container.photos.copyFor(pending.product.illustration)
-            current = current.copy(pending = pending.copy(product = pending.product.copy(illustration = copy)))
-        }
+        val current = _state.value ?: return
         // One unit for the whole invoice: the unit of its first measured item, else the one chosen in Settings.
         val chosen = event
         val effective = if (chosen is FlowEvent.ProductChosen) {
@@ -143,12 +135,31 @@ class InvoiceFlowViewModel(
             FlowEvent.ProductChosen(chosen.product.copy(defaultUnit = unit))
         } else event
         val transition = flow.reduce(current, effective)
-        _state.value = transition.state
+        // Copy only newly committed photos, once per independent invoice line.
+        val existingIds = current.items.map { it.id }.toSet()
+        val items = transition.state.items.map { item ->
+            if (item.id !in existingIds && PhotoKey.isPhoto(item.illustration)) {
+                item.copy(illustration = container.photos.copyFor(item.illustration))
+            } else item
+        }
+        _state.value = transition.state.copy(items = items)
         when (val effect = transition.effect) {
             is FlowEffect.Save -> save(effect.draft)
             is FlowEffect.Exit -> exit(effect.keepDraft)
             null -> Unit
         }
+    }
+
+    fun confirmEntries() {
+        onEvent(FlowEvent.EntrySubmitted)
+        val current = _state.value
+        if (current?.step == ma.workshop.invoice.domain.flow.FlowStep.ItemConfirm && settings.value.speakItemTotals) {
+            current.pending?.let { pending ->
+                val total = pending.forms.fold(Money.ZERO) { sum, form -> sum + form.evaluate().pricing!!.total }
+                container.speaker.sayIfReady(speechText().itemTotal(pending.product.name, total), settings.value)
+            }
+        }
+        onEvent(FlowEvent.ItemConfirmed)
     }
 
     fun resumeDraft() {
@@ -241,15 +252,6 @@ class InvoiceFlowViewModel(
 
     fun speakAddProduct(): SpeakResult = container.speaker.say(speechText().addProduct, settings.value)
 
-    fun replayItemTotal(): SpeakResult {
-        val text = itemTotalText() ?: return SpeakResult.UNAVAILABLE
-        return container.speaker.say(text, settings.value)
-    }
-
-    fun autoSpeakItemTotal() {
-        if (settings.value.speakItemTotals) itemTotalText()?.let { container.speaker.sayIfReady(it, settings.value) }
-    }
-
     fun replayInvoiceSummary(): SpeakResult {
         val text = invoiceSummaryText() ?: return SpeakResult.UNAVAILABLE
         return container.speaker.say(text, settings.value)
@@ -257,12 +259,6 @@ class InvoiceFlowViewModel(
 
     fun autoSpeakInvoiceSummary() {
         if (settings.value.speakInvoiceTotals) invoiceSummaryText()?.let { container.speaker.sayIfReady(it, settings.value) }
-    }
-
-    private fun itemTotalText(): String? {
-        val pending = _state.value?.pending
-        val pricing = pending?.confirmedPricing ?: return null
-        return speechText().itemTotal(pending.product.name, pricing.total)
     }
 
     private fun invoiceSummaryText(): String? {

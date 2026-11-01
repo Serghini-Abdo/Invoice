@@ -1,5 +1,9 @@
 package ma.workshop.invoice.ui.settings
 
+import ma.workshop.invoice.ui.components.MicButton
+
+import ma.workshop.invoice.ui.components.LocalDictation
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -65,6 +69,8 @@ import ma.workshop.invoice.ui.components.SectionCard
 import ma.workshop.invoice.ui.components.StatusBanner
 import ma.workshop.invoice.ui.components.strictClickable
 import ma.workshop.invoice.ui.methodName
+import ma.workshop.invoice.ui.methodHint
+import ma.workshop.invoice.domain.pricing.Measurements
 import ma.workshop.invoice.ui.theme.appPalette
 
 /** Manage the workshop's own product types. Inactive products stay listed (dimmed) and keep their history. */
@@ -165,6 +171,9 @@ fun ProductEditScreen(
         if (uri != null) onPickPhoto(uri)
     }
     var confirmingDelete by rememberSaveable { mutableStateOf(false) }
+    val dictation = LocalDictation.current
+    val mic: (@Composable () -> Unit)? =
+        if (dictation == null) null else ({ MicButton(dictation, 40, onText = { text -> onEdit { it.copy(name = text.take(40)) } }) })
 
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         when (state) {
@@ -196,6 +205,7 @@ fun ProductEditScreen(
                         label = Strings.PRODUCT_NAME,
                         error = if (state.nameMissing) Strings.NAME_REQUIRED else null,
                         tag = "product-name",
+                        trailing = mic,
                     )
 
                     SectionCard {
@@ -254,14 +264,31 @@ fun ProductEditScreen(
 
                     SectionCard {
                         ArabicText(Strings.PRICING_METHOD, style = MaterialTheme.typography.titleMedium)
-                        FormulaOption(Strings.FORMULA_AREA, Strings.FORMULA_AREA_HINT, form.formula == PricingFormula.AREA) {
-                            onEdit { it.copy(formula = PricingFormula.AREA) }
+                        for (method in PricingFormula.entries) {
+                            FormulaOption(method.methodName(), method.methodHint(), form.formula == method) {
+                                onEdit { it.copy(formula = method) }
+                            }
                         }
-                        FormulaOption(Strings.FORMULA_PERIMETER, Strings.FORMULA_PERIMETER_HINT, form.formula == PricingFormula.PERIMETER) {
-                            onEdit { it.copy(formula = PricingFormula.PERIMETER) }
+                        val optional = form.formula == PricingFormula.PER_ITEM
+                        val visible = form.formula.visibleMeasurements(form.measurements)
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Switch(
+                                checked = visible != Measurements.NONE,
+                                enabled = optional,
+                                onCheckedChange = { checked -> onEdit { it.copy(measurements = if (checked) Measurements.BOTH else Measurements.NONE) } },
+                                modifier = Modifier.testTag("show-measurements"),
+                            )
+                            ArabicText(Strings.SHOW_MEASUREMENTS, modifier = Modifier.weight(1f))
                         }
-                        FormulaOption(Strings.FORMULA_PIECE, Strings.FORMULA_PIECE_HINT, form.formula == PricingFormula.PER_ITEM) {
-                            onEdit { it.copy(formula = PricingFormula.PER_ITEM) }
+                        if (optional && visible != Measurements.NONE) {
+                            ArabicText(Strings.INFORMATIONAL_MEASUREMENTS, style = MaterialTheme.typography.bodySmall)
+                            for ((choice, label) in listOf(Measurements.WIDTH to Strings.WIDTH, Measurements.HEIGHT to Strings.HEIGHT, Measurements.BOTH to Strings.BOTH_MEASUREMENTS)) {
+                                FormulaOption(label, "", form.measurements == choice) {
+                                    onEdit { it.copy(measurements = choice) }
+                                }
+                            }
+                        } else if (form.formula.needsDimensions) {
+                            ArabicText(Strings.REQUIRED_MEASUREMENTS, style = MaterialTheme.typography.bodySmall)
                         }
                         if (!state.isNew) {
                             ArabicText(Strings.FORMULA_LOCKED_NOTE, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

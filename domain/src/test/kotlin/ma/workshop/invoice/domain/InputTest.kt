@@ -1,8 +1,6 @@
 package ma.workshop.invoice.domain
 
 import ma.workshop.invoice.domain.input.DecimalParser
-import ma.workshop.invoice.domain.input.KeypadEditor
-import ma.workshop.invoice.domain.input.KeypadKey
 import ma.workshop.invoice.domain.input.ParsedNumber
 import java.math.BigDecimal
 import kotlin.test.Test
@@ -55,47 +53,4 @@ class InputTest {
         assertEquals(ParsedNumber.TooManyDecimals, parse("1.234", 2))
     }
 
-    @Test
-    fun `keypad builds numbers digit by digit`() {
-        var text = ""
-        for (key in listOf(KeypadKey.Digit(1), KeypadKey.Decimal, KeypadKey.Digit(2), KeypadKey.Digit(0))) {
-            text = KeypadEditor.apply(text, key, maxDecimals = 3)
-        }
-        assertEquals("1.20", text)
-    }
-
-    @Test
-    fun `keypad decimal on empty starts with zero and only one decimal point is allowed`() {
-        var text = KeypadEditor.apply("", KeypadKey.Decimal, 3)
-        assertEquals("0.", text)
-        text = KeypadEditor.apply(text, KeypadKey.Decimal, 3)
-        assertEquals("0.", text)
-        text = KeypadEditor.apply(text, KeypadKey.Digit(5), 3)
-        assertEquals("0.5", text)
-    }
-
-    @Test
-    fun `keypad ignores decimal point when no decimals are allowed`() {
-        assertEquals("12", KeypadEditor.apply("12", KeypadKey.Decimal, maxDecimals = 0))
-    }
-
-    @Test
-    fun `keypad limits decimals and integer digits`() {
-        assertEquals("1.25", KeypadEditor.apply("1.25", KeypadKey.Digit(9), maxDecimals = 2))
-        assertEquals("1234567", KeypadEditor.apply("1234567", KeypadKey.Digit(8), maxDecimals = 2))
-    }
-
-    @Test
-    fun `keypad avoids leading zeros`() {
-        assertEquals("5", KeypadEditor.apply("0", KeypadKey.Digit(5), 2))
-        assertEquals("0", KeypadEditor.apply("0", KeypadKey.Digit(0), 2))
-        assertEquals("0", KeypadEditor.apply("", KeypadKey.Digit(0), 2))
-    }
-
-    @Test
-    fun `keypad backspace and clear`() {
-        assertEquals("1.2", KeypadEditor.apply("1.25", KeypadKey.Backspace, 3))
-        assertEquals("", KeypadEditor.apply("", KeypadKey.Backspace, 3))
-        assertEquals("", KeypadEditor.apply("12.5", KeypadKey.Clear, 3))
-    }
 }

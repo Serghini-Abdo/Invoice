@@ -14,7 +14,7 @@ data class DocumentRow(
     val name: String,
     /** "1,20 × 2,10 م", null for per-piece items. */
     val measures: String?,
-    val quantity: Int,
+    val quantity: Int?,
     /** "500 DH / م²" */
     val rate: String,
     /** "2,52 م² × 500 DH × 2" */
@@ -83,7 +83,7 @@ object InvoiceDocumentBuilder {
             illustration = item.illustration,
             name = item.productName,
             measures = ItemDescriber.measures(pricing, script),
-            quantity = pricing.quantity,
+            quantity = pricing.quantity.takeIf { pricing.formula.usesQuantity },
             rate = ItemDescriber.rate(pricing, script),
             calculation = ItemDescriber.calculation(pricing, script),
             formula = ItemDescriber.formula(pricing, script),

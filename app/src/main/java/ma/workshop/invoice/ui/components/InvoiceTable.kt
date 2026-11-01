@@ -99,7 +99,7 @@ fun InvoiceTableRow(row: DocumentRow, picture: Dp, modifier: Modifier = Modifier
             Modifier.width(QuantityColumn).padding(horizontal = QuantityMargin / 2).testTag("table-quantity-$index"),
             contentAlignment = Alignment.Center,
         ) {
-            ArabicText(row.quantity.toString(), style = TextStyle(fontSize = BodySize, fontWeight = FontWeight.Bold), textAlign = TextAlign.Center)
+            ArabicText(row.quantity?.toString().orEmpty(), style = TextStyle(fontSize = BodySize, fontWeight = FontWeight.Bold), textAlign = TextAlign.Center)
         }
         Row(Modifier.weight(NameWeight).padding(horizontal = 3.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
             ArabicText(

@@ -1,5 +1,7 @@
 package ma.workshop.invoice.ui
 
+import ma.workshop.invoice.ui.components.LocalDictation
+
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
@@ -123,7 +125,11 @@ fun AppNav(container: AppContainer) {
         )
     }
 
-    CompositionLocalProvider(LocalSpeakers provides shownUi, LocalUnitScript provides appSettings.unitLabelScript) {
+    CompositionLocalProvider(
+        LocalSpeakers provides shownUi,
+        LocalUnitScript provides appSettings.unitLabelScript,
+        LocalDictation provides container.dictation,
+    ) {
     Box(
         Modifier
             .fillMaxSize()

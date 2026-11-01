@@ -12,6 +12,7 @@ import ma.workshop.invoice.domain.pricing.ItemPricing
 import ma.workshop.invoice.domain.pricing.Length
 import ma.workshop.invoice.domain.pricing.LengthUnit
 import ma.workshop.invoice.domain.pricing.PricingFormula
+import ma.workshop.invoice.domain.pricing.Measurements
 import ma.workshop.invoice.domain.settings.AppSettings
 import ma.workshop.invoice.domain.settings.ExportFormat
 import ma.workshop.invoice.domain.settings.UnitLabelScript
@@ -36,6 +37,7 @@ fun ProductEntity.toDomain(): ProductDefinition? {
         sortOrder = sortOrder,
         createdAt = createdAt,
         updatedAt = updatedAt,
+        measurements = Measurements.fromId(measurements) ?: return null,
     )
 }
 
@@ -50,6 +52,7 @@ fun ProductDefinition.toEntity() = ProductEntity(
     sortOrder = sortOrder,
     createdAt = createdAt,
     updatedAt = updatedAt,
+    measurements = measurements.id,
 )
 
 // ---------- invoices ----------

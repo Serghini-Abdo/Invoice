@@ -80,3 +80,22 @@ Approved by the owner on 2026-10-25 after four design rounds. The mock-ups are i
 Quantity defaults to 1; repeated products stay separate items; confirming an item returns to the item
 list; area / perimeter / per-piece calculation and rounding; immutable invoice snapshots and revisions;
 no taxes. The calculation method must stay pluggable (no new `when (formula)` branches in new code).
+
+
+## Entry and pricing update — 2026-10-27
+
+This owner-approved update supersedes the single-size entry and separate confirmation screen above.
+
+* Select a product once, enter multiple independent size lines, and confirm the batch below the fields
+  on the same page. Each line remains separately editable in the invoice.
+* Use the system numeric keyboard (decimal for measurements/rates, integer for quantity), dismissible
+  with Done, Back or the hide-keyboard action. Deposit entry also uses the system keyboard.
+* Carry the preceding line's rate into the next line. Keep an unchanged copied rate yellow, with a text
+  cue, until Confirm or Add another size accepts it. Changing the rate also clears that cue.
+* Product configuration separates measurements from pricing. Per-piece products can hide measurements
+  or show width, height or both for information. Inputs required by a pricing method remain visible.
+* Add width × rate × quantity and height × rate × quantity. Length rates use metres, converting cm exactly.
+* Add fixed charges: an amount with no quantity or measurements. A custom charge (e.g. labour) needs only
+  a description and amount, without creating a catalogue product.
+* Keep integer money, exact length conversion, one final rounding, independent snapshots, drafts,
+  speaker-only speech actions and backwards-compatible restoration of old backups.

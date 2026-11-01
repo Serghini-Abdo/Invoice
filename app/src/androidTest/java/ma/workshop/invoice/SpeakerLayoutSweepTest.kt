@@ -89,10 +89,6 @@ class SpeakerLayoutSweepTest {
         rule.onNodeWithText(text).performClick()
     }
 
-    private fun keys(vararg keys: String) {
-        for (key in keys) rule.onNodeWithTag("key-$key").performClick()
-    }
-
     @Test
     fun noWordIsBrokenOnAnyScreenOfTheInvoiceFlow() {
         rule.waitForTextOrExplain(Strings.NEW_INVOICE)
@@ -113,15 +109,12 @@ class SpeakerLayoutSweepTest {
 
         rule.waitForTextOrExplain(Strings.WIDTH)
         check("item entry, empty")
-        keys("1", "decimal", "2", "0")
-        rule.onNodeWithTag("key-next").performClick()
-        keys("2", "decimal", "1", "0")
-        rule.onNodeWithTag("key-next").performClick()
-        keys("5", "0", "0")
+        rule.enterNumber("field-width", "1.20")
+        rule.enterNumber("field-height", "2.10")
+        rule.enterNumber("field-rate", "500")
         check("item entry, filled")
-        rule.onNodeWithTag("entry-continue").performClick()
+        rule.showEntryControl("confirm-item")
 
-        rule.waitForTextOrExplain(Strings.CONFIRM_ITEM_TITLE)
         check("item confirmation")
         // with the speaker tiles the two buttons are stacked, each full width, confirm above cancel
         val confirm = rule.onNodeWithTag("confirm-item").getUnclippedBoundsInRoot()
@@ -129,7 +122,7 @@ class SpeakerLayoutSweepTest {
         assertTrue("confirm is above cancel", confirm.bottom <= cancel.top)
         assertEquals("same width", (confirm.right - confirm.left).value, (cancel.right - cancel.left).value, 0.5f)
         assertTrue("wide enough for its label", (confirm.right - confirm.left).value > 250f)
-        click(Strings.CONFIRM)
+        rule.confirmEntry()
 
         rule.waitUntil(15_000) { rule.onAllNodesWithTag("invoice-table").fetchSemanticsNodes().isNotEmpty() }
         check("item list")

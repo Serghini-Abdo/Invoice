@@ -30,17 +30,19 @@ data class ItemEntryForm(
     val heightUnit: LengthUnit = LengthUnit.METER,
     val quantity: Int = DEFAULT_QUANTITY,
     val rateText: String = "",
+    val measurements: Measurements = formula.measurements,
+    val rateNeedsConfirmation: Boolean = false,
 ) {
+
+    val visibleMeasurements: Measurements get() = formula.visibleMeasurements(measurements)
 
     fun evaluate(): FormEvaluation {
         val issues = mutableListOf<FieldIssue>()
 
         var width: Length? = null
         var height: Length? = null
-        if (formula.needsDimensions) {
-            width = parseLength(Field.WIDTH, widthText, widthUnit, issues)
-            height = parseLength(Field.HEIGHT, heightText, heightUnit, issues)
-        }
+        if (visibleMeasurements.width) width = parseLength(Field.WIDTH, widthText, widthUnit, issues)
+        if (visibleMeasurements.height) height = parseLength(Field.HEIGHT, heightText, heightUnit, issues)
 
         var rate: Money? = null
         when (val parsed = MoneyParser.parse(rateText)) {
@@ -76,8 +78,8 @@ data class ItemEntryForm(
         const val DEFAULT_QUANTITY = 1
 
         /** A blank form for a freshly selected catalog product: quantity 1, no price, no dimensions. */
-        fun forProduct(formula: PricingFormula, defaultUnit: LengthUnit): ItemEntryForm =
-            ItemEntryForm(formula = formula, widthUnit = defaultUnit, heightUnit = defaultUnit)
+        fun forProduct(formula: PricingFormula, defaultUnit: LengthUnit, measurements: Measurements = formula.measurements): ItemEntryForm =
+            ItemEntryForm(formula = formula, widthUnit = defaultUnit, heightUnit = defaultUnit, measurements = measurements)
 
         /** Re-opens a confirmed item for editing, in the units the user originally typed. */
         fun fromPricing(pricing: ItemPricing): ItemEntryForm = ItemEntryForm(
@@ -88,6 +90,7 @@ data class ItemEntryForm(
             heightUnit = pricing.height?.unit ?: LengthUnit.METER,
             quantity = pricing.quantity,
             rateText = MoneyParser.toEditableText(pricing.unitRate),
+            measurements = Measurements.of(pricing.width != null, pricing.height != null),
         )
 
         private fun editable(length: Length): String = length.value.canonical().toPlainString()

@@ -73,7 +73,27 @@ object Strings {
 
     // item confirm
     const val CONFIRM_ITEM_TITLE = "تأكيد المنتوج"
+    const val ADD_VARIATION = "إضافة قياس آخر"
+    const val LINE = "السطر"
+    const val SAME_PRICE = "نفس الثمن — أكّده أو أضف سطراً آخر"
+    const val CUSTOM_CHARGE = "إضافة مبلغ خاص"
+    const val CHARGE_DESCRIPTION = "وصف الخدمة"
+    const val CHARGE_AMOUNT = "المبلغ"
+    const val HIDE_KEYBOARD = "إخفاء لوحة المفاتيح"
+    const val SHOW_MEASUREMENTS = "إظهار القياسات"
+    const val BOTH_MEASUREMENTS = "العرض والارتفاع"
+    const val REQUIRED_MEASUREMENTS = "هذه القياسات ضرورية لحساب الثمن"
+    const val INFORMATIONAL_MEASUREMENTS = "للمعلومات فقط، لا تغيّر ثمن القطعة"
+    const val FORMULA_WIDTH = "حسب العرض"
+    const val FORMULA_WIDTH_HINT = "العرض × ثمن المتر × العدد"
+    const val FORMULA_HEIGHT = "حسب الارتفاع"
+    const val FORMULA_HEIGHT_HINT = "الارتفاع × ثمن المتر × العدد"
+    const val FORMULA_FIXED = "مبلغ ثابت"
+    const val FORMULA_FIXED_HINT = "مبلغ مباشر بدون عدد أو قياسات"
     const val CALCULATION = "الحساب"
+    const val QUANTITY_PLUS = "زيادة العدد"
+    const val QUANTITY_MINUS = "إنقاص العدد"
+    const val EXPAND_LINE = "عرض السطر كاملاً"
 
     // review / payment
     const val REVIEW_TITLE = "مراجعة الفاتورة"
@@ -189,12 +209,14 @@ object Strings {
 
     // speak-to-fill
     const val DICTATE = "الكتابة بالصوت"
+    const val DICTATE_READY = "الكتابة بالصوت جاهزة"
+    const val DICTATE_NEEDS_PERMISSION = "الكتابة بالصوت: سيطلب الهاتف إذن الميكروفون عند أول استعمال"
     const val DICTATE_LISTENING = "تكلّم الآن…"
     const val DICTATE_PERMISSION_TITLE = "إذن الميكروفون"
     const val DICTATE_PERMISSION_MESSAGE = "لكتابة الاسم بصوتك يحتاج التطبيق إذن الميكروفون. لا يُسجَّل ولا يُحفظ أي صوت. بعد ذلك سيسألك الهاتف"
     const val DICTATE_TYPE_INSTEAD = "سأكتب بيدي"
     const val DICTATE_PERMISSION_DENIED = "الميكروفون غير مسموح. يمكنك الكتابة بيدك، أو السماح به من إعدادات الهاتف"
-    const val DICTATE_OFFLINE_MISSING = "الكتابة بالصوت تحتاج الإنترنت في هذا الهاتف. لتعمل بدون إنترنت، حمّل اللغة العربية للتعرف على الكلام من إعدادات الهاتف"
+    const val DICTATE_OFFLINE_MISSING = "الكتابة بالصوت تحتاج الإنترنت. لتعمل بدونه حمّل العربية من إعدادات التعرف على الكلام"
     const val DICTATE_NOT_AVAILABLE = "الكتابة بالصوت غير متوفرة في هذا الهاتف. اكتب بيدك"
     const val DICTATE_NO_MATCH = "لم أفهم. حاول مرة أخرى أو اكتب بيدك"
     const val DICTATE_BUSY = "الميكروفون مشغول. حاول بعد لحظة"

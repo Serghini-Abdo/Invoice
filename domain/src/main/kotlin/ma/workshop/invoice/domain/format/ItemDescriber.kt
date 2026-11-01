@@ -20,8 +20,13 @@ object ItemDescriber {
 
     /** "1,20 × 2,10 م" (or with a unit after each number when units differ). Null for per-piece items. */
     fun measures(pricing: ItemPricing, script: UnitLabelScript = UnitLabelScript.ARABIC): String? {
-        val width = pricing.width ?: return null
-        val height = pricing.height ?: return null
+        val width = pricing.width
+        val height = pricing.height
+        if (width == null || height == null) {
+            val dimension = width ?: height ?: return null
+            val label = if (width != null) ArabicTerms.WIDTH else ArabicTerms.HEIGHT
+            return "$label ${ArabicFormat.isolate("${ArabicFormat.length(dimension)} ${ArabicFormat.unit(dimension.unit, script)}", script)}"
+        }
         val text = if (width.unit == height.unit) {
             "${ArabicFormat.length(width)} × ${ArabicFormat.length(height)} ${ArabicFormat.unit(width.unit, script)}"
         } else {
@@ -33,6 +38,7 @@ object ItemDescriber {
 
     /** "500 DH / م²" */
     fun rate(pricing: ItemPricing, script: UnitLabelScript = UnitLabelScript.ARABIC): String {
+        if (!pricing.formula.usesQuantity) return ArabicFormat.amount(pricing.unitRate)
         val text = "${ArabicFormat.amount(pricing.unitRate)} / ${rateUnit(pricing.rateBasis, script)}"
         return if (pricing.rateBasis == RateBasis.PER_PIECE) text else ArabicFormat.isolate(text, script)
     }
@@ -41,6 +47,7 @@ object ItemDescriber {
         RateBasis.PER_SQUARE_METER -> ArabicFormat.squareMeter(script)
         RateBasis.PER_LINEAR_METER -> ArabicFormat.unit(LengthUnit.METER, script)
         RateBasis.PER_PIECE -> ArabicTerms.PIECE
+        RateBasis.FIXED -> ""
     }
 
     /** "2,52 م²" or "7 م"; null for per-piece items. */
@@ -59,8 +66,9 @@ object ItemDescriber {
      */
     fun calculation(pricing: ItemPricing, script: UnitLabelScript = UnitLabelScript.ARABIC): String {
         val rate = ArabicFormat.amount(pricing.unitRate)
-        return when (pricing.formula) {
-            PricingFormula.PER_ITEM -> "${pricing.quantity} × $rate"
+        if (!pricing.formula.usesQuantity) return rate
+        return when (pricing.baseAmount) {
+            null -> "${pricing.quantity} × $rate"
             else -> ArabicFormat.isolate("${baseAmount(pricing, script)} × $rate", script).let {
                 if (script == UnitLabelScript.LATIN) "$it × ${pricing.quantity}" else "${baseAmount(pricing, script)} × $rate${ArabicFormat.RLM} × ${pricing.quantity}"
             }
@@ -71,8 +79,8 @@ object ItemDescriber {
      * The calculation cell of the invoice table: the unit price sits inside it and the quantity does not
      * (it has its own column). "2,52 م² × 500 DH" or, for a per-piece product, "35 DH / قطعة".
      */
-    fun formula(pricing: ItemPricing, script: UnitLabelScript = UnitLabelScript.ARABIC): String = when (pricing.formula) {
-        PricingFormula.PER_ITEM -> rate(pricing, script)
+    fun formula(pricing: ItemPricing, script: UnitLabelScript = UnitLabelScript.ARABIC): String = when (pricing.baseAmount) {
+        null -> rate(pricing, script)
         else -> ArabicFormat.isolate("${baseAmount(pricing, script)} × ${ArabicFormat.amount(pricing.unitRate)}", script)
     }
 
@@ -81,23 +89,24 @@ object ItemDescriber {
         val lines = mutableListOf<BreakdownLine>()
         val width = pricing.width
         val height = pricing.height
-        if (width != null && height != null) {
+        if (width != null) {
             lines += BreakdownLine(ArabicTerms.WIDTH, ArabicFormat.isolate("${ArabicFormat.length(width)} ${ArabicFormat.unit(width.unit, script)}", script))
+        }
+        if (height != null) {
             lines += BreakdownLine(ArabicTerms.HEIGHT, ArabicFormat.isolate("${ArabicFormat.length(height)} ${ArabicFormat.unit(height.unit, script)}", script))
-
+        }
+        if (width != null && height != null && pricing.baseAmount != null) {
             val wMeters = ArabicFormat.decimal(width.meters, minDecimals = 2, maxDecimals = 6)
             val hMeters = ArabicFormat.decimal(height.meters, minDecimals = 2, maxDecimals = 6)
-            val formulaLine = when (pricing.formula) {
-                PricingFormula.AREA -> "$wMeters × $hMeters = ${baseAmount(pricing, script)}"
-                PricingFormula.PERIMETER ->
-                    "${ArabicFormat.decimal(TWO)} × ($wMeters + $hMeters) = ${baseAmount(pricing, script)}"
-                PricingFormula.PER_ITEM -> ""
-            }
+            val formulaLine = mapOf(
+                PricingFormula.AREA to "$wMeters × $hMeters = ${baseAmount(pricing, script)}",
+                PricingFormula.PERIMETER to "${ArabicFormat.decimal(TWO)} × ($wMeters + $hMeters) = ${baseAmount(pricing, script)}",
+            )[pricing.formula]
             val label = if (pricing.formula == PricingFormula.AREA) ArabicTerms.AREA else ArabicTerms.PERIMETER
-            lines += BreakdownLine(label, formulaLine)
+            if (formulaLine != null) lines += BreakdownLine(label, formulaLine)
         }
         lines += BreakdownLine(ArabicTerms.RATE, rate(pricing, script))
-        lines += BreakdownLine(ArabicTerms.QUANTITY, pricing.quantity.toString())
+        if (pricing.formula.usesQuantity) lines += BreakdownLine(ArabicTerms.QUANTITY, pricing.quantity.toString())
         lines += BreakdownLine(ArabicTerms.TOTAL, "${calculation(pricing, script)} = ${ArabicFormat.amount(pricing.total)}")
         return lines
     }

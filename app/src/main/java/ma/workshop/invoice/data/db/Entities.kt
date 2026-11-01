@@ -21,6 +21,7 @@ data class ProductEntity(
     val sortOrder: Int,
     val createdAt: Long,
     val updatedAt: Long,
+    @ColumnInfo(defaultValue = "'none'") val measurements: String = "none",
 )
 
 @Entity(

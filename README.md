@@ -26,16 +26,19 @@ New invoice:
    **+ إضافة منتوج** button; **متابعة** to go on. Items can be edited or removed (removal asks first).
 3. **Choose a product** from the picture grid (two columns). Tapping the picture selects it; the small
    speaker under each card only speaks the name and never selects.
-4. **Details**: only the fields the product needs. Width/height in metres or centimetres (switch beside each
-   number), the rate typed for *this* item, quantity (starts at 1, big - / + buttons). A big keypad with
-   decimal, backspace and clear. The total updates on every keypress.
-5. **Confirm**: picture, name, measurements, quantity, rate and the full calculation, then **تأكيد** or **إلغاء**.
-   After confirming you are always back on the item list, never in the catalog or at payment.
-6. **Review**: all items, the total, an editable deposit (default 0, cannot exceed the total), the remaining
+4. **Details and confirmation**: enter the size, rate and quantity with the phone's numeric keyboard.
+   Dismiss it with Done, Back or the hide-keyboard button. Use **إضافة قياس آخر** to add another size of
+   the same product. Its rate carries over in yellow with a text cue until changed, confirmed or accepted
+   by adding another line. Review the calculations and total below the fields, then confirm all lines together.
+5. **Review**: all items, the total, an editable deposit (default 0, cannot exceed the total), the remaining
    balance and an explicit "خالص" (fully paid) state. A final confirmation precedes saving.
-7. **Saved**: the invoice is stored first; then the PNG/PDF is generated on the phone, previewed, and
-   shared through Android's share sheet (WhatsApp appears there when installed). The app never claims a
-   message was sent, only that the share sheet was opened.
+6. **Saved**: the invoice is stored first; then the PNG/PDF is generated on the phone, previewed, and
+   shared through Android's share sheet (WhatsApp appears there when installed).
+
+The product picker also offers **إضافة مبلغ خاص** for labour or another fixed charge: description and amount,
+without a catalogue product, quantity or measurements. Product settings offer per-piece, area, perimeter,
+width-only, height-only and fixed pricing. Per-piece products may show width, height or both for information;
+required measurements for calculated prices cannot be hidden.
 
 The same product can be added any number of times; every addition is an independent item with its own size,
 rate and quantity. Nothing is merged.
@@ -196,8 +199,6 @@ These are real, current limits, not future plans:
   using one of them). Taking or importing photos of products is not implemented.
 * **Phones are locked to portrait.** Tablets may rotate; on a tablet in landscape the item-entry screen is
   usable but compact (it scrolls).
-* **Only the three required pricing formulas exist** (area, perimeter, per piece). A product priced per
-  linear metre of a single length can use the perimeter formula only with two dimensions.
 * **The app is Arabic-only** by design; there is no language switch.
 * **Android Auto Backup is switched off** (`allowBackup=false`) so invoice data only leaves the phone
   through the explicit backup actions.

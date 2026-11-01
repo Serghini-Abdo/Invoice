@@ -1,5 +1,16 @@
 # Testing: what is covered, and what is not
 
+## Entry update verification (2026-10-27)
+
+The current entry flow confirms multiple size lines on one page and uses the native numeric keyboard.
+The older scenario descriptions below refer to the original separate confirmation screen and custom keypad.
+`VariationEntryTest` covers batch entry, copied rates, draft recovery, new pricing methods and backup validation.
+`InvoiceFlowUiTest`, `UnitsUiTest`, the screen tests and `MigrationTest` have been updated for the new flow.
+
+210 domain tests pass. The debug APK, instrumentation APK and lint checks pass. Device execution is recorded
+in `docs/day2/PROGRESS.md`; compilation alone is not proof that the keyboard or migration ran on a device.
+
+
 Every statement below was produced by the CI workflow in `.github/workflows/ci.yml`, not by assumption.
 The workflow has four jobs. A fresh checkout reproduces all of them with the commands at the end.
 

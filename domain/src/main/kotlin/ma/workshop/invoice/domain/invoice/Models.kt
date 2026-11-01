@@ -4,6 +4,7 @@ import ma.workshop.invoice.domain.money.Money
 import ma.workshop.invoice.domain.pricing.ItemPricing
 import ma.workshop.invoice.domain.pricing.LengthUnit
 import ma.workshop.invoice.domain.pricing.PricingFormula
+import ma.workshop.invoice.domain.pricing.Measurements
 
 /**
  * A catalog entry: a *definition* of something the workshop makes. It deliberately has no price;
@@ -21,8 +22,9 @@ data class ProductDefinition(
     val sortOrder: Int = 0,
     val createdAt: Long = 0,
     val updatedAt: Long = 0,
+    val measurements: Measurements = formula.measurements,
 ) {
-    fun toRef(): ProductRef = ProductRef(id, name, illustration, formula, defaultUnit)
+    fun toRef(): ProductRef = ProductRef(id, name, illustration, formula, defaultUnit, measurements)
 }
 
 /**
@@ -36,6 +38,7 @@ data class ProductRef(
     val illustration: String,
     val formula: PricingFormula,
     val defaultUnit: LengthUnit,
+    val measurements: Measurements = formula.measurements,
 )
 
 data class CustomerInfo(val name: String = "", val phone: String = "") {

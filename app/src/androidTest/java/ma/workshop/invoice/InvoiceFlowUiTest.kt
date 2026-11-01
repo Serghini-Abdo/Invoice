@@ -1,6 +1,10 @@
 package ma.workshop.invoice
 
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -60,10 +64,6 @@ class InvoiceFlowUiTest {
         rule.onNodeWithText(text).performClick()
     }
 
-    private fun keys(vararg keys: String) {
-        for (key in keys) rule.onNodeWithTag("key-$key").performClick()
-    }
-
     private fun addButton() = Strings.ADD_PRODUCT
 
     @Test
@@ -72,6 +72,83 @@ class InvoiceFlowUiTest {
         rule.onNodeWithText(Strings.NEW_INVOICE).assertIsDisplayed()
         rule.onNodeWithText(Strings.PREVIOUS_INVOICES).assertIsDisplayed()
         rule.onNodeWithText(Strings.SETTINGS).assertIsDisplayed()
+    }
+
+    @Test
+    fun fourDoorSizesKeepTheirPricesAndSaveAsIndependentLines() {
+        click(Strings.NEW_INVOICE)
+        click(Strings.CONTINUE)
+        click(Strings.ADD_PRODUCT)
+        click("باب حديد")
+        for (index in 0..3) {
+            val suffix = if (index == 0) "" else "-$index"
+            rule.enterNumber("field-width$suffix", listOf("1", "1.1", "1.2", "1.3")[index])
+            rule.enterNumber("field-height$suffix", "2")
+            if (index == 0) rule.enterNumber("field-rate", "500")
+            else {
+                rule.showEntryControl("field-rate$suffix")
+                rule.onNodeWithTag("field-rate$suffix").assert(hasText("500"))
+                rule.onNodeWithTag("same-price-$index").assertExists()
+            }
+            if (index < 3) {
+                rule.showEntryControl("add-variation")
+                rule.onNodeWithTag("add-variation").performClick()
+            }
+        }
+        rule.confirmEntry()
+        click(Strings.CONTINUE)
+        click(Strings.SAVE_INVOICE)
+        click(Strings.SAVE)
+        waitForText(Strings.SAVED_TITLE)
+        runBlocking {
+            val invoice = container.database.invoices().getAll().single()
+            val items = container.database.invoices().getItems(invoice.id)
+            assertEquals(4, items.map { it.id }.toSet().size)
+            assertEquals(listOf(100000L, 110000L, 120000L, 130000L), items.map { it.totalCentimes })
+            assertEquals(460000L, invoice.totalCentimes)
+        }
+    }
+
+    @Test
+    fun customLabourNeedsOnlyADescriptionAndAmount() {
+        click(Strings.NEW_INVOICE)
+        click(Strings.CONTINUE)
+        click(Strings.ADD_PRODUCT)
+        click(Strings.CUSTOM_CHARGE)
+        rule.onNodeWithTag("charge-description").performTextReplacement("تركيب الباب")
+        rule.enterNumber("field-rate", "350")
+        rule.onNodeWithTag("field-width").assertDoesNotExist()
+        rule.onNodeWithTag("field-height").assertDoesNotExist()
+        rule.onNodeWithTag("field-quantity").assertDoesNotExist()
+        rule.confirmEntry()
+        click(Strings.CONTINUE)
+        click(Strings.SAVE_INVOICE)
+        click(Strings.SAVE)
+        waitForText(Strings.SAVED_TITLE)
+        runBlocking {
+            val invoice = container.database.invoices().getAll().single()
+            val item = container.database.invoices().getItems(invoice.id).single()
+            assertEquals(null, item.productId)
+            assertEquals("fixed", item.formula)
+            assertEquals(35000L, item.totalCentimes)
+        }
+    }
+
+    @Test
+    fun keyboardCanBeDismissedWithoutLeavingOrLosingInput() {
+        click(Strings.NEW_INVOICE)
+        click(Strings.CONTINUE)
+        click(Strings.ADD_PRODUCT)
+        click("باب حديد")
+        rule.onNodeWithTag("field-width").performClick().performTextReplacement("1.25")
+        waitForText(Strings.HIDE_KEYBOARD)
+        rule.onNodeWithTag("hide-keyboard").performClick()
+        rule.onNodeWithTag("field-width").assert(hasText("1.25"))
+        rule.onNodeWithText(Strings.CHOOSE_PRODUCT).assertDoesNotExist()
+        rule.onNodeWithTag("field-width").performClick()
+        waitForText(Strings.HIDE_KEYBOARD)
+        rule.onNodeWithTag("field-width").performImeAction()
+        rule.onNodeWithTag("field-width").assert(hasText("1.25"))
     }
 
     @Test
@@ -89,18 +166,15 @@ class InvoiceFlowUiTest {
         waitForText(Strings.CHOOSE_PRODUCT)
         rule.onNodeWithText("باب حديد").performClick()
         waitForText(Strings.WIDTH)
-        keys("1", "decimal", "2", "0")
-        rule.onNodeWithTag("key-next").performClick()
-        keys("2", "decimal", "1", "0")
-        rule.onNodeWithTag("key-next").performClick()
-        keys("5", "0", "0")
-        rule.onNodeWithTag("entry-continue").performClick()
+        rule.enterNumber("field-width", "1.20")
+        rule.enterNumber("field-height", "2.10")
+        rule.enterNumber("field-rate", "500")
+        rule.showEntryControl("confirm-item")
 
         // Step 4: confirmation shows 1 260 DH
-        waitForText(Strings.CONFIRM_ITEM_TITLE)
         val firstTotal = ArabicFormat.amount(Money(126_000))
-        rule.onAllNodesWithText(firstTotal, substring = true)[0].assertIsDisplayed()
-        click(Strings.CONFIRM)
+        rule.onNodeWithTag("entry-total").assert(hasText(firstTotal, substring = true))
+        rule.confirmEntry()
 
         // After confirming, we are on the item list: not the catalog, not payment
         waitForText(addButton())
@@ -113,15 +187,12 @@ class InvoiceFlowUiTest {
         waitForText(Strings.CHOOSE_PRODUCT)
         rule.onNodeWithText("باب حديد").performClick()
         waitForText(Strings.WIDTH)
-        keys("1")
-        rule.onNodeWithTag("key-next").performClick()
-        keys("2")
-        rule.onNodeWithTag("key-next").performClick()
-        keys("6", "0", "0")
-        rule.onNodeWithContentDescription(Strings.INCREASE).performScrollTo().performClick()
-        rule.onNodeWithTag("entry-continue").performClick()
-        waitForText(Strings.CONFIRM_ITEM_TITLE)
-        click(Strings.CONFIRM)
+        rule.enterNumber("field-width", "1")
+        rule.enterNumber("field-height", "2")
+        rule.enterNumber("field-rate", "600")
+        rule.enterNumber("field-quantity", "2")
+        rule.showEntryControl("confirm-item")
+        rule.confirmEntry()
 
         // two independent items on the list
         waitForText(addButton())

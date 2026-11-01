@@ -1,5 +1,19 @@
 package ma.workshop.invoice.ui.settings
 
+import ma.workshop.invoice.ui.components.LocalDictation
+
+import androidx.core.content.ContextCompat
+
+import androidx.compose.ui.platform.LocalContext
+
+import androidx.compose.runtime.remember
+
+import androidx.compose.runtime.LaunchedEffect
+
+import android.content.pm.PackageManager
+
+import android.Manifest
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -307,9 +321,27 @@ fun SettingsScreen(
                         BigButton(Strings.AUDIO_INSTALL, Icons.Filled.RecordVoiceOver, onInstallVoice, kind = ButtonKind.Secondary)
                     }
                 }
+                MicStatusLine()
             }
 
             NavCard(Strings.BACKUP, backupHint, Icons.Filled.Backup, onOpenBackup)
         }
+    }
+}
+
+/** Settings status line for speak-to-fill (the mic on customer name and product name). */
+@Composable
+private fun MicStatusLine() {
+    val dictation = LocalDictation.current ?: return
+    val context = LocalContext.current
+    var offlinePack by remember { mutableStateOf<Boolean?>(null) }
+    LaunchedEffect(Unit) { dictation.checkOfflinePack { offlinePack = it } }
+    val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+    ArabicText(Strings.DICTATE, style = MaterialTheme.typography.titleMedium)
+    when {
+        !dictation.isAvailable() -> StatusBanner(Strings.DICTATE_NOT_AVAILABLE, BannerKind.Warning)
+        offlinePack == false -> StatusBanner(Strings.DICTATE_OFFLINE_MISSING, BannerKind.Warning)
+        !granted -> StatusBanner(Strings.DICTATE_NEEDS_PERMISSION, BannerKind.Info)
+        else -> StatusBanner(Strings.DICTATE_READY, BannerKind.Success)
     }
 }

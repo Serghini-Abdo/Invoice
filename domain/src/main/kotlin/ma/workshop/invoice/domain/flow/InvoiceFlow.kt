@@ -14,6 +14,8 @@ import ma.workshop.invoice.domain.pricing.ItemEntryForm
 import ma.workshop.invoice.domain.pricing.ItemPricing
 import ma.workshop.invoice.domain.pricing.LengthUnit
 import ma.workshop.invoice.domain.pricing.Problem
+import ma.workshop.invoice.domain.pricing.PricingFormula
+import ma.workshop.invoice.domain.pricing.Measurements
 
 sealed interface FlowMode {
     data object New : FlowMode
@@ -34,7 +36,7 @@ sealed interface FlowStep {
     /** Step 3: dimensions, quantity and unit rate for the selected product. */
     data object ItemEntry : FlowStep
 
-    /** Step 4: calculation breakdown, confirm or cancel. */
+    /** Validated entries, committed immediately by the host after the inline confirmation. */
     data object ItemConfirm : FlowStep
 
     /** Step 5: totals, deposit, remaining balance and the final save confirmation. */
@@ -54,7 +56,11 @@ data class PendingItem(
     val showErrors: Boolean = false,
     /** Set once the form is valid and the confirmation screen is showing. */
     val confirmedPricing: ItemPricing? = null,
-)
+    val additionalForms: List<ItemEntryForm> = emptyList(),
+) {
+    val forms: List<ItemEntryForm> get() = listOf(form) + additionalForms
+    val isCustomCharge: Boolean get() = product.id == null && product.formula == PricingFormula.FIXED
+}
 
 enum class FlowIssue { NO_ITEMS, SAVE_FAILED }
 
@@ -104,7 +110,8 @@ data class FlowState(
     private val hasHalfTypedNewItem: Boolean
         get() = pending != null &&
             pending.editingItemId == null &&
-            pending.form != ItemEntryForm.forProduct(pending.product.formula, pending.product.defaultUnit)
+            (pending.additionalForms.isNotEmpty() || pending.isCustomCharge && pending.product.name.isNotBlank() ||
+                pending.form != ItemEntryForm.forProduct(pending.product.formula, pending.product.defaultUnit, pending.product.measurements))
 }
 
 sealed interface FlowEvent {
@@ -115,7 +122,11 @@ sealed interface FlowEvent {
     /** The "+ إضافة منتوج" button. */
     data object AddProductPressed : FlowEvent
     data class ProductChosen(val product: ProductRef) : FlowEvent
-    data class FormEdited(val form: ItemEntryForm) : FlowEvent
+    data class FormEdited(val form: ItemEntryForm, val index: Int = 0) : FlowEvent
+    data object AddVariation : FlowEvent
+    data class RemoveVariation(val index: Int) : FlowEvent
+    data object CustomChargePressed : FlowEvent
+    data class CustomChargeEdited(val name: String) : FlowEvent
     data object EntrySubmitted : FlowEvent
     data object ItemConfirmed : FlowEvent
     data object ItemCancelled : FlowEvent
@@ -206,7 +217,7 @@ class InvoiceFlow(private val newId: () -> String) {
                             step = FlowStep.ItemEntry,
                             pending = PendingItem(
                                 product = event.product,
-                                form = ItemEntryForm.forProduct(event.product.formula, event.product.defaultUnit),
+                                form = ItemEntryForm.forProduct(event.product.formula, event.product.defaultUnit, event.product.measurements),
                             ),
                         ),
                     )
@@ -216,11 +227,54 @@ class InvoiceFlow(private val newId: () -> String) {
 
             is FlowEvent.FormEdited -> {
                 val pending = state.pending
-                if (step == FlowStep.ItemEntry && pending != null && event.form.formula == pending.product.formula) {
-                    Transition(state.copy(pending = pending.copy(form = event.form, confirmedPricing = null)))
+                val previous = pending?.forms?.getOrNull(event.index)
+                if (step == FlowStep.ItemEntry && pending != null && previous != null && event.form.formula == pending.product.formula) {
+                    val forms = pending.forms.toMutableList()
+                    forms[event.index] = event.form.copy(
+                        measurements = previous.measurements,
+                        rateNeedsConfirmation = previous.rateNeedsConfirmation && previous.rateText == event.form.rateText,
+                    )
+                    Transition(state.copy(pending = pending.copy(form = forms.first(), additionalForms = forms.drop(1), confirmedPricing = null)))
                 } else {
                     Transition(state)
                 }
+            }
+
+            FlowEvent.AddVariation -> {
+                val pending = state.pending
+                if (step != FlowStep.ItemEntry || pending == null || pending.editingItemId != null || !pending.product.formula.usesQuantity) {
+                    Transition(state)
+                } else if (pending.forms.any { !it.evaluate().isValid }) {
+                    Transition(state.copy(pending = pending.copy(showErrors = true)))
+                } else {
+                    val accepted = pending.forms.map { it.copy(rateNeedsConfirmation = false) }
+                    val previous = accepted.last()
+                    val next = previous.copy(widthText = "", heightText = "", quantity = 1, rateNeedsConfirmation = true)
+                    Transition(state.copy(pending = pending.copy(form = accepted.first(), additionalForms = accepted.drop(1) + next, showErrors = false)))
+                }
+            }
+
+            is FlowEvent.RemoveVariation -> {
+                val pending = state.pending
+                if (step != FlowStep.ItemEntry || pending == null || pending.forms.size < 2 || event.index !in pending.forms.indices) {
+                    Transition(state)
+                } else {
+                    val forms = pending.forms.filterIndexed { index, _ -> index != event.index }
+                    Transition(state.copy(pending = pending.copy(form = forms.first(), additionalForms = forms.drop(1))))
+                }
+            }
+
+            FlowEvent.CustomChargePressed ->
+                if (step == FlowStep.ItemList || step == FlowStep.Catalog) {
+                    val product = ProductRef(null, "", ma.workshop.invoice.domain.catalog.Illustrations.FALLBACK_KEY, PricingFormula.FIXED, LengthUnit.METER)
+                    Transition(state.copy(step = FlowStep.ItemEntry, pending = PendingItem(product, ItemEntryForm.forProduct(product.formula, product.defaultUnit))))
+                } else Transition(state)
+
+            is FlowEvent.CustomChargeEdited -> {
+                val pending = state.pending
+                if (step == FlowStep.ItemEntry && pending?.isCustomCharge == true) {
+                    Transition(state.copy(pending = pending.copy(product = pending.product.copy(name = event.name.take(40)))))
+                } else Transition(state)
             }
 
             FlowEvent.EntrySubmitted -> submitEntry(state)
@@ -243,6 +297,7 @@ class InvoiceFlow(private val newId: () -> String) {
                         illustration = item.illustration,
                         formula = item.pricing.formula,
                         defaultUnit = item.pricing.width?.unit ?: item.pricing.height?.unit ?: LengthUnit.METER,
+                        measurements = Measurements.of(item.pricing.width != null, item.pricing.height != null),
                     )
                     Transition(
                         state.copy(
@@ -342,13 +397,17 @@ class InvoiceFlow(private val newId: () -> String) {
         if (state.step != FlowStep.ItemEntry || pending == null) return Transition(state)
         val evaluation = pending.form.evaluate()
         val pricing = evaluation.pricing
-        return if (pricing == null) {
+        return if (pricing == null || pending.product.name.isBlank() || pending.forms.any { !it.evaluate().isValid }) {
             Transition(state.copy(pending = pending.copy(showErrors = true, confirmedPricing = null)))
         } else {
             Transition(
                 state.copy(
                     step = FlowStep.ItemConfirm,
-                    pending = pending.copy(showErrors = false, confirmedPricing = pricing),
+                    pending = pending.copy(
+                        showErrors = false, confirmedPricing = pricing,
+                        form = pending.form.copy(rateNeedsConfirmation = false),
+                        additionalForms = pending.additionalForms.map { it.copy(rateNeedsConfirmation = false) },
+                    ),
                 ),
             )
         }
@@ -362,15 +421,16 @@ class InvoiceFlow(private val newId: () -> String) {
         val editingId = pending.editingItemId
         val items = if (editingId == null) {
             // Every addition is a brand-new, independent item, even for the same product.
-            state.items + InvoiceItem(
+            val pricings = pending.forms.map { it.evaluate().pricing ?: return Transition(state) }
+            state.items + pricings.map { linePricing -> InvoiceItem(
                 id = newId(),
                 productId = pending.product.id,
-                productName = pending.product.name,
+                productName = pending.product.name.trim(),
                 illustration = pending.product.illustration,
-                pricing = pricing,
-            )
+                pricing = linePricing,
+            ) }
         } else {
-            state.items.map { if (it.id == editingId) it.copy(pricing = pricing) else it }
+            state.items.map { if (it.id == editingId) it.copy(pricing = pricing, productName = pending.product.name.trim()) else it }
         }
         // Always back to the item list: never the catalog, never a new invoice, never payment.
         return Transition(state.copy(step = FlowStep.ItemList, items = items, pending = null, issue = null))

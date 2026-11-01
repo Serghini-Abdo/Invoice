@@ -5,6 +5,9 @@ package ma.workshop.invoice.domain.speech
  * the screens keep their own wording in `ui/Strings.kt`, the printed invoice in `ArabicTerms`.
  */
 object DarijaTerms {
+    const val METHOD_WIDTH = "حسب العرض"
+    const val METHOD_HEIGHT = "حسب الارتفاع"
+    const val METHOD_FIXED = "مبلغ ثابت"
     // money and units
     const val DIRHAM = "درهم"
     const val DIRHAMS = "دراهم"

@@ -17,7 +17,8 @@ import ma.workshop.invoice.domain.speech.DictationProblem
 
 sealed interface DictationOutcome {
     data class Text(val text: String) : DictationOutcome
-    data class Problem(val problem: DictationProblem) : DictationOutcome
+    /** [code] is the recognizer's own error number, shown to help find out why it failed. */
+    data class Problem(val problem: DictationProblem, val code: Int? = null) : DictationOutcome
 }
 
 /**
@@ -49,6 +50,27 @@ class Dictation(context: Context) {
             onOutcome(DictationOutcome.Problem(DictationProblem.NOT_AVAILABLE))
             return
         }
+        // One recognizer at a time: first learn whether the offline pack exists, then listen. If the check
+        // never answers, listen anyway after a moment. Offline is preferred only when the pack is there, so
+        // a phone without it simply uses the internet.
+        var started = false
+        val mine = ++session
+        fun go(installed: Boolean?) {
+            if (started || mine != session) return
+            started = true
+            startEngine(LANGUAGE, preferOffline = installed == true, retried = false, onListening, onOutcome)
+        }
+        checkOfflinePack { go(it) }
+        main.postDelayed({ go(null) }, 1500)
+    }
+
+    private fun startEngine(
+        language: String,
+        preferOffline: Boolean,
+        retried: Boolean,
+        onListening: () -> Unit,
+        onOutcome: (DictationOutcome) -> Unit,
+    ) {
         val engine = SpeechRecognizer.createSpeechRecognizer(app)
         recognizer = engine
         engine.setRecognitionListener(object : RecognitionListener {
@@ -64,7 +86,12 @@ class Dictation(context: Context) {
 
             override fun onError(error: Int) {
                 finish()
-                onOutcome(DictationOutcome.Problem(DictationErrors.problemFor(error)))
+                // Moroccan Arabic is not offered everywhere: once, retry with plain Arabic over the internet.
+                if (!retried && error in RETRY_WITH_PLAIN_ARABIC) {
+                    main.post { startEngine(FALLBACK_LANGUAGE, preferOffline = false, retried = true, onListening, onOutcome) }
+                    return
+                }
+                onOutcome(DictationOutcome.Problem(DictationErrors.problemFor(error), error))
             }
 
             override fun onBeginningOfSpeech() = Unit
@@ -74,7 +101,7 @@ class Dictation(context: Context) {
             override fun onPartialResults(partialResults: Bundle?) = Unit
             override fun onEvent(eventType: Int, params: Bundle?) = Unit
         })
-        engine.startListening(intent())
+        engine.startListening(intent(language, preferOffline))
     }
 
     /**
@@ -105,7 +132,10 @@ class Dictation(context: Context) {
         })
     }
 
+    private var session = 0
+
     fun cancel() {
+        session++
         recognizer?.cancel()
         finish()
     }
@@ -117,15 +147,18 @@ class Dictation(context: Context) {
         main.post { engine.destroy() }
     }
 
-    private fun intent(): Intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+    private fun intent(language: String = LANGUAGE, preferOffline: Boolean = true): Intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
         .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-        .putExtra(RecognizerIntent.EXTRA_LANGUAGE, LANGUAGE)
-        .putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
+        .putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
+        .putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, preferOffline)
         .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
         .putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
 
     private companion object {
         const val LANGUAGE = "ar-MA"
+        const val FALLBACK_LANGUAGE = "ar"
+        /** Network, server and language errors: worth one retry with plain Arabic. */
+        val RETRY_WITH_PLAIN_ARABIC = setOf(1, 2, 4, 11, 12, 13)
         const val KEY_PERMISSION_ASKED = "micPermissionAsked"
     }
 }
