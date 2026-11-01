@@ -3,7 +3,6 @@ package ma.workshop.invoice.platform
 import ma.workshop.invoice.domain.settings.AppSettings
 import ma.workshop.invoice.domain.speech.SpeechDecision
 import ma.workshop.invoice.domain.speech.SpeechGate
-import ma.workshop.invoice.domain.speech.VoiceState
 
 /** What happened when a speaker was tapped. None of these ever selects or navigates. */
 enum class SpeakResult { SPOKEN, AUDIO_OFF, ASK_FOR_VOICE, UNAVAILABLE, CHECKING }
@@ -11,6 +10,7 @@ enum class SpeakResult { SPOKEN, AUDIO_OFF, ASK_FOR_VOICE, UNAVAILABLE, CHECKING
 /**
  * Every speaker in the app goes through here: it applies the audio switch and the speech rate from the
  * settings, and asks (once per app run) for an Arabic voice to be downloaded when none is installed.
+ * Nothing is spoken automatically (owner decision, 2026-11-01): the only callers are speaker taps.
  */
 class Speaker(private val controller: SpeechController) {
     private val gate = SpeechGate()
@@ -28,11 +28,6 @@ class Speaker(private val controller: SpeechController) {
             SpeechDecision.NO_VOICE -> SpeakResult.UNAVAILABLE
             SpeechDecision.STILL_CHECKING -> SpeakResult.CHECKING
         }
-    }
-
-    /** Speech the app starts by itself (a total on arrival): never asks for a voice, never interrupts the user. */
-    fun sayIfReady(text: String, settings: AppSettings) {
-        if (settings.audioEnabled && controller.voiceState == VoiceState.READY) controller.speak(text, settings.speechRate)
     }
 
     fun stop() = controller.stop()

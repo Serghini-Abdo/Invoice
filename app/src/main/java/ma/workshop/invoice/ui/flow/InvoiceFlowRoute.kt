@@ -155,8 +155,6 @@ fun InvoiceFlowRoute(
             FlowStep.ItemEntry, FlowStep.ItemConfirm -> current.pending?.let { pending ->
                 ItemEntryScreen(
                     pending = pending,
-                    audioEnabled = settings.audioEnabled,
-                    onToggleAudio = vm::toggleAudio,
                     onFormChange = { form, index -> vm.onEvent(FlowEvent.FormEdited(form, index)) },
                     onAddVariation = { vm.onEvent(FlowEvent.AddVariation) },
                     onRemoveVariation = { vm.onEvent(FlowEvent.RemoveVariation(it)) },
@@ -169,9 +167,6 @@ fun InvoiceFlowRoute(
             FlowStep.Review -> ReviewScreen(
                 state = current,
                 speechAvailable = speechAvailable,
-                audioEnabled = settings.audioEnabled,
-                onToggleAudio = vm::toggleAudio,
-                onSpeakSummary = { vm.autoSpeakInvoiceSummary() },
                 onReplay = { speakFeedback(vm.replayInvoiceSummary()) },
                 onDepositChange = { vm.onEvent(FlowEvent.DepositEdited(it)) },
                 onSave = { vm.onEvent(FlowEvent.SavePressed) },

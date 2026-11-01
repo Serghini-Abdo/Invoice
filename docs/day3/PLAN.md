@@ -122,7 +122,7 @@ Written 2026-11-01 from the owner's product review. The decisions behind every s
 * **Goal:** replace the one long Settings page with a list of category cards, each opening its own screen,
   and hide child options when their parent switch is off. See DECISIONS.md "Settings".
 * **Today:** `ui/settings/SettingsScreen.kt` is one scrolling page: a nav card to the catalogue, then sections
-  (`SectionCard`) for workshop info, receipt format, units and audio (switches, language, rate, auto totals,
+  (`SectionCard`) for workshop info, receipt format, units and audio (switches, language, rate,
   voice status and test, dictation status line `MicStatusLine`), then a nav card to backup. Routes are in
   `ui/AppNav.kt` (`Routes.SETTINGS`, `CATALOG`, `BACKUP`; composable at ~229).
 * **Files:** `ui/settings/SettingsScreen.kt` (split it), new files `ui/settings/WorkshopSettingsScreen.kt`,

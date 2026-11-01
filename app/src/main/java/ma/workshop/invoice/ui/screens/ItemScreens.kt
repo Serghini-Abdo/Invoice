@@ -68,8 +68,6 @@ import ma.workshop.invoice.domain.pricing.PricingLimits
 import ma.workshop.invoice.ui.Strings
 import ma.workshop.invoice.ui.arabic
 import ma.workshop.invoice.ui.components.AppTextField
-import ma.workshop.invoice.ui.components.AppSubBar
-import ma.workshop.invoice.ui.components.AudioToggle
 import ma.workshop.invoice.ui.components.AppTopBar
 import ma.workshop.invoice.ui.components.ArabicText
 import ma.workshop.invoice.ui.components.BigButton
@@ -92,8 +90,6 @@ import ma.workshop.invoice.ui.theme.appPalette
 @Composable
 fun ItemEntryScreen(
     pending: PendingItem,
-    audioEnabled: Boolean,
-    onToggleAudio: () -> Unit,
     onFormChange: (ItemEntryForm, Int) -> Unit,
     onAddVariation: () -> Unit,
     onRemoveVariation: (Int) -> Unit,

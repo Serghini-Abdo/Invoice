@@ -97,11 +97,6 @@ fun AudioSettingsScreen(
                 }
 
                 SectionCard {
-                    SwitchRow(Strings.AUDIO_ITEM_TOTALS, settings.speakItemTotals) { v -> onUpdate { it.copy(speakItemTotals = v) } }
-                    SwitchRow(Strings.AUDIO_INVOICE_TOTALS, settings.speakInvoiceTotals) { v -> onUpdate { it.copy(speakInvoiceTotals = v) } }
-                }
-
-                SectionCard {
                     when (speechStatus) {
                         is SpeechStatus.Checking -> StatusBanner(Strings.AUDIO_CHECKING, BannerKind.Info)
                         is SpeechStatus.Ready -> {

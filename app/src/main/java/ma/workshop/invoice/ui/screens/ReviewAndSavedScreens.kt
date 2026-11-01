@@ -50,7 +50,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
@@ -67,7 +66,6 @@ import ma.workshop.invoice.domain.settings.ExportFormat
 import ma.workshop.invoice.ui.Strings
 import ma.workshop.invoice.ui.arabic
 import ma.workshop.invoice.ui.components.AmountRow
-import ma.workshop.invoice.ui.components.AudioToggle
 import ma.workshop.invoice.ui.components.BannerKind
 import ma.workshop.invoice.ui.components.BigButton
 import ma.workshop.invoice.ui.components.ButtonKind
@@ -77,7 +75,6 @@ import ma.workshop.invoice.ui.components.LocalSpeakers
 import ma.workshop.invoice.ui.components.LocalUnitScript
 import ma.workshop.invoice.ui.components.PaidBadge
 import ma.workshop.invoice.ui.components.TablePicture
-import ma.workshop.invoice.ui.components.AppSubBar
 import ma.workshop.invoice.ui.components.AppTopBar
 import ma.workshop.invoice.ui.components.ArabicText
 import ma.workshop.invoice.ui.components.SectionCard
@@ -90,9 +87,6 @@ import ma.workshop.invoice.ui.theme.appPalette
 fun ReviewScreen(
     state: FlowState,
     speechAvailable: Boolean,
-    audioEnabled: Boolean,
-    onToggleAudio: () -> Unit,
-    onSpeakSummary: () -> Unit,
     onReplay: () -> Unit,
     onDepositChange: (String) -> Unit,
     onSave: () -> Unit,
@@ -106,8 +100,6 @@ fun ReviewScreen(
     val keyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     fun dismissKeyboard() { keyboard?.hide(); focus.clearFocus() }
     BackHandler(enabled = keyboardVisible) { dismissKeyboard() }
-
-    LaunchedEffect(Unit) { onSpeakSummary() }
 
     val total = state.total
     val deposit = state.deposit

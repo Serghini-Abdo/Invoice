@@ -47,9 +47,9 @@ The final state of every product decision. Later decisions replace earlier ones;
   counter below before changing the default).
 * A speaker tap only speaks: it never selects, presses or navigates. Tapping another speaker stops the
   current speech.
-* **[to build] Nothing is spoken automatically.** Speech happens only when the owner taps a speaker or
-  "تجربة الصوت". No reading on screen arrival, after a value changes, or after saving. The two automatic-totals
-  switches are removed from Settings (their stored values stay, unused). No speaker on icon-only controls (back arrow, − / +, mic, photo button).
+* Nothing is spoken automatically; speech only on a speaker tap or the voice test. No reading on screen
+  arrival, after a value changes, or after saving. The stored values of the two old automatic-totals settings
+  stay in the database and in backups, unused. No speaker on icon-only controls (back arrow, − / +, mic, photo button).
 * No speakers in Settings and Backup, except the product screens (list, edit, calculation methods).
 * Speech rate: 3 presets (slow / normal / fast). Spoken language: Darija by default, standard Arabic in
   Settings > الصوت > "لغة الكلام". Numbers are spoken as words generated offline. Screens and printed

@@ -55,9 +55,9 @@ data class AppSettings(
     val exportFormat: ExportFormat = ExportFormat.PNG,
     /** Master switch for any speech. Everything must work with this off. */
     val audioEnabled: Boolean = true,
-    /** Speak an item's total on the confirmation screen. */
+    /** Unused since 2026-11-01, kept for schema and backup compatibility. */
     val speakItemTotals: Boolean = true,
-    /** Speak the invoice total, deposit and remaining balance on the review screen. */
+    /** Unused since 2026-11-01, kept for schema and backup compatibility. */
     val speakInvoiceTotals: Boolean = true,
     val thankYouMessage: String = DEFAULT_THANK_YOU,
     /** Next invoice number to hand out. Never decreases, so numbers are not reused after deletions. */

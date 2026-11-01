@@ -146,7 +146,7 @@ class LayoutAndBackUiTest {
     }
 
     @Test
-    fun itemScreensShowTheirPictureInTheCentreOfTheTopBarAndTheMuteChipBelowIt() {
+    fun itemScreensShowTheirPictureInTheCentreOfTheTopBar() {
         goToCatalog()
         rule.onNodeWithText("باب حديد").performClick()
         waitForText(Strings.WIDTH)
@@ -163,7 +163,6 @@ class LayoutAndBackUiTest {
         rule.enterNumber("field-rate", "500")
         rule.showEntryControl("field-width")
 
-        rule.onNodeWithTag("audio-toggle").assertDoesNotExist()
         rule.onNodeWithTag("top-bar-icon").assertExists()
     }
 

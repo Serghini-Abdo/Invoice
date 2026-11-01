@@ -302,18 +302,6 @@ fun AppTopBar(
     }
 }
 
-/** A slim line under the top bar for screen-wide controls (the mute chip), on the right like the back arrow. */
-@Composable
-fun AppSubBar(content: @Composable () -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 12.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) { content() }
-}
-
 /**
  * The speaker tile of a labelled button: it copies the button's colour, border, radius and height, sits on
  * the button's left, and is its own target (at least 48 × 48 dp). A tap only speaks.

@@ -42,6 +42,9 @@ class SpeechController(private val context: Context) {
     private var engine: TextToSpeech? = null
     private var utterance = 0
 
+    /** How many utterances have been handed to the engine. Tests use it to prove nothing speaks by itself. */
+    val utteranceCount: Int get() = utterance
+
     val isReady: Boolean get() = _status.value is SpeechStatus.Ready
 
     val voiceState: VoiceState

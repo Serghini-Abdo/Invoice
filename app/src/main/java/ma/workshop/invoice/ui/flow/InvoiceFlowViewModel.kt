@@ -152,13 +152,6 @@ class InvoiceFlowViewModel(
 
     fun confirmEntries() {
         onEvent(FlowEvent.EntrySubmitted)
-        val current = _state.value
-        if (current?.step == ma.workshop.invoice.domain.flow.FlowStep.ItemConfirm && settings.value.speakItemTotals) {
-            current.pending?.let { pending ->
-                val total = pending.forms.fold(Money.ZERO) { sum, form -> sum + form.evaluate().pricing!!.total }
-                container.speaker.sayIfReady(speechText().itemTotal(pending.product.name, total), settings.value)
-            }
-        }
         onEvent(FlowEvent.ItemConfirmed)
     }
 
@@ -257,10 +250,6 @@ class InvoiceFlowViewModel(
         return container.speaker.say(text, settings.value)
     }
 
-    fun autoSpeakInvoiceSummary() {
-        if (settings.value.speakInvoiceTotals) invoiceSummaryText()?.let { container.speaker.sayIfReady(it, settings.value) }
-    }
-
     private fun invoiceSummaryText(): String? {
         val state = _state.value ?: return null
         val deposit = state.deposit ?: Money.ZERO
@@ -276,12 +265,6 @@ class InvoiceFlowViewModel(
     }
 
     fun installVoiceIntent() = container.speech.installVoiceDataIntent()
-
-    /** The quick mute switch: also silences anything currently being spoken. */
-    fun toggleAudio() {
-        container.speaker.stop()
-        viewModelScope.launch { container.settings.update { it.copy(audioEnabled = !it.audioEnabled) } }
-    }
 
     override fun onCleared() {
         container.speaker.stop()

@@ -17,13 +17,13 @@ there are no real receipts on any phone yet.
 * `README.md` (the app as built), `docs/calculation-rules.md`, `docs/data-and-migrations.md`, `docs/testing.md`.
 * Mock-ups: `docs/day2/design-review.html` (Day 2).
 
-## Coming changes that affect most code (2026-11-01 review)
+## Decided in the 2026-11-01 review
 
-* The document becomes a **receipt (وصل)**, not an invoice: screen text, printed title and speech.
-  Internal code names (`Invoice*`) may stay.
-* The palette becomes **blue**; green means paid only.
-* Speakers move to one system (`SpeakableText` / `SpeakableButton` and a speaker column); do not add new
-  hand-placed speakers in the meantime.
+* The document is a **receipt (وصل)**, not an invoice, in screen text, printed title and speech. Internal code
+  names (`Invoice*`) stay. The palette is **blue**; green means paid only (and the printed receipt keeps its
+  own colours). Buttons and cards have no arrows. Nothing is spoken automatically.
+* Coming: speakers move to one system (`SpeakableText` / `SpeakableButton` and a speaker column); do not add
+  new hand-placed speakers in the meantime.
 
 ## Setup
 

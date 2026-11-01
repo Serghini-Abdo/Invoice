@@ -89,8 +89,6 @@ class SpeakerTapTest {
             InvoiceTheme {
                 ItemEntryScreen(
                     pending = pending,
-                    audioEnabled = true,
-                    onToggleAudio = {},
                     onFormChange = { _, _ -> },
                     onAddVariation = {},
                     onRemoveVariation = {},

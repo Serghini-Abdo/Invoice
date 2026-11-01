@@ -133,18 +133,18 @@ class SettingsCategoriesUiTest {
         openSettings()
         click(Strings.AUDIO)
         rule.waitForTextOrExplain(Strings.SHOW_SPEAKERS)
-        assertEquals(1, count(Strings.AUDIO_ITEM_TOTALS))
+        assertEquals(1, count(Strings.SPEECH_LANGUAGE))
 
         click(Strings.AUDIO_ENABLED) // off
         rule.waitForTextOrExplain(Strings.AUDIO_OFF)
-        for (child in listOf(Strings.SHOW_SPEAKERS, Strings.SPEECH_LANGUAGE, Strings.SPEECH_RATE, Strings.AUDIO_ITEM_TOTALS, Strings.AUDIO_INVOICE_TOTALS, Strings.DICTATE)) {
+        for (child in listOf(Strings.SHOW_SPEAKERS, Strings.SPEECH_LANGUAGE, Strings.SPEECH_RATE, Strings.DICTATE)) {
             assertEquals("\"$child\" is hidden, not greyed out", 0, count(child))
         }
 
         click(Strings.AUDIO_ENABLED) // on again
         rule.waitForTextOrExplain(Strings.SHOW_SPEAKERS)
         assertEquals(0, count(Strings.AUDIO_OFF))
-        rule.waitForTextOrExplain(Strings.AUDIO_ITEM_TOTALS)
+        rule.waitForTextOrExplain(Strings.SPEECH_LANGUAGE)
 
         // hiding never reset a saved value
         val saved = runBlocking { container.settings.get() }

@@ -6,14 +6,15 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
 
 ## Current state (2026-11-01)
 
-* Branch `day3/sprint-0` (from `main` at `4a7dd70`). **Not pushed.** Chapter 0 of the Day 3 plan is in place
-  except the owner tasks below.
-* Room schema **version 6**. Every version has a migration, a `MigrationTest` case and its committed JSON.
-* Tests at the last run (2026-11-01): **211 domain tests pass**; `:app:assembleDebug`,
-  `:app:assembleDebugAndroidTest` and `:app:lintDebug` pass, so the multi-size entry patch compiles.
-  The instrumented suite last ran before the 2026-10-27 entry update: **OK (73 tests)** on the owner's
-  Samsung SM-S931B, Android 16 (test data only). **Device suite not run** for the entry update or for the
-  Google consent change below.
+* Branch `day3/sprint-1`. **Not pushed.** Chapter 1 of the Day 3 plan (steps 1.0 to 1.7) is built; the
+  chapter 0 owner tasks below are still open.
+* Room schema **version 6** (no change in chapter 1). Every version has a migration, a `MigrationTest` case
+  and its committed JSON.
+* Tests at the last run (2026-11-01): **214 domain tests pass**; `:app:assembleDebug`,
+  `:app:compileDebugAndroidTestKotlin` and `:app:lintDebug` pass after step 1.7. The instrumented suite last
+  ran after step 1.1 on the owner's Samsung SM-S931B (Android 16, test data only): 82 of 83 passed, 1 skipped,
+  1 failed (known failure below). **Device suite not run** after steps 1.2 to 1.7, including the new
+  `NoAutomaticSpeechTest`, which needs an offline Arabic voice on the device or it skips.
 
 ## What is built
 
@@ -25,22 +26,28 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
 * **Printed receipt:** PNG and PDF from one layout engine (table option A, pagination, footer, totals on the
   last page, PDF fallback for long receipts).
 * **Settings:** product catalogue (with photo import), workshop name / phone / thank-you line, output
-  format, units and unit labels, audio (on / off, rate, spoken language, speaker icons switch), backup.
+  format, units and unit labels, audio (on / off, rate, spoken language, speaker icons switch, voice test),
+  backup.
 * **Backup:** automatic (off / daily / weekly) to the phone and / or Google Drive (setup done; one backup and
   one restore verified by the owner on 2026-11-01), back up now, staged and
   validated restore. When Google's consent screen fails, the real reason is shown: a closed screen says so
   (no home banner); anything else shows Google's code, for example `api 10`.
 * **Speech:** offline TextToSpeech in Darija or standard Arabic, speakers behind a switch (off by default),
-  dictation on customer name and product name.
-* **Layout:** forced right-to-left on every phone (back arrow on the right, forward arrows point left, labels
-  on the right, amounts on the left); green palette (to be replaced, see the roadmap).
+  dictation on customer name and product name. **Nothing is spoken automatically**; speech happens only on a
+  speaker tap or "تجربة الصوت".
+* **Layout:** forced right-to-left on every phone (back arrow on the right, labels on the right, amounts on
+  the left). Buttons and cards have no arrows; the only arrow is the back arrow in the top bar.
+* **Palette and name:** blue for actions and the launcher icon; green only for paid (badge, paid balance,
+  "خالص" banner) and on the printed receipt, which keeps its colours. The document is called وصل everywhere
+  the owner sees or hears it; shared files are named `wasl-0007-...`.
 * **Settings:** six category cards with their own screens (see above).
 
 ## Still to check by hand on the phone
 
-* **Sprint 1, steps 1.0 and 1.1 (phone set to French):** Settings list and its five child screens, then every
-  screen of the receipt flow, history, catalogue and backup read from the right (list in the hand-off report).
-  Nothing from these two steps has been compiled or run yet.
+* **Sprint 1, steps 1.0 to 1.7 (phone set to French):** Settings list and its child screens, every screen of
+  the receipt flow, history, catalogue and backup read from the right, buttons and cards without arrows, the
+  blue palette (green only on paid states), the blue launcher icon, the new wording (وصل جديد, الوصولات
+  السابقة, "الوصل خالص" spoken in Darija), and silence until a speaker is tapped (list in the hand-off report).
 
 * Voice quality in Darija and standard Arabic, speech rates, the voice download flow, a speaker stopping the
   previous one.
@@ -87,11 +94,14 @@ Still open (owner tasks):
 1. ~~Settings as categories with parent / child options~~ (plan step 1.0): built; compiles, lint clean, domain tests (211) pass; device suite run on a Samsung SM-S931B (Android 16): 82 of 83 pass, 1 skipped (old-Android test), 1 fails (see below). Hand check still to do.
 2. ~~Right-to-left app layout~~ (plan step 1.1): built; same device run as above, the layout tests pass. Hand check still to do.
    * Known failure, **not caused by Sprint 1** (fails the same way on a5bffd2): `LayoutAndBackUiTest.leavingWithUnsavedWorkAsksFirst`. After typing a width on the item entry screen, a system Back leaves the screen on item entry instead of returning to the catalogue. Cause not yet found (a Back-handler on the entry screen, or the soft keyboard on a real phone, are the first suspects).
-3. Blue palette tokens and a blue launcher icon; green only for paid.
-4. Rename invoice to receipt (وصل) in screens, printed output and speech (no migration).
-5. Fix the known issues: the product "not found" message, the unused string.
-6. No arrows on buttons and cards (plan step 1.6).
-7. No automatic speech; remove the two automatic-totals switches (plan step 1.7).
+3. ~~Blue palette tokens and a blue launcher icon; green only for paid~~ (steps 1.2, 1.3): built; compiles and
+   lint passes; the receipt colours are pinned by a domain test; not run on a device. Hand check still to do.
+4. ~~Rename invoice to receipt (وصل)~~ (step 1.4): built; domain tests pass; the Arabic wording needs the
+   owner's review.
+5. ~~Fix the known issues: the product "not found" message, the unused string~~ (step 1.5): built.
+6. ~~No arrows on buttons and cards~~ (step 1.6): built; not run on a device.
+7. ~~No automatic speech; remove the two automatic-totals switches~~ (step 1.7): built; the new
+   `NoAutomaticSpeechTest` has not run on a device.
 
 ### Sprint 2: fewer taps
 
