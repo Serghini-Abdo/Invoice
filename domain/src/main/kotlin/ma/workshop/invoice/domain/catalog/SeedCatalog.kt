@@ -30,8 +30,8 @@ object SeedCatalog {
         Seed("فوكادر", "sk_fauxcadre", PricingFormula.PERIMETER, LengthUnit.METER),
         Seed("شباك بالكو", "sk_balcony", PricingFormula.PER_ITEM, LengthUnit.METER, Measurements.BOTH),
         Seed("ضواية السطح", "sk_skylight", PricingFormula.PER_ITEM, LengthUnit.METER),
-        Seed("تشارات", "sk_tchara", PricingFormula.PER_ITEM, LengthUnit.METER),
-        Seed("روكار", "sk_regard", PricingFormula.PER_ITEM, LengthUnit.METER),
+        Seed("نشارات", "sk_clothesrack", PricingFormula.PER_ITEM, LengthUnit.METER),
+        Seed("روكار", "sk_regard", // regard d'eau PricingFormula.PER_ITEM, LengthUnit.METER),
         Seed("كاش ريدو", "sk_cacherideau", PricingFormula.PER_ITEM, LengthUnit.METER),
         Seed("باب الكراج", "sk_garage", PricingFormula.AREA, LengthUnit.METER),
     )

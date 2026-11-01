@@ -247,7 +247,7 @@ object Illustrations {
             stroke("M60 53L69 73", INK, 5f)
             stroke("M74 53L83 73", INK, 5f)
         },
-        illustration("sk_tchara", "تشارات") {
+        illustration("sk_clothesrack", "نشارات") {
             stroke("M20 30H80", INK, 5f)
             stroke("M23 30V74", INK, 5f)
             stroke("M77 30V74", INK, 5f)
