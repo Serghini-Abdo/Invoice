@@ -18,3 +18,7 @@ google-services.json
 
 # IDE build output
 domain/bin/
+
+# JVM crash logs
+hs_err_pid*.log
+replay_pid*.log

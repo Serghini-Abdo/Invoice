@@ -26,7 +26,8 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
   last page, PDF fallback for long receipts).
 * **Settings:** product catalogue (with photo import), workshop name / phone / thank-you line, output
   format, units and unit labels, audio (on / off, rate, spoken language, speaker icons switch), backup.
-* **Backup:** automatic (off / daily / weekly) to the phone and / or Google Drive, back up now, staged and
+* **Backup:** automatic (off / daily / weekly) to the phone and / or Google Drive (setup done; one backup and
+  one restore verified by the owner on 2026-11-01), back up now, staged and
   validated restore. When Google's consent screen fails, the real reason is shown: a closed screen says so
   (no home banner); anything else shows Google's code, for example `api 10`.
 * **Speech:** offline TextToSpeech in Darija or standard Arabic, speakers behind a switch (off by default),
@@ -50,8 +51,6 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
 
 ## Not proven at all
 
-* Google Drive backup and restore against a real Google account (needs the OAuth setup in
-  [google-drive-setup.md](../google-drive-setup.md)).
 * Automatic backups firing on schedule on a real phone (Doze, reboot).
 * A physical Android 7 to 9 phone, device restart, airplane mode, a failing share target.
 
@@ -76,16 +75,16 @@ Done: compile, domain tests and lint for the entry update; the real reason for a
 Still open (owner tasks):
 
 1. The instrumented suite on one targeted device (entry update and consent change).
-2. One real backup and one restore on the owner's phone (phone folder, and Google Drive after its setup),
-   before the owner keeps any real receipts.
+2. One real backup and one restore to the **phone folder** (Google Drive: done 2026-11-01).
 3. Push `main`.
 
 ### Sprint 1: layout, palette, name
 
-1. Right-to-left app layout (replace forced LTR); update the layout tests.
-2. Blue palette tokens and a blue launcher icon; green only for paid.
-3. Rename invoice to receipt (وصل) in screens, printed output and speech (no migration).
-4. Fix the known issues: the product "not found" message, the unused string.
+1. Settings as categories with parent / child options (plan step 1.0, done first).
+2. Right-to-left app layout (replace forced LTR); update the layout tests.
+3. Blue palette tokens and a blue launcher icon; green only for paid.
+4. Rename invoice to receipt (وصل) in screens, printed output and speech (no migration).
+5. Fix the known issues: the product "not found" message, the unused string.
 
 ### Sprint 2: fewer taps
 

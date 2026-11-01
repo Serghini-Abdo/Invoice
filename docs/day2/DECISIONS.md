@@ -134,6 +134,18 @@ The final state of every product decision. Later decisions replace earlier ones;
 * **[to build]** An **option** to send straight to the customer's WhatsApp using the saved phone number,
   next to the share sheet, not instead of it.
 
+## Settings
+
+* **[to build]** Settings is a short list of **categories**, each opening its own screen: المنتوجات,
+  معلومات الورشة, شكل الوصل, الوحدات, الصوت, النسخ الاحتياطي. Each card shows its current value in one line
+  (for example "متوقف" or "مفعل · الدارجة · عادي"), so the owner can see the state without opening it.
+* **Parent and child options:** an option that only matters when another is on is its child. When the parent
+  is off, its children are **hidden** (not greyed out) and one line says why ("الصوت متوقف"). Their saved
+  values are kept. Under الصوت, everything else (speaker icons, automatic totals, language, rate, voice test,
+  dictation status) is a child of "تشغيل الصوت".
+* Changes still save immediately; there is no save button. No speakers on any Settings screen except the
+  product screens (unchanged).
+
 ## Accessibility
 
 * Large type, pictures, one decision per screen. Touch targets at least 48 dp.

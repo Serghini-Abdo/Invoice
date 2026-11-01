@@ -17,7 +17,7 @@ who reads little: large buttons, large numbers, one decision per screen, optiona
 > **Status.** The app is built and tested by the GitHub Actions workflow in this repository
 > (`.github/workflows/ci.yml`): domain unit tests, Android build, lint and an emulator run of the
 > instrumented tests. See [Verification](#verification-what-has-and-has-not-been-proven) for exactly what is
-> proven and what is not (for example, Google Drive has not been exercised against a real Google account).
+> proven and what is not (for example, automatic backups firing on schedule have not been observed on a phone).
 
 ## Using the app
 
@@ -164,8 +164,8 @@ Proven by the CI workflow (`.github/workflows/ci.yml`), on every push:
 
 Not proven, stated plainly:
 
-* Google Drive backup against a real Google account (needs your OAuth client). The Drive error mapping,
-  retention and the worker's behaviour with a scripted fake Drive are tested; the live Google calls are not.
+* Google Drive is verified by hand only: the owner ran one backup and one restore against his Google account
+  (2026-11-01). Automated tests use a scripted fake Drive.
 * A background backup actually firing on schedule on a real phone (the worker is tested by running it
   directly; WorkManager's own timing, Doze and reboot behaviour were not observed).
 * Saving to `Documents/Fawatir Warsha` is verified on the Android 14 (API 34) emulator and on the Android 7.0
@@ -190,12 +190,10 @@ the exported invoice are published to the `ci-screenshots` branch by every run.
 
 These are real, current limits, not future plans:
 
-* **Google Drive backup/restore has not been run against a real Google account.** It needs an OAuth
-  client (see [docs/google-drive-setup.md](docs/google-drive-setup.md)), Google Play Services and internet,
-  none of which exist in automated tests. Until the owner completes the setup and presses "Back up now" once,
-  treat Drive as unverified. The parts that make a restore *safe* (strict validation,
-  staged confirmation, safety copy, atomic transaction) are tested without Drive, and the identical
-  restore path is exercised through the file backup.
+* **Google Drive needs the one-time OAuth setup** ([docs/google-drive-setup.md](docs/google-drive-setup.md)),
+  Google Play Services and internet. With that done, one backup and one restore worked on the owner's phone
+  (2026-11-01). The parts that make a restore *safe* (strict validation, staged confirmation, safety copy,
+  atomic transaction) are tested automatically through the file backup, which uses the same restore path.
 * **Arabic speech depends on the phone.** The app uses whatever Arabic text-to-speech voice is installed
   (Moroccan Arabic if present). Darija pronunciation is *not* promised or verified; spoken amounts use
   standard Arabic number words. CI emulators have no Arabic voice, so speech output itself is only verified

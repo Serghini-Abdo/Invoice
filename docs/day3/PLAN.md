@@ -117,6 +117,49 @@ Written 2026-11-01 from the owner's product review. The decisions behind every s
 
 ## Part C. Chapter 1: layout, palette, name (branch `day3/sprint-1`)
 
+### Step 1.0 Settings in categories (do this first, then build 1.1 on the new screens)
+
+* **Goal:** replace the one long Settings page with a list of category cards, each opening its own screen,
+  and hide child options when their parent switch is off. See DECISIONS.md "Settings".
+* **Today:** `ui/settings/SettingsScreen.kt` is one scrolling page: a nav card to the catalogue, then sections
+  (`SectionCard`) for workshop info, receipt format, units and audio (switches, language, rate, auto totals,
+  voice status and test, dictation status line `MicStatusLine`), then a nav card to backup. Routes are in
+  `ui/AppNav.kt` (`Routes.SETTINGS`, `CATALOG`, `BACKUP`; composable at ~229).
+* **Files:** `ui/settings/SettingsScreen.kt` (split it), new files `ui/settings/WorkshopSettingsScreen.kt`,
+  `FormatSettingsScreen.kt`, `UnitsSettingsScreen.kt`, `AudioSettingsScreen.kt`, `ui/AppNav.kt`, `Strings.kt`,
+  tests `ScreenshotTourTest`, `SpeakerLayoutSweepTest`, `SpeakerToggleUiTest` and any test that opens Settings.
+* **Do:**
+  1. **Parent screen** (`Routes.SETTINGS`): `AppTopBar(SETTINGS_TITLE)` and six cards in this order, using the
+     existing `NavCard` (icon, title, one-line value instead of today's hint):
+     | Card | Opens | Value line |
+     |---|---|---|
+     | المنتوجات | `CATALOG` (exists) | "N منتوج" (active products) |
+     | معلومات الورشة | `settings/workshop` | the workshop name, or "غير مكتوب" |
+     | شكل الوصل | `settings/format` | "صورة (PNG)" / "ملف PDF" / "الاثنان" |
+     | الوحدات | `settings/units` | for example "م · سم / م" |
+     | الصوت | `settings/audio` | "متوقف", or "مفعل · <language> · <rate>" |
+     | النسخ الاحتياطي | `BACKUP` (exists) | the existing `backupHint` |
+  2. **Child screens:** move each section's existing composables unchanged into its screen, under an
+     `AppTopBar` with the card's title and a back arrow to the parent. Keep the local text-field state
+     (`rememberSaveable`) on the workshop screen. Every change still calls `onUpdate` immediately.
+  3. **Audio screen, parent / child:** "تشغيل الصوت" first. When it is **off**, show only it and the line
+     `AUDIO_OFF`; hide the rest. When on, show in groups: speaker icons switch; spoken language; speech rate;
+     automatic totals (`AUDIO_ITEM_TOTALS`, `AUDIO_INVOICE_TOTALS`); voice status, test and install; dictation
+     status. Hidden values are kept, never reset.
+  4. Make a small reusable `ChildOptions(visible: Boolean, content)` so any future parent / child pair uses
+     the same rule (hidden, not greyed out). Use it for the audio children.
+  5. `AppNav.kt` line ~112 hides speakers on `SETTINGS` and `BACKUP`: add the four new routes to that rule.
+  6. Remove `PRODUCT_CATALOG_HINT` and `BACKUP_HINT` if nothing uses them any more; add the new strings
+     (category titles already exist as `WORKSHOP_INFO`, `EXPORT_FORMAT`, `UNITS`, `AUDIO`; add the value
+     texts and "غير مكتوب", "منتوج").
+* **Do not:** change any setting's meaning, default or storage (no Room change); add speakers to Settings;
+  add a save button.
+* **Tests:** a UI test: the parent shows six cards with their value lines; turning audio off on the audio
+  screen hides its children and turning it on shows them again with their previous values; Back from a child
+  returns to the parent. Update the other tests to open the right child screen first.
+* **Done when:** Settings fits on one phone screen without scrolling, each category opens and returns, and
+  all tests pass.
+
 ### Step 1.1 Right-to-left app layout
 
 * **Goal:** the app uses Arabic right-to-left layout on every phone, **even when the phone's language is
