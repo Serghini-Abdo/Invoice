@@ -13,7 +13,7 @@ The final state of every product decision. Later decisions replace earlier ones;
 * For one small workshop (doors, windows, garage gates, frames, accessories). Offline, no account.
   No taxes, no inventory, no accounting.
 * **[to build]** The document is a **receipt (وصل)**, not a legal invoice. Rename it everywhere: app name
-  (proposed "وصولات الورشة"), Home buttons, screen titles, Saved screen, printed title and spoken text.
+  "وصولات الورشة", Home buttons, screen titles, Saved screen, printed title and spoken text.
   No data migration: the app is still in development and holds no real receipts.
 * Prices are typed on every line **by design**: each job has its own size and material, so the price
   differs most of the time. No default price per product and no suggested-price chips.
@@ -36,6 +36,7 @@ The final state of every product decision. Later decisions replace earlier ones;
   get a `#A67C00` edge. On paper the balance amount is dark yellow `#A67C00` (bright yellow is unreadable).
 * Error `#D32F2F`, gray `#6B7280`, surface `#F3F4F6`.
 * Colour is never the only signal: every state also has an icon and a word.
+* The printed receipt keeps its existing palette; the blue is for the app only.
 
 ## Speakers (TextToSpeech, offline, no recordings)
 
@@ -157,7 +158,5 @@ The final state of every product decision. Later decisions replace earlier ones;
 
 ## Open questions
 
-* The word: **وصل** is proposed; confirm, or choose "bon" or another word.
-* Printed receipt colours with the blue palette: proposed mostly black and white, blue only in the header.
 * The speaker column's side once the layout is right-to-left: left edge proposed; confirm in a prototype.
 * The entry-flow prototype of 2026-10-29 (one expanded size at a time, grouped products): awaiting feedback.
