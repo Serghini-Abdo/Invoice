@@ -40,6 +40,8 @@ object Illustrations {
     private const val ORANGE_DARK = 0xFFBF360CL
     private const val SHADOW = 0x22000000L
     private const val SHINE = 0x66FFFFFFL
+    private const val INK = 0xFF263238L
+    private const val PAPER = 0xFFFFFFFFL
 
     val all: List<Illustration> = listOf(
         illustration("door", "باب") {
@@ -198,6 +200,80 @@ object Illustrations {
             stroke(rect(24.0, 44.0, 52.0, 46.0), 0xFFFF8F00L, 2f)
             fill(circle(50.0, 62.0, 5.5), DARK)
             fill("M47 64H53L55 78H45Z", DARK)
+        },
+        // ---- Drawn after the owner's own sketches (2026-11-01): black ink lines, so he recognises them. ----
+        illustration("sk_door", "باب") {
+            fill("M26 5h48v90h-48Z", PAPER)
+            stroke("M26 5h48v90h-48Z", INK, 5f)
+            fill("M60.8 46a3.2 3.2 0 1 0 6.4 0a3.2 3.2 0 1 0 -6.4 0Z", INK)
+            stroke("M38 60h14v16h-14Z", INK, 5f)
+            stroke("M43 64v9", INK, 5f)
+        },
+        illustration("sk_window", "شباك") {
+            fill("M14 14h72v72h-72Z", PAPER)
+            stroke("M14 14h72v72h-72Z", INK, 5f)
+            stroke("M28 18q4 8 0 16q-4 8 0 16q4 8 0 16q-4 8 0 16", INK, 5f)
+            stroke("M42 18q4 8 0 16q-4 8 0 16q4 8 0 16q-4 8 0 16", INK, 5f)
+            stroke("M56 18q4 8 0 16q-4 8 0 16q4 8 0 16q-4 8 0 16", INK, 5f)
+            stroke("M70 18q4 8 0 16q-4 8 0 16q4 8 0 16q-4 8 0 16", INK, 5f)
+        },
+        illustration("sk_fauxcadre", "فوكادر") {
+            fill("M10 20h80v60h-80Z", PAPER)
+            stroke("M10 20h80v60h-80Z", INK, 5f)
+            stroke("M21 30h58v40h-58Z", INK, 5f)
+        },
+        illustration("sk_balcony", "شباك بالكو") {
+            stroke("M6 26H88q6 0 6 6V80", INK, 5f)
+            stroke("M6 33H86V80", INK, 5f)
+            stroke("M18 33q3 8.75 0 17.5q-3 8.75 0 17.5", INK, 5f)
+            stroke("M30 33q3 8.75 0 17.5q-3 8.75 0 17.5", INK, 5f)
+            stroke("M42 33q3 8.75 0 17.5q-3 8.75 0 17.5", INK, 5f)
+            stroke("M54 33q3 8.75 0 17.5q-3 8.75 0 17.5", INK, 5f)
+            stroke("M66 33q3 8.75 0 17.5q-3 8.75 0 17.5", INK, 5f)
+            stroke("M78 33q3 8.75 0 17.5q-3 8.75 0 17.5", INK, 5f)
+        },
+        illustration("sk_skylight", "ضواية السطح") {
+            fill("M8 24h84v52h-84Z", PAPER)
+            stroke("M8 24h84v52h-84Z", INK, 5f)
+            stroke("M8 50H92", INK, 5f)
+            stroke("M18 47L27 27", INK, 5f)
+            stroke("M32 47L41 27", INK, 5f)
+            stroke("M46 47L55 27", INK, 5f)
+            stroke("M60 47L69 27", INK, 5f)
+            stroke("M74 47L83 27", INK, 5f)
+            stroke("M18 53L27 73", INK, 5f)
+            stroke("M32 53L41 73", INK, 5f)
+            stroke("M46 53L55 73", INK, 5f)
+            stroke("M60 53L69 73", INK, 5f)
+            stroke("M74 53L83 73", INK, 5f)
+        },
+        illustration("sk_tchara", "تشارات") {
+            stroke("M20 30H80", INK, 5f)
+            stroke("M23 30V74", INK, 5f)
+            stroke("M77 30V74", INK, 5f)
+            fill("M18.5 79a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0 -9 0Z", INK)
+            fill("M72.5 79a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0 -9 0Z", INK)
+            fill("M20 30a3 3 0 1 0 6 0a3 3 0 1 0 -6 0Z", INK)
+        },
+        illustration("sk_regard", "روكار") {
+            fill("M14 26h72v48h-72Z", PAPER)
+            stroke("M14 26h72v48h-72Z", INK, 5f)
+        },
+        illustration("sk_cacherideau", "كاش ريدو") {
+            fill("M14 18h72v64h-72Z", PAPER)
+            stroke("M14 18h72v64h-72Z", INK, 5f)
+            stroke("M8 30H92", INK, 5f)
+            stroke("M14 46H86", INK, 5f)
+            stroke("M30 38h8M50 37h12M70 39h6", INK, 5f)
+        },
+        illustration("sk_garage", "باب الكراج") {
+            fill("M10 6h80v88h-80Z", PAPER)
+            stroke("M10 6h80v88h-80Z", INK, 5f)
+            stroke("M36 6V94", INK, 5f)
+            stroke("M64 6V94", INK, 5f)
+            stroke("M8 90H92", INK, 5f)
+            stroke("M43 54h13v32h-13Z", INK, 5f)
+            fill("M49.8 72a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0 -4.4 0Z", INK)
         },
         illustration(FALLBACK_KEY, "أخرى") {
             fill(

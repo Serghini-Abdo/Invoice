@@ -82,6 +82,27 @@ class IllustrationsTest {
         assertTrue(seeds.all { it.isActive })
     }
 
+    @Test
+    fun `the owner's sketch products exist once each, with their pictures and methods`() {
+        val all = SeedCatalog.products(now = 1)
+        assertEquals(all.size, all.map { it.name }.toSet().size, "no two products share a name")
+        val workshop = SeedCatalog.workshopProducts(now = 1, firstOrder = 20)
+        assertEquals(9, workshop.size)
+        assertEquals((20 until 29).toList(), workshop.map { it.sortOrder })
+        for (product in workshop) {
+            assertTrue(product.illustration.startsWith("sk_"), product.name)
+            assertNotNull(Illustrations.find(product.illustration), product.name)
+            assertTrue(all.any { it.illustration == product.illustration }, "fresh installs get ${product.name} too")
+        }
+        val byName = workshop.associateBy { it.name }
+        assertEquals(PricingFormula.AREA, byName.getValue("شباك").formula)
+        assertEquals(PricingFormula.PERIMETER, byName.getValue("فوكادر").formula)
+        assertEquals(PricingFormula.PER_ITEM, byName.getValue("باب").formula)
+        val balcony = byName.getValue("شباك بالكو")
+        assertEquals(PricingFormula.PER_ITEM, balcony.formula)
+        assertEquals(ma.workshop.invoice.domain.pricing.Measurements.BOTH, balcony.measurements)
+    }
+
     /** Writes a contact sheet so the artwork can be looked at (build/illustrations.html). */
     @Test
     fun `render contact sheet`() {

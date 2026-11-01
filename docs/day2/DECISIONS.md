@@ -100,6 +100,15 @@ The final state of every product decision. Later decisions replace earlier ones;
 * A invoice uses the unit of its first measured item (else the Settings unit); old mixed items stay as typed.
 * Latin unit labels inside right-to-left text are wrapped as LTR isolates.
 
+## Catalogue
+
+* The owner's own products, **named as he says them** (Darija, or French written in Arabic) and **drawn after
+  his own sketches** in black ink lines, because he recognises his drawings, not the words (2026-11-01):
+  باب (per piece), شباك (area), فوكادر (perimeter), شباك بالكو (per piece, shows width and height),
+  ضواية السطح, تشارات, روكار, كاش ريدو (per piece), باب الكراج (area). Fresh installations get them after the
+  original examples; existing ones get them once at start-up, skipping any name or picture already there.
+* New product pictures follow the same style: simple black line drawings like his sketches, not coloured art.
+
 ## Fields and pictures
 
 * Small illustration beside each field: ↔ width, ↕ height, DH coin for prices (never "$"), stacked boxes
@@ -194,4 +203,10 @@ The final state of every product decision. Later decisions replace earlier ones;
 
 ## Open questions
 
-None at the moment.
+* **تشارات**: what is it (his sketch: a bar on two legs with wheels)? If it means hinges (charnières), the
+  older "مفصلات" example is the same product.
+* **روكار** (written روشار on one page): is it a "regard" (inspection cover)? Its pricing (per piece) is a guess.
+* **شباك بالكو** and **كاش ريدو**: per piece is a guess from his paper invoices; confirm or switch to per metre.
+* **Window + faux-cadre pairs:** on his paper invoices every شباك is followed by a فوكادر with the same sizes
+  and quantity. Offer "add the faux-cadre with the same sizes" after a window? (not decided)
+* His paper says **دفع** for the deposit and **الباقي** for the balance; the app says التسبيق. Switch to دفع?

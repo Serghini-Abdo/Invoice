@@ -13,6 +13,7 @@ import ma.workshop.invoice.data.InvoiceRepository
 import ma.workshop.invoice.data.ProductRepository
 import ma.workshop.invoice.data.SettingsRepository
 import ma.workshop.invoice.data.db.AppDatabase
+import ma.workshop.invoice.data.db.toEntity
 import ma.workshop.invoice.domain.backup.BackupData
 import ma.workshop.invoice.domain.backup.InvoiceRecord
 import ma.workshop.invoice.domain.flow.FlowEvent
@@ -206,6 +207,22 @@ class DatabaseTest {
         }
         assertTrue(db.invoices().getAll().isEmpty())
         assertEquals(1L, settings.get().nextInvoiceNumber) // no number was consumed
+    }
+
+    @Test
+    fun theOwnersProductsAreAddedToAnOlderCatalogWithoutDuplicates() = runBlocking {
+        // An installation seeded before 2026-11-01: it has an old "باب الكراج" with the old picture.
+        db.products().insertAll(
+            listOf(ProductDefinition(0, "باب الكراج", "garage", PricingFormula.AREA, LengthUnit.METER).toEntity()),
+        )
+        products.addWorkshopProducts()
+        val after = db.products().getAll()
+        assertEquals(9, after.size) // 8 added; his garage door is skipped because the name is taken
+        assertEquals(1, after.count { it.name == "باب الكراج" })
+        assertTrue(after.any { it.name == "شباك" && it.illustration == "sk_window" && it.formula == "area" })
+
+        products.addWorkshopProducts()
+        assertEquals(after.size, db.products().getAll().size)
     }
 
     @Test

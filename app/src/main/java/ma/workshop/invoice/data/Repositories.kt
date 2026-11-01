@@ -78,6 +78,24 @@ class ProductRepository(private val db: AppDatabase, private val env: Environmen
         }
     }
 
+    /**
+     * Adds the owner's sketch-drawn products to a catalogue that was seeded before they existed. Run once per
+     * installation (the caller keeps the flag). A product whose picture or name is already used is skipped, so a fresh
+     * installation, which got them from [ensureSeeded], gets no duplicates.
+     */
+    suspend fun addWorkshopProducts() {
+        db.withTransaction {
+            val existing = db.products().getAll()
+            val usedPictures = existing.map { it.illustration }.toSet()
+            val usedNames = existing.map { it.name.trim() }.toSet()
+            val first = db.products().maxSortOrder() + 1
+            // Skip a product whose picture or name is already there (e.g. an older "باب الكراج"): no duplicates.
+            val missing = SeedCatalog.workshopProducts(env.now(), first)
+                .filter { it.illustration !in usedPictures && it.name !in usedNames }
+            if (missing.isNotEmpty()) db.products().insertAll(missing.map { it.toEntity() })
+        }
+    }
+
     /** Creates a product and returns its id. Edits never touch invoice items, which hold snapshots. */
     suspend fun save(product: ProductDefinition): Long = db.withTransaction {
         val now = env.now()
