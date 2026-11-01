@@ -82,8 +82,8 @@ fun ProductCard(
                         .padding(top = 6.dp),
                 )
             }
-            // Bottom-left, inside the card, its own target.
-            Row(Modifier.fillMaxWidth().padding(horizontal = 6.dp), horizontalArrangement = Arrangement.Start) {
+            // Bottom-left, inside the card, its own target (End is the left edge in the right-to-left layout).
+            Row(Modifier.fillMaxWidth().padding(horizontal = 6.dp), horizontalArrangement = Arrangement.End) {
                 SpeakerButton(onClick = onSpeak, available = speechAvailable)
             }
         }

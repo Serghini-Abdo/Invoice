@@ -34,7 +34,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Checks the forced left-to-right layout, touch-target sizes and the system Back button on the real UI. */
+/** Checks the forced right-to-left layout, touch-target sizes and the system Back button on the real UI. */
 @RunWith(AndroidJUnit4::class)
 class LayoutAndBackUiTest {
 
@@ -84,7 +84,7 @@ class LayoutAndBackUiTest {
     private fun rootWidth() = rule.onRoot().getBoundsInRoot().width
 
     @Test
-    fun theLayoutIsLeftToRightWithTheBackArrowLeftAndTheTitleRight() {
+    fun theLayoutIsRightToLeftWithTheBackArrowAtTheRightEdgeAndTheTitleNextToIt() {
         waitForText(Strings.NEW_INVOICE)
         for (label in listOf(Strings.NEW_INVOICE, Strings.PREVIOUS_INVOICES, Strings.SETTINGS)) {
             rule.onNodeWithText(label).assertHeightIsAtLeast(100.dp)
@@ -94,10 +94,11 @@ class LayoutAndBackUiTest {
 
         val width = rootWidth()
         val back = rule.onNodeWithContentDescription(Strings.BACK).getBoundsInRoot()
-        assertTrue("the back arrow is at the left edge, was $back", back.right < width / 2)
+        assertTrue("the back arrow is on the right half, was $back", back.left > width / 2)
+        assertTrue("the back arrow's right edge is near the screen's right edge, was $back of $width", back.right > width - 16.dp)
         val title = rule.onNodeWithText(Strings.CUSTOMER_TITLE).getBoundsInRoot()
-        assertTrue("the title sits right of the back arrow, was $title", title.left >= back.right)
-        assertTrue("the title ends at the right edge, was $title of $width", title.right > width - 32.dp)
+        assertTrue("the title sits left of the back arrow, was $title", title.right <= back.left + 1.dp)
+        assertTrue("the title is not pushed far from the arrow, was $title of $back", back.left - title.right < 24.dp)
         rule.onNodeWithContentDescription(Strings.BACK).assertWidthIsAtLeast(48.dp).assertHeightIsAtLeast(48.dp)
         rule.onNodeWithText(Strings.CONTINUE).assertHeightIsAtLeast(64.dp)
     }
@@ -155,7 +156,7 @@ class LayoutAndBackUiTest {
         assertTrue("the picture is centred, was $icon of $width", kotlin.math.abs(centre.value - width.value / 2) < 2f)
         val title = rule.onAllNodesWithText("باب حديد").onFirst().getBoundsInRoot()
         assertTrue("the title stays in the right half, was $title, icon $icon", title.left >= icon.right)
-        assertTrue("the back arrow is left of the picture", rule.onNodeWithContentDescription(Strings.BACK).getBoundsInRoot().right <= icon.left)
+        assertTrue("the back arrow is right of the picture", rule.onNodeWithContentDescription(Strings.BACK).getBoundsInRoot().left >= icon.right)
 
         rule.enterNumber("field-width", "1.2")
         rule.enterNumber("field-height", "2")

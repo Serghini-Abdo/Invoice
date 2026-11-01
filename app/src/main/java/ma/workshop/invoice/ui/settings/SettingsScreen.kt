@@ -55,15 +55,15 @@ internal fun NavCard(title: String, hint: String, icon: ImageVector, onClick: ()
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 2.dp,
     ) {
-        // Badge and words on the right; the forward arrow on the far left, pointing right.
+        // Badge and words on the right; the forward arrow on the far left, pointing left.
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(28.dp))
-            Column(Modifier.weight(1f).padding(start = 8.dp), horizontalAlignment = Alignment.End) {
+            IconBadge(icon, size = 56)
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f).padding(end = 8.dp), horizontalAlignment = Alignment.Start) {
                 ArabicText(title, style = MaterialTheme.typography.titleLarge)
                 ArabicText(hint, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            Spacer(Modifier.width(16.dp))
-            IconBadge(icon, size = 56)
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(28.dp))
         }
     }
 }
@@ -79,11 +79,11 @@ internal fun FormatOption(title: String, hint: String, selected: Boolean, onClic
         color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
     ) {
         Row(Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+            RadioButton(selected = selected, onClick = null, modifier = Modifier.padding(12.dp))
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
                 ArabicText(title, style = MaterialTheme.typography.titleMedium)
                 if (hint.isNotEmpty()) ArabicText(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            RadioButton(selected = selected, onClick = null, modifier = Modifier.padding(12.dp))
         }
     }
 }
@@ -123,14 +123,14 @@ internal fun SwitchRow(label: String, checked: Boolean, enabled: Boolean = true,
             .strictClickable(enabled = enabled, role = Role.Switch) { onChange(!checked) },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Switch(checked = checked, onCheckedChange = null, enabled = enabled)
-        Spacer(Modifier.width(12.dp))
         ArabicText(
             label,
             style = MaterialTheme.typography.titleSmall,
             modifier = Modifier.weight(1f),
             color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
         )
+        Spacer(Modifier.width(12.dp))
+        Switch(checked = checked, onCheckedChange = null, enabled = enabled)
     }
 }
 

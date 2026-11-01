@@ -28,7 +28,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -71,9 +71,10 @@ import ma.workshop.invoice.ui.theme.TouchTarget
 import ma.workshop.invoice.ui.theme.appPalette
 
 /**
- * Screen text. The layout is left-to-right, so plain [Text] would put an Arabic sentence on the left and
- * reorder strings that start with digits or Latin ("DH / م²", "0612 345 678 أحمد"). This one is always a
- * right-to-left paragraph, right-aligned inside the width it is given.
+ * Screen text. The layout is right-to-left, so [TextAlign.Start] is the right edge. A plain [Text] of mixed content
+ * would pick its direction from its first character and reorder strings that start with digits or Latin
+ * ("DH / م²", "0612 345 678 أحمد"). This one is always a right-to-left paragraph, aligned to the start (right)
+ * inside the width it is given.
  */
 @Composable
 fun ArabicText(
@@ -82,7 +83,7 @@ fun ArabicText(
     style: TextStyle = LocalTextStyle.current,
     color: Color = Color.Unspecified,
     fontWeight: FontWeight? = null,
-    textAlign: TextAlign = TextAlign.Right,
+    textAlign: TextAlign = TextAlign.Start,
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip,
 ) {
@@ -101,10 +102,10 @@ fun ArabicText(
 /** A warning line under a field: icon on the right, then the words, never colour alone. */
 @Composable
 internal fun FieldError(text: String) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-        ArabicText(text, color = MaterialTheme.appPalette.error, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.width(6.dp))
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically) {
         Icon(Icons.Filled.Warning, contentDescription = null, tint = MaterialTheme.appPalette.error, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(6.dp))
+        ArabicText(text, color = MaterialTheme.appPalette.error, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -112,6 +113,7 @@ internal fun FieldError(text: String) {
  * The app's one text field: label above on the right (with an optional small hint), the box below, an
  * optional illustration beside it on the right, and an optional [trailing] control inside the box on the
  * left (the mic, or a clear button). Text is right-aligned; a phone number keeps its own digit order.
+ * In the right-to-left layout the first child of a row is the right-hand one, so the code lists them in that order.
  */
 @Composable
 fun AppTextField(
@@ -131,7 +133,7 @@ fun AppTextField(
     tag: String? = null,
     containerColor: Color = MaterialTheme.colorScheme.surface,
     contentColor: Color = MaterialTheme.colorScheme.onSurface,
-    /** A button outside the box on its left / right (the quantity "-" and "+"). */
+    /** A button outside the box on its left ([startButton]) / right ([endButton]) (the quantity "-" and "+"). */
     startButton: (@Composable () -> Unit)? = null,
     endButton: (@Composable () -> Unit)? = null,
     /** Lets the keyboard's Next key move to a chosen field. */
@@ -154,17 +156,29 @@ fun AppTextField(
     }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         if (label != null) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                RoundSpeaker(label)
-                if (hint != null) {
-                    ArabicText(hint, style = MaterialTheme.typography.bodyMedium, color = palette.grayStrong)
-                    Spacer(Modifier.width(6.dp))
-                }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically) {
                 ArabicText(label, style = MaterialTheme.typography.titleSmall, color = palette.grayStrong)
+                if (hint != null) {
+                    Spacer(Modifier.width(6.dp))
+                    ArabicText(hint, style = MaterialTheme.typography.bodyMedium, color = palette.grayStrong)
+                }
+                RoundSpeaker(label)
             }
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            startButton?.invoke()
+            if (picture != null) {
+                picture()
+            } else if (illustration != null) {
+                Box(
+                    Modifier
+                        .size(width = 46.dp, height = 58.dp)
+                        .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(illustration, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(30.dp))
+                }
+            }
+            endButton?.invoke()
             Surface(
                 modifier = Modifier.weight(1f).heightIn(min = 58.dp),
                 shape = RoundedCornerShape(14.dp),
@@ -179,7 +193,9 @@ fun AppTextField(
                 ),
             ) {
                 Row(Modifier.padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    trailing?.invoke()
+                    if (icon != null) {
+                        Icon(icon, contentDescription = null, tint = palette.grayStrong, modifier = Modifier.padding(start = 4.dp).size(26.dp))
+                    }
                     BasicTextField(
                         value = field,
                         onValueChange = { next ->
@@ -200,7 +216,7 @@ fun AppTextField(
                             .then(if (tag != null) Modifier.testTag(tag) else Modifier)
                             .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier),
                         decorationBox = { inner ->
-                            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
                                 if (value.isEmpty() && placeholder != null) {
                                     ArabicText(placeholder, style = MaterialTheme.typography.bodyLarge, color = palette.gray, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 }
@@ -208,33 +224,19 @@ fun AppTextField(
                             }
                         },
                     )
-                    if (icon != null) {
-                        Icon(icon, contentDescription = null, tint = palette.grayStrong, modifier = Modifier.padding(end = 4.dp).size(26.dp))
-                    }
+                    trailing?.invoke()
                 }
             }
-            endButton?.invoke()
-            if (picture != null) {
-                picture()
-            } else if (illustration != null) {
-                Box(
-                    Modifier
-                        .size(width = 46.dp, height = 58.dp)
-                        .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(illustration, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(30.dp))
-                }
-            }
+            startButton?.invoke()
         }
         if (error != null) FieldError(error)
     }
 }
 
 /**
- * The top bar of every screen (left-to-right layout): the back arrow on the left, the title on the right
- * with an optional [speaker] just left of it. A screen with its own picture passes [centerIcon]; it sits in
- * the exact centre and the title is then limited to the right half, ending with "…" before the picture.
+ * The top bar of every screen (right-to-left layout): the back arrow on the right edge, the title next to it
+ * with an optional [speaker] just left of the title. A screen with its own picture passes [centerIcon]; it sits in
+ * the exact centre and the title is then limited to the right half (after the arrow), ending with "…" before the picture.
  */
 @Composable
 fun AppTopBar(
@@ -273,23 +275,26 @@ fun AppTopBar(
                 }
                 if (centerIcon != null && speaker == null) {
                     // The speaker is pushed to the left of the picture so it never takes room from the title.
-                    Box(Modifier.align(Alignment.Center).offset(x = (-50).dp)) { RoundSpeaker(title) }
+                    Box(Modifier.align(Alignment.Center).absoluteOffset(x = (-50).dp)) { RoundSpeaker(title) }
                 }
-                val titleMax = if (centerIcon != null) maxWidth / 2 - 26.dp else maxWidth - TouchTarget - 8.dp
+                // The title starts right after the back arrow. With a picture it may use the right half, minus the arrow.
+                val arrow = if (onBack != null) TouchTarget else 0.dp
+                val titleMax = if (centerIcon != null) maxWidth / 2 - 28.dp - arrow else maxWidth - arrow - 8.dp
                 Row(
                     Modifier
-                        .align(Alignment.CenterEnd)
+                        .align(Alignment.CenterStart)
+                        .padding(start = arrow)
                         .widthIn(max = titleMax),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (speaker != null) speaker() else if (centerIcon == null) RoundSpeaker(title)
                     FitText(
                         text = title,
                         style = if (centerIcon != null) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
                         modifier = Modifier
                             .weight(1f, fill = false)
-                            .padding(end = 10.dp),
+                            .padding(horizontal = 6.dp),
                     )
+                    if (speaker != null) speaker() else if (centerIcon == null) RoundSpeaker(title)
                 }
             }
             Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)))
@@ -297,7 +302,7 @@ fun AppTopBar(
     }
 }
 
-/** A slim line under the top bar for screen-wide controls (the mute chip), on the left like the back arrow. */
+/** A slim line under the top bar for screen-wide controls (the mute chip), on the right like the back arrow. */
 @Composable
 fun AppSubBar(content: @Composable () -> Unit) {
     Row(
@@ -364,8 +369,8 @@ fun SpokenButton(
         return
     }
     Row(modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        SpeakerTile(kind, onSpeak, "${Strings.SPEAK_LABEL}: $text", buttonEnabled = enabled, speechAvailable = speechAvailable)
         BigButton(text, icon, onClick, buttonModifier.weight(1f), kind = kind, enabled = enabled, spokenTile = false)
+        SpeakerTile(kind, onSpeak, "${Strings.SPEAK_LABEL}: $text", buttonEnabled = enabled, speechAvailable = speechAvailable)
     }
 }
 
@@ -442,7 +447,7 @@ fun FitText(
     style: TextStyle = LocalTextStyle.current,
     color: Color = Color.Unspecified,
     fontWeight: FontWeight? = null,
-    textAlign: TextAlign = TextAlign.Right,
+    textAlign: TextAlign = TextAlign.Start,
     minScale: Float = 0.7f,
     maxLines: Int = 2,
 ) {

@@ -66,15 +66,16 @@ private fun HomeCard(
                     .padding(horizontal = 24.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                ArabicText(text, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
-                Spacer(Modifier.width(20.dp))
                 Surface(shape = RoundedCornerShape(50), color = content.copy(alpha = 0.14f), modifier = Modifier.size(84.dp)) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
                         Icon(icon, contentDescription = null, modifier = Modifier.size(52.dp))
                     }
                 }
+                Spacer(Modifier.width(20.dp))
+                ArabicText(text, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.weight(1f))
             }
-            RoundSpeaker(text, Modifier.align(Alignment.BottomStart).padding(4.dp), tint = content)
+            // Bottom-left, as before (End is the left edge in the right-to-left layout).
+            RoundSpeaker(text, Modifier.align(Alignment.BottomEnd).padding(4.dp), tint = content)
         }
     }
 }

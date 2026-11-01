@@ -73,9 +73,9 @@ fun AudioSettingsScreen(
 
                 SectionCard {
                     ArabicText(Strings.SPEECH_LANGUAGE, style = MaterialTheme.typography.titleMedium)
-                    // Choices read from the right: the first (default) one is on the right.
+                    // Choices read from the right: the first (default) one is on the right (first child in a right-to-left row).
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        for (language in listOf(SpeechLanguage.DARIJA, SpeechLanguage.STANDARD).reversed()) {
+                        for (language in listOf(SpeechLanguage.DARIJA, SpeechLanguage.STANDARD)) {
                             ChoiceOption(speechLanguageLabel(language), selected = settings.speechLanguage == language, enabled = true, modifier = Modifier.weight(1f)) {
                                 onUpdate { it.copy(speechLanguage = language) }
                             }
@@ -86,7 +86,7 @@ fun AudioSettingsScreen(
                 SectionCard {
                     ArabicText(Strings.SPEECH_RATE, style = MaterialTheme.typography.titleMedium)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        for (rate in listOf(SpeechRate.SLOW, SpeechRate.NORMAL, SpeechRate.FAST).reversed()) {
+                        for (rate in listOf(SpeechRate.SLOW, SpeechRate.NORMAL, SpeechRate.FAST)) {
                             ChoiceOption(speechRateLabel(rate), selected = settings.speechRate == rate, enabled = true, modifier = Modifier.weight(1f)) {
                                 onUpdate { it.copy(speechRate = rate) }
                             }

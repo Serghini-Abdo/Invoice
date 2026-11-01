@@ -21,7 +21,6 @@ there are no real receipts on any phone yet.
 
 * The document becomes a **receipt (وصل)**, not an invoice: screen text, printed title and speech.
   Internal code names (`Invoice*`) may stay.
-* The app layout becomes **right-to-left**; the forced LTR, and the layout tests that assume it, will go.
 * The palette becomes **blue**; green means paid only.
 * Speakers move to one system (`SpeakableText` / `SpeakableButton` and a speaker column); do not add new
   hand-placed speakers in the meantime.

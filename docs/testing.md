@@ -52,7 +52,7 @@ below), so it runs on the oldest and a current Android version.
 
 ## Other emulator checks
 
-* `LayoutAndBackUiTest`: placement in the current left-to-right layout (back arrow on the left, titles, labels
+* `LayoutAndBackUiTest`: placement in the right-to-left layout (back arrow at the right edge with the title next to it, labels
   and typed text on the right, first catalogue product top-right), touch targets of at least 48 dp, a speaker tap
   or a finger sliding off a product never selecting it, the system Back button walking back through the steps,
   and leaving with unsaved work asking first.

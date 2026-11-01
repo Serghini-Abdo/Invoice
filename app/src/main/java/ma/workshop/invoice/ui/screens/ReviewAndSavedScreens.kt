@@ -138,15 +138,15 @@ fun ReviewScreen(
             SectionCard {
                 // One speaker for the whole card: total, deposit and balance as one sentence.
                 if (remaining != null) {
-                    Row(Modifier.fillMaxWidth()) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         RoundSpeaker(LocalSpeakers.current.texts.paymentSummary(PaymentSummary(total, deposit ?: Money.ZERO, remaining)))
                     }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    SpeakerButton(onClick = onReplay, available = speechAvailable, description = Strings.REPLAY)
                     Column(Modifier.weight(1f)) {
                         AmountRow(Strings.INVOICE_TOTAL, ArabicFormat.amount(total), emphasized = true)
                     }
+                    SpeakerButton(onClick = onReplay, available = speechAvailable, description = Strings.REPLAY)
                 }
                 AppTextField(
                     value = state.depositText,
@@ -162,16 +162,16 @@ fun ReviewScreen(
                 if (fullyPaid) {
                     // Paid: "0 DH" in green with the "خالص" badge on the same line. An open balance is bold ink.
                     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                        PaidBadge()
-                        Spacer(Modifier.width(10.dp))
+                        ArabicText(Strings.REMAINING, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                        Spacer(Modifier.width(8.dp))
                         ArabicText(
                             ArabicFormat.amount(remaining!!),
                             style = MaterialTheme.typography.headlineMedium,
                             color = MaterialTheme.appPalette.paid,
                             modifier = Modifier.testTag("balance-value"),
                         )
-                        Spacer(Modifier.width(8.dp))
-                        ArabicText(Strings.REMAINING, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                        Spacer(Modifier.width(10.dp))
+                        PaidBadge()
                     }
                 } else {
                     AmountRow(
@@ -188,12 +188,12 @@ fun ReviewScreen(
                 if (state.saving) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.End,
+                        horizontalArrangement = Arrangement.Start,
                         modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
                     ) {
-                        ArabicText(Strings.SAVING, style = MaterialTheme.typography.titleMedium)
-                        Spacer(Modifier.width(12.dp))
                         CircularProgressIndicator(Modifier.size(28.dp))
+                        Spacer(Modifier.width(12.dp))
+                        ArabicText(Strings.SAVING, style = MaterialTheme.typography.titleMedium)
                     }
                 }
                 BigButton(Strings.SAVE_INVOICE, Icons.Filled.Save, { dismissKeyboard(); onSave() }, enabled = !state.saving, kind = ButtonKind.Success)
@@ -242,12 +242,12 @@ fun ExportPanel(
     modifier: Modifier = Modifier,
     onPrint: (() -> Unit)? = null,
 ) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.End) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = Alignment.Start) {
         when (export.status) {
             ExportStatus.PREPARING -> Row(verticalAlignment = Alignment.CenterVertically) {
-                ArabicText(Strings.EXPORT_PREPARING, style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.width(12.dp))
                 CircularProgressIndicator(Modifier.size(28.dp))
+                Spacer(Modifier.width(12.dp))
+                ArabicText(Strings.EXPORT_PREPARING, style = MaterialTheme.typography.titleMedium)
             }
             ExportStatus.FAILED -> {
                 StatusBanner(Strings.EXPORT_FAILED, BannerKind.Warning)

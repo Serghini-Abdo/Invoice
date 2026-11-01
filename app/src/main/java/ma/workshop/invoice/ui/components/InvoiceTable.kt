@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -50,7 +50,8 @@ private val FormulaSize = 12.sp
 
 /**
  * The compact invoice table, the same on the item list, the review and the invoice detail, and laid out like
- * the paper: left to right amount (DH) | measurement and calculation | quantity | product with its picture.
+ * the paper: from the right, the product with its picture | quantity | measurement and calculation | amount (DH) on the left.
+ * The layout is right-to-left, so the first child of each row is the product.
  * No divider lines; a long calculation wraps inside its own cell.
  */
 @Composable
@@ -65,10 +66,10 @@ fun InvoiceTableHeader(modifier: Modifier = Modifier) {
             .padding(vertical = 5.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        FitText(ArabicTerms.AMOUNT_HEADER, Modifier.width(AmountColumn).padding(horizontal = 3.dp), style, textAlign = TextAlign.Left)
-        FitText(ArabicTerms.MEASURE_AND_CALCULATION, Modifier.weight(FormulaWeight).padding(horizontal = 3.dp), style)
-        FitText(ArabicTerms.QUANTITY, Modifier.width(QuantityColumn).padding(horizontal = 2.dp), style, textAlign = TextAlign.Center)
         FitText(ArabicTerms.PRODUCT, Modifier.weight(NameWeight).padding(horizontal = 3.dp), style)
+        FitText(ArabicTerms.QUANTITY, Modifier.width(QuantityColumn).padding(horizontal = 2.dp), style, textAlign = TextAlign.Center)
+        FitText(ArabicTerms.MEASURE_AND_CALCULATION, Modifier.weight(FormulaWeight).padding(horizontal = 3.dp), style)
+        FitText(ArabicTerms.AMOUNT_HEADER, Modifier.width(AmountColumn).padding(horizontal = 3.dp), style, textAlign = TextAlign.Left)
     }
 }
 
@@ -81,19 +82,14 @@ fun InvoiceTableRow(row: DocumentRow, picture: Dp, modifier: Modifier = Modifier
         modifier.fillMaxWidth().padding(vertical = 4.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // The row's speaker sits under the amount, so it never takes width from the product and the calculation.
-        Column(Modifier.width(AmountColumn).padding(horizontal = 3.dp), horizontalAlignment = Alignment.Start) {
-            FitText(
-                row.totalNumber,
-                Modifier.testTag("table-amount-$index"),
+        Row(Modifier.weight(NameWeight).padding(horizontal = 3.dp), horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically) {
+            IllustrationImage(row.illustration, Modifier.size(picture))
+            Spacer(Modifier.width(4.dp))
+            ArabicText(
+                row.name,
+                Modifier.weight(1f).testTag("table-name-$index"),
                 TextStyle(fontSize = BodySize, fontWeight = FontWeight.Bold),
-                textAlign = TextAlign.Left,
             )
-            if (speakersShown && speakText != null) RoundSpeaker(speakText, Modifier.offset(x = (-8).dp))
-        }
-        Column(Modifier.weight(FormulaWeight).padding(horizontal = 3.dp).testTag("table-formula-$index"), horizontalAlignment = Alignment.End) {
-            row.measures?.let { ArabicText(it, style = TextStyle(fontSize = BodySize)) }
-            ArabicText(row.formula, style = TextStyle(fontSize = FormulaSize, color = palette.grayStrong))
         }
         Box(
             Modifier.width(QuantityColumn).padding(horizontal = QuantityMargin / 2).testTag("table-quantity-$index"),
@@ -101,14 +97,19 @@ fun InvoiceTableRow(row: DocumentRow, picture: Dp, modifier: Modifier = Modifier
         ) {
             ArabicText(row.quantity?.toString().orEmpty(), style = TextStyle(fontSize = BodySize, fontWeight = FontWeight.Bold), textAlign = TextAlign.Center)
         }
-        Row(Modifier.weight(NameWeight).padding(horizontal = 3.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-            ArabicText(
-                row.name,
-                Modifier.weight(1f).testTag("table-name-$index"),
+        Column(Modifier.weight(FormulaWeight).padding(horizontal = 3.dp).testTag("table-formula-$index"), horizontalAlignment = Alignment.Start) {
+            row.measures?.let { ArabicText(it, style = TextStyle(fontSize = BodySize)) }
+            ArabicText(row.formula, style = TextStyle(fontSize = FormulaSize, color = palette.grayStrong))
+        }
+        // The row's speaker sits under the amount, so it never takes width from the product and the calculation.
+        Column(Modifier.width(AmountColumn).padding(horizontal = 3.dp), horizontalAlignment = Alignment.End) {
+            FitText(
+                row.totalNumber,
+                Modifier.testTag("table-amount-$index"),
                 TextStyle(fontSize = BodySize, fontWeight = FontWeight.Bold),
+                textAlign = TextAlign.Left,
             )
-            Spacer(Modifier.width(4.dp))
-            IllustrationImage(row.illustration, Modifier.size(picture))
+            if (speakersShown && speakText != null) RoundSpeaker(speakText, Modifier.absoluteOffset(x = (-8).dp))
         }
     }
 }

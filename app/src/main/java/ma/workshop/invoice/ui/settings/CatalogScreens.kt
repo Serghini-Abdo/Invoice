@@ -101,6 +101,19 @@ fun CatalogManagementScreen(
                     shadowElevation = if (product.isActive) 2.dp else 0.dp,
                 ) {
                     Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        IllustrationImage(product.illustration, Modifier.size(64.dp))
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
+                            ArabicText(
+                                product.name,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = if (product.isActive) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            ArabicText(product.formula.methodName(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Spacer(Modifier.width(8.dp))
                         Column(
                             Modifier.strictClickable(role = Role.Switch) { onSetActive(product.id, !product.isActive) },
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -112,19 +125,6 @@ fun CatalogManagementScreen(
                                 color = if (product.isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                             )
                         }
-                        Spacer(Modifier.width(8.dp))
-                        Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-                            ArabicText(
-                                product.name,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = if (product.isActive) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            ArabicText(product.formula.methodName(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        IllustrationImage(product.illustration, Modifier.size(64.dp))
                     }
                 }
                 }
@@ -147,11 +147,11 @@ private fun FormulaOption(title: String, hint: String, selected: Boolean, onClic
         color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
     ) {
         Row(Modifier.padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+            RadioButton(selected = selected, onClick = null, modifier = Modifier.padding(12.dp))
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
                 ArabicText(title, style = MaterialTheme.typography.titleMedium)
                 ArabicText(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            RadioButton(selected = selected, onClick = null, modifier = Modifier.padding(12.dp))
         }
     }
 }
@@ -224,9 +224,8 @@ fun ProductEditScreen(
                         val pictures = Illustrations.all
                         for (row in pictures.chunked(4)) {
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                // keep the last row aligned with the others; the first picture stays top-right
-                                repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
-                                for (picture in row.reversed()) {
+                                // the first picture stays top-right; the last row is padded on the left to line up
+                                for (picture in row) {
                                     val selected = picture.key == form.illustration
                                     Surface(
                                         modifier = Modifier
@@ -250,7 +249,7 @@ fun ProductEditScreen(
                                                     contentDescription = null,
                                                     tint = MaterialTheme.appPalette.onColor,
                                                     modifier = Modifier
-                                                        .align(Alignment.TopEnd)
+                                                        .align(Alignment.TopStart)
                                                         .size(22.dp)
                                                         .background(MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.CircleShape),
                                                 )
@@ -258,6 +257,7 @@ fun ProductEditScreen(
                                         }
                                     }
                                 }
+                                repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
                             }
                         }
                     }
@@ -272,13 +272,13 @@ fun ProductEditScreen(
                         val optional = form.formula == PricingFormula.PER_ITEM
                         val visible = form.formula.visibleMeasurements(form.measurements)
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            ArabicText(Strings.SHOW_MEASUREMENTS, modifier = Modifier.weight(1f))
                             Switch(
                                 checked = visible != Measurements.NONE,
                                 enabled = optional,
                                 onCheckedChange = { checked -> onEdit { it.copy(measurements = if (checked) Measurements.BOTH else Measurements.NONE) } },
                                 modifier = Modifier.testTag("show-measurements"),
                             )
-                            ArabicText(Strings.SHOW_MEASUREMENTS, modifier = Modifier.weight(1f))
                         }
                         if (optional && visible != Measurements.NONE) {
                             ArabicText(Strings.INFORMATIONAL_MEASUREMENTS, style = MaterialTheme.typography.bodySmall)
@@ -310,8 +310,8 @@ fun ProductEditScreen(
                             .strictClickable(role = Role.Switch) { onEdit { it.copy(isActive = !it.isActive) } },
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Switch(checked = form.isActive, onCheckedChange = null)
                         ArabicText(if (form.isActive) Strings.ACTIVE else Strings.INACTIVE, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                        Switch(checked = form.isActive, onCheckedChange = null)
                     }
                 }
                 Column(

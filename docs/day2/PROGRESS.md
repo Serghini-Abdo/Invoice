@@ -32,9 +32,15 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
   (no home banner); anything else shows Google's code, for example `api 10`.
 * **Speech:** offline TextToSpeech in Darija or standard Arabic, speakers behind a switch (off by default),
   dictation on customer name and product name.
-* **Layout:** forced left-to-right with right-aligned Arabic (to be replaced, see the roadmap), green palette.
+* **Layout:** forced right-to-left on every phone (back arrow on the right, forward arrows point left, labels
+  on the right, amounts on the left); green palette (to be replaced, see the roadmap).
+* **Settings:** six category cards with their own screens (see above).
 
 ## Still to check by hand on the phone
+
+* **Sprint 1, steps 1.0 and 1.1 (phone set to French):** Settings list and its five child screens, then every
+  screen of the receipt flow, history, catalogue and backup read from the right (list in the hand-off report).
+  Nothing from these two steps has been compiled or run yet.
 
 * Voice quality in Darija and standard Arabic, speech rates, the voice download flow, a speaker stopping the
   previous one.
@@ -80,8 +86,8 @@ Still open (owner tasks):
 
 ### Sprint 1: layout, palette, name
 
-1. Settings as categories with parent / child options (plan step 1.0, done first).
-2. Right-to-left app layout (replace forced LTR); update the layout tests.
+1. ~~Settings as categories with parent / child options~~ (plan step 1.0): built, compiled and tested on no device yet.
+2. ~~Right-to-left app layout~~ (plan step 1.1): built; layout tests updated, none run yet.
 3. Blue palette tokens and a blue launcher icon; green only for paid.
 4. Rename invoice to receipt (وصل) in screens, printed output and speech (no migration).
 5. Fix the known issues: the product "not found" message, the unused string.

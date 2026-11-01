@@ -72,13 +72,13 @@ private fun DestinationRow(
         color = if (checked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
     ) {
         Row(Modifier.padding(horizontal = 14.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Switch(checked = checked, onCheckedChange = null, enabled = enabled)
-            Column(Modifier.weight(1f).padding(start = 8.dp), horizontalAlignment = Alignment.End) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(32.dp))
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f).padding(end = 8.dp), horizontalAlignment = Alignment.Start) {
                 ArabicText(title, style = MaterialTheme.typography.titleMedium)
                 ArabicText(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Spacer(Modifier.width(12.dp))
-            Icon(icon, contentDescription = null, modifier = Modifier.size(32.dp))
+            Switch(checked = checked, onCheckedChange = null, enabled = enabled)
         }
     }
 }
@@ -87,7 +87,7 @@ private fun DestinationRow(
 @Composable
 private fun StatusRow(destination: BackupDestination, status: DestinationStatus) {
     val zone = ZoneId.systemDefault()
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.End) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.Start) {
         AmountRow(
             destination.label(),
             status.lastSuccessAt?.let { ArabicFormat.dateTime(it, zone) } ?: Strings.STATUS_NEVER,
@@ -133,7 +133,7 @@ fun BackupScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
-            horizontalAlignment = Alignment.End,
+            horizontalAlignment = Alignment.Start,
         ) {
             state.messages.forEach { message ->
                 StatusBanner(message.text, message.kind)
@@ -149,9 +149,9 @@ fun BackupScreen(
 
             if (state.working) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    ArabicText(Strings.WORKING, style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.width(12.dp))
                     CircularProgressIndicator(Modifier.size(28.dp))
+                    Spacer(Modifier.width(12.dp))
+                    ArabicText(Strings.WORKING, style = MaterialTheme.typography.titleMedium)
                 }
             }
 

@@ -45,7 +45,7 @@ fun UnitsSettingsScreen(
                     for ((unit, label) in listOf(
                         LengthUnit.METER to ArabicTerms.METER,
                         LengthUnit.CENTIMETER to ArabicTerms.CENTIMETER,
-                    ).reversed()) {
+                    )) {
                         ChoiceOption(label, selected = settings.lengthUnit == unit, enabled = true, modifier = Modifier.weight(1f).testTag("unit-${unit.id}")) {
                             onUpdate { it.copy(lengthUnit = unit) }
                         }
@@ -56,7 +56,7 @@ fun UnitsSettingsScreen(
                     for ((script, label) in listOf(
                         UnitLabelScript.ARABIC to Strings.UNIT_LABELS_ARABIC,
                         UnitLabelScript.LATIN to Strings.UNIT_LABELS_LATIN,
-                    ).reversed()) {
+                    )) {
                         ChoiceOption(label, selected = settings.unitLabelScript == script, enabled = true, modifier = Modifier.weight(1f).testTag("script-${script.id}")) {
                             onUpdate { it.copy(unitLabelScript = script) }
                         }

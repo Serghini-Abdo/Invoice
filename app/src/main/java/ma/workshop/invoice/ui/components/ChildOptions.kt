@@ -20,6 +20,6 @@ fun ChildOptions(visible: Boolean, content: @Composable ColumnScope.() -> Unit) 
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalAlignment = Alignment.End,
+        horizontalAlignment = Alignment.Start,
     ) { content() }
 }

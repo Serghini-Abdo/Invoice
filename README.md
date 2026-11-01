@@ -10,7 +10,7 @@ who reads little: large buttons, large numbers, one decision per screen, optiona
 * No taxes, no inventory, no accounting: invoices only.
 
 > **Where it is going.** Product decisions, including the planned changes from the 2026-11-01 review
-> (receipts instead of invoices, right-to-left layout, blue palette), are in
+> (receipts instead of invoices, blue palette), are in
 > [docs/day2/DECISIONS.md](docs/day2/DECISIONS.md); current state and roadmap in
 > [docs/day2/PROGRESS.md](docs/day2/PROGRESS.md). This README describes the app as built.
 

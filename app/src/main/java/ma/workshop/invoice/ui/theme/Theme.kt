@@ -126,13 +126,15 @@ private val shapes = Shapes(
 )
 
 /**
- * The layout is forced left-to-right whatever the phone's language: back on the left, forward arrows
- * pointing right, digits in phone order. Arabic text keeps its own direction and right alignment through
- * [ma.workshop.invoice.ui.components.ArabicText]. The printed invoice stays right-to-left (its renderer).
+ * The layout is forced right-to-left whatever the phone's language (French and English phones are common):
+ * back on the right, forward arrows pointing left, labels on the right, amounts on the left. The first child of
+ * a Row is the right-hand one, and Alignment.Start is the right edge. Arabic text keeps its direction through
+ * [ma.workshop.invoice.ui.components.ArabicText]; phone numbers, amounts and "DH / م²" keep their digit order
+ * through their LTR isolates. The printed receipt has its own renderer and is not affected.
  */
 @Composable
 fun InvoiceTheme(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr, LocalAppPalette provides AppPalette()) {
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl, LocalAppPalette provides AppPalette()) {
         MaterialTheme(colorScheme = lightColors, typography = typography, shapes = shapes, content = content)
     }
 }

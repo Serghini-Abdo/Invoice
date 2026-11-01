@@ -174,7 +174,7 @@ private fun PaymentCard(invoice: Invoice) {
     val payment = invoice.payment
     SectionCard {
         // one speaker for the card: total, deposit and balance as one sentence
-        Row(Modifier.fillMaxWidth()) { RoundSpeaker(LocalSpeakers.current.texts.paymentSummary(payment)) }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { RoundSpeaker(LocalSpeakers.current.texts.paymentSummary(payment)) }
         AmountRow(Strings.INVOICE_TOTAL, ArabicFormat.amount(payment.total), emphasized = true)
         AmountRow(Strings.DEPOSIT_SHORT, ArabicFormat.amount(payment.deposit))
         AmountRow(
@@ -195,6 +195,7 @@ private fun RevisionLog(revisions: List<InvoiceRevision>, zone: ZoneId) {
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            ArabicText(Strings.REVISION_LOG, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
             StrictIconButton(
                 onClick = { expanded = !expanded },
                 contentDescription = Strings.REVISION_LOG,
@@ -206,11 +207,10 @@ private fun RevisionLog(revisions: List<InvoiceRevision>, zone: ZoneId) {
                     modifier = Modifier.size(32.dp),
                 )
             }
-            ArabicText(Strings.REVISION_LOG, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
         }
         if (expanded) {
             for (revision in revisions) {
-                Column(Modifier.padding(vertical = 6.dp), horizontalAlignment = Alignment.End) {
+                Column(Modifier.padding(vertical = 6.dp), horizontalAlignment = Alignment.Start) {
                     ArabicText(
                         "${Strings.REVISION} ${revision.revision - 1}  •  ${ArabicFormat.date(revision.changedAt, zone)}",
                         style = MaterialTheme.typography.titleSmall,

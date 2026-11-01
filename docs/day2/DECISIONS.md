@@ -19,7 +19,7 @@ The final state of every product decision. Later decisions replace earlier ones;
 
 ## Layout and header
 
-* **[to build]** The app follows Arabic **right-to-left** layout, like the other apps the owner uses.
+* The app follows Arabic **right-to-left** layout, like the other apps the owner uses.
   This replaces the forced left-to-right layout of Day 2: back arrow on the right, forward arrows point left.
   Labels stay on the right and amounts on the left. The printed receipt is right-to-left (unchanged).
 * One top bar on every screen: back arrow, title, and the title's speaker beside it. Item entry shows the

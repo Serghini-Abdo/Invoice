@@ -99,8 +99,10 @@ fun HistoryScreen(
                 textStyle = MaterialTheme.typography.bodyLarge,
                 tag = "history-search",
             )
-            // "From" on the right, "to" beside it, the clear button on the left.
+            // "From" on the right (first), "to" beside it, the clear button on the left (last).
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                DateButton(Strings.DATE_FROM, query.fromDate, Modifier.weight(1f)) { pickingFrom = true }
+                DateButton(Strings.DATE_TO, query.toDate, Modifier.weight(1f)) { pickingTo = true }
                 if (!query.isEmpty) {
                     StrictIconButton(
                         onClick = { onQueryChange(HistoryQuery()) },
@@ -110,8 +112,6 @@ fun HistoryScreen(
                         Icon(Icons.Filled.Clear, contentDescription = Strings.CLEAR_FILTERS, modifier = Modifier.size(28.dp))
                     }
                 }
-                DateButton(Strings.DATE_TO, query.toDate, Modifier.weight(1f)) { pickingTo = true }
-                DateButton(Strings.DATE_FROM, query.fromDate, Modifier.weight(1f)) { pickingFrom = true }
             }
         }
 
@@ -132,6 +132,7 @@ fun HistoryScreen(
                 items(invoices, key = { it.id }) { invoice ->
                     val ui = LocalSpeakers.current
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.weight(1f)) { InvoiceSummaryCard(invoice, zone) { onOpen(invoice.id) } }
                         RoundSpeaker(
                             listOf(
                                 "${ArabicTerms.INVOICE} ${ArabicTerms.NUMBER} ${ArabicFormat.invoiceNumber(invoice.number)}",
@@ -139,7 +140,6 @@ fun HistoryScreen(
                                 "${ArabicTerms.TOTAL} ${ui.texts.amount(invoice.total)}",
                             ).filter { it.isNotEmpty() }.joinToString("، "),
                         )
-                        Box(Modifier.weight(1f)) { InvoiceSummaryCard(invoice, zone) { onOpen(invoice.id) } }
                     }
                 }
             }
@@ -214,26 +214,9 @@ fun InvoiceSummaryCard(invoice: InvoiceSummary, zone: ZoneId, onClick: () -> Uni
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
-        // Amounts on the left, the invoice and customer on the right.
+        // Amounts on the left, the invoice and customer on the right (first child = right).
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(horizontalAlignment = Alignment.Start) {
-                ArabicText(ArabicFormat.amount(invoice.total), style = MaterialTheme.typography.titleLarge)
-                if (invoice.remaining.isZero) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        ArabicText(Strings.FULLY_PAID, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.appPalette.paid)
-                        Spacer(Modifier.width(4.dp))
-                        Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.appPalette.paid, modifier = Modifier.size(20.dp))
-                    }
-                } else {
-                    ArabicText(
-                        "${Strings.REMAINING}: ${ArabicFormat.amount(invoice.remaining)}",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
-            }
-            Spacer(Modifier.width(8.dp))
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp), horizontalAlignment = Alignment.End) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp), horizontalAlignment = Alignment.Start) {
                 ArabicText(
                     "${Strings.INVOICE_NUMBER} ${ArabicFormat.invoiceNumber(invoice.number)}",
                     style = MaterialTheme.typography.titleMedium,
@@ -251,6 +234,23 @@ fun InvoiceSummaryCard(invoice: InvoiceSummary, zone: ZoneId, onClick: () -> Uni
                 )
                 if (invoice.revision > 1) {
                     ArabicText(Strings.EDITED, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.appPalette.onWarningContainer)
+                }
+            }
+            Spacer(Modifier.width(8.dp))
+            Column(horizontalAlignment = Alignment.End) {
+                ArabicText(ArabicFormat.amount(invoice.total), style = MaterialTheme.typography.titleLarge)
+                if (invoice.remaining.isZero) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        ArabicText(Strings.FULLY_PAID, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.appPalette.paid)
+                        Spacer(Modifier.width(4.dp))
+                        Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.appPalette.paid, modifier = Modifier.size(20.dp))
+                    }
+                } else {
+                    ArabicText(
+                        "${Strings.REMAINING}: ${ArabicFormat.amount(invoice.remaining)}",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
                 }
             }
         }

@@ -88,9 +88,6 @@ import ma.workshop.invoice.ui.components.StatusBanner
 import ma.workshop.invoice.ui.components.StrictButton
 import ma.workshop.invoice.ui.components.strictClickable
 import ma.workshop.invoice.ui.theme.appPalette
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -158,7 +155,7 @@ fun CustomerScreen(
 
 /**
  * One invoice item as a row of the compact invoice table (36 dp picture), with its actions below:
- * | حذف | تعديل | (delete on the left, edit on the right).
+ * | تعديل | حذف | read from the right: edit first (on the right), delete on the left.
  */
 @Composable
 fun ItemCard(item: InvoiceItem, onEdit: () -> Unit, onRemove: () -> Unit, modifier: Modifier = Modifier, position: Int = 1) {
@@ -176,8 +173,8 @@ fun ItemCard(item: InvoiceItem, onEdit: () -> Unit, onRemove: () -> Unit, modifi
                 speakText = if (speakers.show) speakers.texts.itemLine(item.productName, item.pricing) else null,
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SmallAction(Strings.DELETE, Icons.Filled.Delete, onRemove, Modifier.weight(1f), danger = true)
                 SmallAction(Strings.EDIT, Icons.Filled.Edit, onEdit, Modifier.weight(1f))
+                SmallAction(Strings.DELETE, Icons.Filled.Delete, onRemove, Modifier.weight(1f), danger = true)
             }
         }
     }
@@ -264,7 +261,7 @@ fun ItemListScreen(
                             ArabicText(Strings.ADD_FIRST_PRODUCT, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
                             ArabicText(Strings.NO_ITEMS_HINT, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
                         }
-                        RoundSpeaker("${Strings.ADD_FIRST_PRODUCT}. ${Strings.NO_ITEMS_HINT}", Modifier.align(Alignment.TopStart))
+                        RoundSpeaker("${Strings.ADD_FIRST_PRODUCT}. ${Strings.NO_ITEMS_HINT}", Modifier.align(Alignment.TopEnd))
                     }
                 }
             }
@@ -276,32 +273,32 @@ fun ItemListScreen(
             ) {
                 item(key = "customer") {
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .strictClickable(role = androidx.compose.ui.semantics.Role.Button, onClickLabel = Strings.EDIT_CUSTOMER, onClick = onEditCustomer),
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                        ) {
+                            Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(28.dp))
+                                Spacer(Modifier.width(10.dp))
+                                val summary = listOf(state.customer.name.trim(), state.customer.phone.trim()).filter { it.isNotEmpty() }
+                                ArabicText(
+                                    if (summary.isEmpty()) "${Strings.EDIT_CUSTOMER} (${Strings.OPTIONAL})" else summary.joinToString("  •  "),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.weight(1f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Spacer(Modifier.width(10.dp))
+                                Icon(Icons.Filled.Edit, contentDescription = Strings.EDIT, modifier = Modifier.size(24.dp))
+                            }
+                        }
                         RoundSpeaker(
                             listOf(state.customer.name.trim(), state.customer.phone.trim()).filter { it.isNotEmpty() }
                                 .joinToString("، ").ifEmpty { Strings.EDIT_CUSTOMER },
                         )
-                        Surface(
-                        modifier = Modifier
-                            .weight(1f)
-                            .strictClickable(role = androidx.compose.ui.semantics.Role.Button, onClickLabel = Strings.EDIT_CUSTOMER, onClick = onEditCustomer),
-                        shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                    ) {
-                        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.Edit, contentDescription = Strings.EDIT, modifier = Modifier.size(24.dp))
-                            Spacer(Modifier.width(10.dp))
-                            val summary = listOf(state.customer.name.trim(), state.customer.phone.trim()).filter { it.isNotEmpty() }
-                            ArabicText(
-                                if (summary.isEmpty()) "${Strings.EDIT_CUSTOMER} (${Strings.OPTIONAL})" else summary.joinToString("  •  "),
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.weight(1f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            Spacer(Modifier.width(10.dp))
-                            Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(28.dp))
-                        }
-                    }
                     }
                 }
                 item(key = "table-title") { InvoiceTableHeader(Modifier.testTag("invoice-table")) }
@@ -365,9 +362,8 @@ fun CatalogPickerScreen(
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         AppTopBar(Strings.CHOOSE_PRODUCT, onBack)
         if (categories.size >= 2) {
-            // reverseLayout: "all" first, on the right, and the rest towards the left.
+            // Right-to-left: "all" first, on the right, and the rest towards the left.
             LazyRow(
-                reverseLayout = true,
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -392,29 +388,24 @@ fun CatalogPickerScreen(
                 ArabicText(Strings.NO_PRODUCTS, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
             }
         } else {
-            // The one right-to-left island of the layout: the grid keeps today's order, first product top-right
-            // (decided). Each card is laid out left-to-right again, like the rest of the app.
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 150.dp),
-                    modifier = Modifier.weight(1f).fillMaxWidth(),
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    gridItems(shown, key = { it.id }) { product ->
-                        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                            ProductCard(
-                                name = product.name,
-                                illustration = product.illustration,
-                                onSelect = { onPick(product) },
-                                onSpeak = { onSpeak(product.name) },
-                                speechAvailable = speechAvailable,
-                            )
-                        }
-                    }
-                    item(span = { GridItemSpan(maxLineSpan) }) { Spacer(Modifier.size(8.dp)) }
+            // Right-to-left like the rest of the app: the first product is top-right.
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 150.dp),
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                contentPadding = PaddingValues(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                gridItems(shown, key = { it.id }) { product ->
+                    ProductCard(
+                        name = product.name,
+                        illustration = product.illustration,
+                        onSelect = { onPick(product) },
+                        onSpeak = { onSpeak(product.name) },
+                        speechAvailable = speechAvailable,
+                    )
                 }
+                item(span = { GridItemSpan(maxLineSpan) }) { Spacer(Modifier.size(8.dp)) }
             }
         }
         BigButton(Strings.CUSTOM_CHARGE, Icons.Filled.Add, onCustomCharge,

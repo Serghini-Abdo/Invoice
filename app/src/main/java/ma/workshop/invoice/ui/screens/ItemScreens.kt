@@ -246,11 +246,11 @@ fun ItemEntryScreen(
                     evaluation.pricing?.let { pricing ->
                         ArabicText(Strings.CALCULATION, style = MaterialTheme.typography.titleMedium)
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            RoundSpeaker(speakers.texts.calculation(pricing))
-                            Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                            Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
                                 ArabicText(ItemDescriber.calculation(pricing, script), style = MaterialTheme.typography.bodyLarge)
                                 ArabicText(ArabicFormat.amount(pricing.total), style = MaterialTheme.typography.headlineSmall)
                             }
+                            RoundSpeaker(speakers.texts.calculation(pricing))
                         }
                     }
                     if (forms.size > 1) {
@@ -268,9 +268,9 @@ fun ItemEntryScreen(
                             Modifier.testTag("add-variation"), kind = ButtonKind.Accent)
                     }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        if (total != null) RoundSpeaker(speakers.texts.itemTotal(pending.product.name, total))
                         ArabicText("${Strings.TOTAL}: ${total?.let(ArabicFormat::amount) ?: "—"}",
                             style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f).testTag("entry-total"))
+                        if (total != null) RoundSpeaker(speakers.texts.itemTotal(pending.product.name, total))
                     }
                     BigButton(Strings.CONFIRM, Icons.Filled.Check, { validateAnd(onSubmit) },
                         Modifier.testTag("confirm-item"), kind = ButtonKind.Success)
@@ -306,18 +306,18 @@ private fun CompactLine(index: Int, pricing: ItemPricing, onOpen: () -> Unit) {
     val script = LocalUnitScript.current
     SectionCard(modifier = Modifier.testTag("variation-$index")) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            RoundSpeaker(speakers.texts.calculation(pricing))
             Row(
                 Modifier.weight(1f).testTag("compact-$index").strictClickable(onClickLabel = Strings.EXPAND_LINE, onClick = onOpen),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(Icons.Filled.ExpandMore, contentDescription = null, modifier = Modifier.size(30.dp))
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
                     ArabicText("${Strings.LINE} ${index + 1}", style = MaterialTheme.typography.titleMedium)
                     ArabicText(ItemDescriber.calculation(pricing, script), style = MaterialTheme.typography.bodyMedium)
                     ArabicText(ArabicFormat.amount(pricing.total), style = MaterialTheme.typography.titleLarge)
                 }
+                Icon(Icons.Filled.ExpandMore, contentDescription = null, modifier = Modifier.size(30.dp))
             }
+            RoundSpeaker(speakers.texts.calculation(pricing))
         }
     }
 }

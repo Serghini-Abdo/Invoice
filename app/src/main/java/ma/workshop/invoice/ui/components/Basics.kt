@@ -69,8 +69,8 @@ internal fun buttonColors(kind: ButtonKind, enabled: Boolean, pressed: Boolean):
 
 /**
  * The app's one button: always an icon AND a label (colour is never the only cue), at least 64dp tall.
- * The icon sits on the right of the label, in Arabic reading order ("→ متابعة"), and a forward arrow
- * points right. Pressed, the button darkens (yellow) and shrinks a little, so the press is visible.
+ * The icon comes after the label in Arabic reading order (on its left: "متابعة ←"), and a forward arrow
+ * points left. Pressed, the button darkens (yellow) and shrinks a little, so the press is visible.
  */
 @Composable
 fun BigButton(
@@ -88,8 +88,8 @@ fun BigButton(
     val speakers = LocalSpeakers.current
     if (spokenTile && speakers.show) {
         Row(modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            SpeakerTile(kind, { speakers.speak(spokenText ?: text) }, "${Strings.SPEAK_LABEL}: $text", buttonEnabled = enabled)
             BigButton(text, icon, onClick, Modifier.weight(1f), kind, enabled, spokenTile = false)
+            SpeakerTile(kind, { speakers.speak(spokenText ?: text) }, "${Strings.SPEAK_LABEL}: $text", buttonEnabled = enabled)
         }
         return
     }
@@ -132,7 +132,7 @@ fun BigButton(
     )
 }
 
-/** The words, then the icon on their right: the small buttons of dialogs. */
+/** The words, then the icon after them (on their left): the small buttons of dialogs. */
 @Composable
 private fun DialogButton(text: String, icon: ImageVector, onClick: () -> Unit, container: Color = Color.Transparent, content: Color = MaterialTheme.colorScheme.primary) {
     StrictButton(
@@ -163,18 +163,18 @@ fun ConfirmDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                RoundSpeaker(title)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically) {
                 ArabicText(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f, fill = false))
+                RoundSpeaker(title)
             }
         },
         text = {
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.End) {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.Start) {
                 if (message.isNotEmpty()) ArabicText(message, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth())
                 extra?.invoke()
             }
         },
-        // Left-to-right: cancel on the left, confirm on the right ("| إلغاء | تأكيد |").
+        // Material orders the two buttons for the layout direction (right-to-left here).
         confirmButton = {
             DialogButton(
                 confirmText,
@@ -214,7 +214,7 @@ fun VoiceMissingDialog(onInstall: () -> Unit, onDismiss: () -> Unit) {
 
 enum class BannerKind { Info, Success, Warning, Error }
 
-/** A message that always carries an icon and words, never colour alone. The icon is on the right. */
+/** A message that always carries an icon and words, never colour alone. The icon is on the right, first. */
 @Composable
 fun StatusBanner(text: String, kind: BannerKind, modifier: Modifier = Modifier) {
     val palette = MaterialTheme.appPalette
@@ -226,9 +226,9 @@ fun StatusBanner(text: String, kind: BannerKind, modifier: Modifier = Modifier) 
     }
     Surface(modifier = modifier.fillMaxWidth(), color = container, shape = RoundedCornerShape(12.dp)) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            ArabicText(text, color = content, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            Spacer(Modifier.width(12.dp))
             Icon(icon, contentDescription = null, tint = content, modifier = Modifier.size(28.dp))
+            Spacer(Modifier.width(12.dp))
+            ArabicText(text, color = content, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
         }
     }
 }
@@ -249,15 +249,15 @@ fun AmountRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ArabicText(
-            value,
-            style = if (emphasized) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.titleLarge,
-            color = valueColor,
-        )
-        Spacer(Modifier.width(8.dp))
-        ArabicText(
             label,
             style = if (emphasized) MaterialTheme.typography.titleLarge else MaterialTheme.typography.titleMedium,
             modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(8.dp))
+        ArabicText(
+            value,
+            style = if (emphasized) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.titleLarge,
+            color = valueColor,
         )
     }
 }
@@ -289,7 +289,7 @@ fun SectionCard(modifier: Modifier = Modifier, content: @Composable () -> Unit) 
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 2.dp,
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.End) { content() }
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.Start) { content() }
     }
 }
 
