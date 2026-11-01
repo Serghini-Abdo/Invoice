@@ -79,6 +79,8 @@ import ma.workshop.invoice.ui.components.IconPicture
 import ma.workshop.invoice.ui.components.InvoiceTableRow
 import ma.workshop.invoice.ui.components.TablePicture
 import ma.workshop.invoice.ui.components.ProductCard
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.text.font.FontWeight
 import ma.workshop.invoice.ui.components.AddProductButton
 import ma.workshop.invoice.ui.components.AppTextField
 import ma.workshop.invoice.ui.components.AppTopBar
@@ -165,7 +167,7 @@ fun ItemCard(item: InvoiceItem, onEdit: () -> Unit, onRemove: () -> Unit, modifi
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
-        Column(Modifier.padding(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             InvoiceTableRow(
                 InvoiceDocumentBuilder.row(position, item, LocalUnitScript.current),
                 TablePicture.ItemList,
@@ -263,6 +265,8 @@ fun ItemListScreen(
                         RoundSpeaker("${Strings.ADD_FIRST_PRODUCT}. ${Strings.NO_ITEMS_HINT}", Modifier.align(Alignment.TopEnd))
                     }
                 }
+                Spacer(Modifier.height(16.dp))
+                AddProductButton(onClick = onAdd, onSpeak = onSpeakAdd, speechAvailable = speechAvailable)
             }
         } else {
             LazyColumn(
@@ -300,6 +304,9 @@ fun ItemListScreen(
                         )
                     }
                 }
+                item(key = "add-product") {
+                    AddProductButton(onClick = onAdd, onSpeak = onSpeakAdd, speechAvailable = speechAvailable)
+                }
                 item(key = "table-title") { InvoiceTableHeader(Modifier.testTag("invoice-table")) }
                 // Newest item on top; each keeps its own line number on the invoice.
                 itemsIndexed(state.items.asReversed(), key = { _, item -> item.id }) { index, item ->
@@ -308,15 +315,19 @@ fun ItemListScreen(
             }
         }
 
-        Surface(shadowElevation = 12.dp, color = MaterialTheme.colorScheme.surface) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Surface(Modifier.testTag("bottom-bar"), shadowElevation = 12.dp, color = MaterialTheme.colorScheme.surface) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (state.items.isNotEmpty()) {
-                    AmountRow(Strings.INVOICE_TOTAL, ArabicFormat.amount(state.total), emphasized = true)
+                    // One compact line: the label on the right, the amount on the left.
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        ArabicText(Strings.INVOICE_TOTAL, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.width(8.dp))
+                        ArabicText(ArabicFormat.amount(state.total), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    }
                 }
                 if (state.issue == FlowIssue.NO_ITEMS) {
                     StatusBanner(Strings.NEED_ONE_ITEM, BannerKind.Warning)
                 }
-                AddProductButton(onClick = onAdd, onSpeak = onSpeakAdd, speechAvailable = speechAvailable)
                 BigButton(
                     Strings.CONTINUE,
                     null,

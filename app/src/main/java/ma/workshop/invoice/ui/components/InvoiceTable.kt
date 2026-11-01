@@ -43,7 +43,7 @@ private val AmountColumn = 66.dp
 private val QuantityColumn = 54.dp
 private val QuantityMargin = 8.dp
 private const val FormulaWeight = 1.2f
-private const val NameWeight = 1f
+private const val NameWeight = 1.5f
 
 private val BodySize = 13.sp
 private val FormulaSize = 12.sp
@@ -85,7 +85,8 @@ fun InvoiceTableRow(row: DocumentRow, picture: Dp, modifier: Modifier = Modifier
         Row(Modifier.weight(NameWeight).padding(horizontal = 3.dp), horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically) {
             IllustrationImage(row.illustration, Modifier.size(picture))
             Spacer(Modifier.width(4.dp))
-            ArabicText(
+            // Shrinks to 70 % first, then wraps between words only (never inside a word).
+            FitText(
                 row.name,
                 Modifier.weight(1f).testTag("table-name-$index"),
                 TextStyle(fontSize = BodySize, fontWeight = FontWeight.Bold),

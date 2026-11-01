@@ -1,6 +1,12 @@
 package ma.workshop.invoice
 
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getBoundsInRoot
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.height
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.hasAnyAncestor
@@ -144,6 +150,39 @@ class InvoiceTableUiTest {
         rule.waitForTextOrExplain(Strings.INVOICE_DETAILS)
         rule.onNodeWithTag("invoice-table").performScrollTo().assertIsDisplayed()
         assertTableColumnOrder()
+    }
+
+    @Test
+    fun itemListBottomBarIsAtMostAQuarterAndTheAddButtonIsInTheList() {
+        click(Strings.NEW_INVOICE)
+        click(Strings.CONTINUE)
+        repeat(3) {
+            click(Strings.ADD_PRODUCT)
+            click("مفصلات")
+            rule.enterNumber("field-rate", "800")
+            rule.enterNumber("field-quantity", "2")
+            rule.confirmEntry()
+            rule.waitUntil(15_000) { rule.onAllNodesWithTag("invoice-table").fetchSemanticsNodes().isNotEmpty() }
+        }
+        rule.waitForIdle()
+        val screen = rule.onRoot().getBoundsInRoot().height.value
+        val bar = rule.onNodeWithTag("bottom-bar").getBoundsInRoot()
+        assertTrue("the bottom bar is at most 25 % of the screen, was ${bar.height.value} of $screen", bar.height.value <= screen * 0.25f)
+        val add = rule.onNodeWithTag("add-product").getBoundsInRoot()
+        val table = rule.onNodeWithTag("invoice-table").getBoundsInRoot()
+        assertTrue("the add button is in the list, above the table title", add.bottom <= table.top && add.bottom <= bar.top)
+        // the product name is never split inside a word
+        for (index in 0..2) {
+            val node = rule.onNodeWithTag("table-name-$index", useUnmergedTree = true).fetchSemanticsNode()
+            val results = ArrayList<TextLayoutResult>()
+            node.config.getOrNull(SemanticsActions.GetTextLayoutResult)!!.action!!(results)
+            val result = results.first()
+            val text = result.layoutInput.text.text
+            for (line in 0 until result.lineCount - 1) {
+                val end = result.getLineEnd(line, visibleEnd = false)
+                assertTrue("\"$text\" is broken inside a word", end !in 1 until text.length || !(text[end - 1].isLetterOrDigit() && text[end].isLetterOrDigit()))
+            }
+        }
     }
 
     private fun androidx.compose.ui.test.junit4.ComposeTestRule.onAllNodesWithTextCount(text: String): Int =
