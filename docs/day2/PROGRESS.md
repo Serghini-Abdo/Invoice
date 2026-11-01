@@ -86,8 +86,8 @@ Still open (owner tasks):
 
 ### Sprint 1: layout, palette, name
 
-1. ~~Settings as categories with parent / child options~~ (plan step 1.0): built, compiled and tested on no device yet.
-2. ~~Right-to-left app layout~~ (plan step 1.1): built; layout tests updated, none run yet.
+1. ~~Settings as categories with parent / child options~~ (plan step 1.0): built; compiles, lint clean, domain tests (211) pass; not run on a device yet.
+2. ~~Right-to-left app layout~~ (plan step 1.1): built; compiles and the instrumented tests compile; layout tests not run on a device yet.
 3. Blue palette tokens and a blue launcher icon; green only for paid.
 4. Rename invoice to receipt (وصل) in screens, printed output and speech (no migration).
 5. Fix the known issues: the product "not found" message, the unused string.
