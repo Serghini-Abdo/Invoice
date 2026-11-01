@@ -102,7 +102,7 @@ object SpokenText {
         append("${ArabicTerms.TOTAL} ${amount(payment.total)}")
         append("، ${ArabicTerms.DEPOSIT} ${if (payment.deposit.isZero) "لا شيء" else amount(payment.deposit)}")
         if (payment.isFullyPaid) {
-            append("، الفاتورة ${ArabicTerms.FULLY_PAID}")
+            append("، الوصل ${ArabicTerms.FULLY_PAID}")
         } else {
             append("، ${ArabicTerms.REMAINING} ${amount(payment.remaining)}")
         }

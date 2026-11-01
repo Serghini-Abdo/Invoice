@@ -37,7 +37,7 @@ data class InvoiceDocument(
     val workshopPhone: String,
     val number: String,
     val date: String,
-    /** Set when the invoice was edited after creation, e.g. "فاتورة معدلة 12/03/2026". */
+    /** Set when the receipt was edited after creation, e.g. "وصل معدل 12/03/2026". */
     val updatedNote: String?,
     val customerName: String?,
     val customerPhone: String?,
@@ -92,11 +92,11 @@ object InvoiceDocumentBuilder {
         )
     }
 
-    /** ASCII-only, sortable and descriptive base name: invoice-0007-2026-10-25 */
+    /** ASCII-only, sortable and descriptive base name: wasl-0007-2026-10-25 */
     fun baseFileName(invoice: Invoice, zone: ZoneId): String =
-        "invoice-${ArabicFormat.invoiceNumber(invoice.number)}-${ArabicFormat.fileDate(invoice.createdAt, zone)}"
+        "wasl-${ArabicFormat.invoiceNumber(invoice.number)}-${ArabicFormat.fileDate(invoice.createdAt, zone)}"
 
-    /** invoice-0007-2026-10-25.pdf */
+    /** wasl-0007-2026-10-25.pdf */
     fun fileName(invoice: Invoice, extension: String, zone: ZoneId): String =
         "${baseFileName(invoice, zone)}.$extension"
 }

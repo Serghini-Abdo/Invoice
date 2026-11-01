@@ -90,7 +90,7 @@ class StandardSpeechTest {
             msa.paymentSummary(PaymentSummary(Money(1_706_630), Money(500_000), Money(1_206_630))),
         )
         assertEquals(
-            "المجموع مائتان درهم، التسبيق مائتان درهم، الفاتورة خالص",
+            "المجموع مائتان درهم، التسبيق مائتان درهم، الوصل خالص",
             msa.paymentSummary(PaymentSummary(Money(20_000), Money(20_000), Money.ZERO)),
         )
     }

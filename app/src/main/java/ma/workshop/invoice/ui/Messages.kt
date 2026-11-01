@@ -15,7 +15,7 @@ fun Problem.arabic(): String = when (this) {
     Problem.NEGATIVE -> "لا يمكن أن يكون سالباً"
     Problem.TOO_LARGE -> "الرقم كبير جداً"
     Problem.TOO_MANY_DECIMALS -> "أرقام كثيرة بعد الفاصلة"
-    Problem.EXCEEDS_TOTAL -> "أكبر من مجموع الفاتورة"
+    Problem.EXCEEDS_TOTAL -> "أكبر من مجموع الوصل"
 }
 
 private val methodNames = mapOf(

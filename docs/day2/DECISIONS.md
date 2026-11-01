@@ -11,8 +11,9 @@ The final state of every product decision. Later decisions replace earlier ones;
 
 * For one small workshop (doors, windows, garage gates, frames, accessories). Offline, no account.
   No taxes, no inventory, no accounting.
-* **[to build]** The document is a **receipt (وصل)**, not a legal invoice. Rename it everywhere: app name
-  "وصولات الورشة", Home buttons, screen titles, Saved screen, printed title and spoken text.
+* The document is a **receipt (وصل)**, not a legal invoice. Renamed everywhere the owner sees or hears it: app
+  name "وصولات الورشة", Home buttons, screen titles, Saved screen, printed title and spoken text. Code names
+  (`Invoice*`), the backup folder and backup JSON keys keep the old name on purpose.
   No data migration: the app is still in development and holds no real receipts.
 * Prices are typed on every line **by design**: each job has its own size and material, so the price
   differs most of the time. No default price per product and no suggested-price chips.

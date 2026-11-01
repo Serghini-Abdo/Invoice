@@ -1,4 +1,4 @@
-# فواتير الورشة: Workshop Invoice
+# وصولات الورشة: Workshop Invoice
 
 An offline-first Android invoicing app for a small Moroccan metalworking workshop (doors, windows,
 garage gates, frames, accessories). Arabic first, right-to-left, illustration first, built for an owner
@@ -21,8 +21,8 @@ who reads little: large buttons, large numbers, one decision per screen, optiona
 
 ## Using the app
 
-Home has exactly three buttons: **فاتورة جديدة** (new invoice), **الفواتير السابقة** (previous invoices),
-**الإعدادات** (settings).
+Home has exactly three buttons: **وصل جديد** (new receipt), **الوصولات السابقة** (previous receipts),
+**الإعدادات** (settings). The document is a receipt (وصل); the code still calls it an invoice.
 
 New invoice:
 

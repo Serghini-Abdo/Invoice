@@ -139,16 +139,16 @@ class SpeechTest {
     @Test
     fun `the totals card is read as one sentence`() {
         assertEquals(
-            "المجموع ديال الفاتورة سبعطاش ألف و ستة و ستين درهم و تلاتين سنتيم، التسبيق خمس آلاف درهم، " +
+            "المجموع ديال الوصل سبعطاش ألف و ستة و ستين درهم و تلاتين سنتيم، التسبيق خمس آلاف درهم، " +
                 "الباقي طناش ألف و ستة و ستين درهم و تلاتين سنتيم",
             DarijaSpeech.paymentSummary(PaymentSummary(Money(1_706_630), Money(500_000), Money(1_206_630))),
         )
         assertEquals(
-            "المجموع ديال الفاتورة ألف و ميتين و ستين درهم، ما كاين حتى تسبيق، الباقي ألف و ميتين و ستين درهم",
+            "المجموع ديال الوصل ألف و ميتين و ستين درهم، ما كاين حتى تسبيق، الباقي ألف و ميتين و ستين درهم",
             DarijaSpeech.paymentSummary(PaymentSummary(Money(126_000), Money.ZERO, Money(126_000))),
         )
         assertEquals(
-            "المجموع ديال الفاتورة ميتين درهم، التسبيق ميتين درهم، الفاتورة خالصة",
+            "المجموع ديال الوصل ميتين درهم، التسبيق ميتين درهم، الوصل خالص",
             DarijaSpeech.paymentSummary(PaymentSummary(Money(20_000), Money(20_000), Money.ZERO)),
         )
     }
