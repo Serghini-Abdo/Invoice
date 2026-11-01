@@ -22,6 +22,8 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -62,7 +64,22 @@ class LayoutAndBackUiTest {
 
     private fun waitForText(text: String) = rule.waitForTextOrExplain(text)
 
+    /**
+     * Back while the keyboard is still on screen only closes the keyboard (by design, on the entry screens),
+     * so wait for it to be gone first; on a real phone it is still animating away right after a Done action.
+     */
+    private fun waitForKeyboardHidden() {
+        rule.waitUntil(10_000) {
+            var visible = true
+            scenario!!.onActivity { activity ->
+                visible = ViewCompat.getRootWindowInsets(activity.window.decorView)?.isVisible(WindowInsetsCompat.Type.ime()) == true
+            }
+            !visible
+        }
+    }
+
     private fun systemBack() {
+        waitForKeyboardHidden()
         scenario!!.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         rule.waitForIdle()
     }

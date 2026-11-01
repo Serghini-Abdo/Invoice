@@ -13,7 +13,7 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
 * Tests at the last run (2026-11-01): **214 domain tests pass**; `:app:assembleDebug`,
   `:app:compileDebugAndroidTestKotlin` and `:app:lintDebug` pass after step 1.7. The instrumented suite last
   ran after step 1.1 on the owner's Samsung SM-S931B (Android 16, test data only): 82 of 83 passed, 1 skipped,
-  1 failed (known failure below). **Device suite not run** after steps 1.2 to 1.7, including the new
+  1 failed (a test timing problem, fixed since, see Sprint 1). **Device suite not run** after steps 1.2 to 1.7, including the new
   `NoAutomaticSpeechTest`, which needs an offline Arabic voice on the device or it skips.
 
 ## What is built
@@ -93,7 +93,7 @@ Still open (owner tasks):
 
 1. ~~Settings as categories with parent / child options~~ (plan step 1.0): built; compiles, lint clean, domain tests (211) pass; device suite run on a Samsung SM-S931B (Android 16): 82 of 83 pass, 1 skipped (old-Android test), 1 fails (see below). Hand check still to do.
 2. ~~Right-to-left app layout~~ (plan step 1.1): built; same device run as above, the layout tests pass. Hand check still to do.
-   * Known failure, **not caused by Sprint 1** (fails the same way on a5bffd2): `LayoutAndBackUiTest.leavingWithUnsavedWorkAsksFirst`. After typing a width on the item entry screen, a system Back leaves the screen on item entry instead of returning to the catalogue. Cause not yet found (a Back-handler on the entry screen, or the soft keyboard on a real phone, are the first suspects).
+   * `LayoutAndBackUiTest.leavingWithUnsavedWorkAsksFirst` failed on the phone (and on a5bffd2, so not caused by Sprint 1). The app is right: on the entry screens a Back press while the keyboard is still on screen only closes the keyboard, and the test pressed Back while the keyboard was still animating away after the Done action. The test now waits for the keyboard to be hidden before every system Back. **Fixed in the test; not yet re-run on a device.**
 3. ~~Blue palette tokens and a blue launcher icon; green only for paid~~ (steps 1.2, 1.3): built; compiles and
    lint passes; the receipt colours are pinned by a domain test; not run on a device. Hand check still to do.
 4. ~~Rename invoice to receipt (وصل)~~ (step 1.4): built; domain tests pass; the Arabic wording needs the
