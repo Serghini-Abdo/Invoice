@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Save
@@ -40,7 +41,9 @@ import ma.workshop.invoice.domain.format.ArabicFormat
 import ma.workshop.invoice.ui.Strings
 import ma.workshop.invoice.ui.VmFactory
 import ma.workshop.invoice.ui.components.BigButton
+import ma.workshop.invoice.ui.components.AppDialog
 import ma.workshop.invoice.ui.components.ButtonKind
+import ma.workshop.invoice.ui.components.DialogAction
 import ma.workshop.invoice.ui.components.ConfirmDialog
 import ma.workshop.invoice.ui.components.AppTopBar
 import ma.workshop.invoice.ui.components.ArabicText
@@ -196,25 +199,22 @@ fun InvoiceFlowRoute(
             onDismiss = vm::discardDraftAndStartFresh,
             confirmText = Strings.RESUME,
             dismissText = Strings.START_NEW,
+            confirmIcon = Icons.Filled.Edit,
+            dismissIcon = Icons.Filled.Add,
         )
     }
 
     if (current?.confirmingExit == true) {
         val isNew = current.mode == FlowMode.New
-        AlertDialog(
-            onDismissRequest = { vm.onEvent(FlowEvent.ExitCancelled) },
-            title = { ArabicText(Strings.LEAVE_TITLE, style = MaterialTheme.typography.titleLarge, modifier = Modifier.fillMaxWidth()) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    ArabicText(if (isNew) Strings.LEAVE_NEW_MESSAGE else Strings.LEAVE_EDIT_MESSAGE, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth())
-                    if (isNew) {
-                        BigButton(Strings.LEAVE_KEEP_DRAFT, Icons.Filled.Save, { vm.onEvent(FlowEvent.ExitKeepDraft) })
-                    }
-                    BigButton(Strings.LEAVE_DISCARD, Icons.Filled.Delete, { vm.onEvent(FlowEvent.ExitDiscard) }, kind = ButtonKind.Danger)
-                    BigButton(Strings.KEEP_EDITING, Icons.Filled.Edit, { vm.onEvent(FlowEvent.ExitCancelled) }, kind = ButtonKind.Secondary)
-                }
+        AppDialog(
+            title = Strings.LEAVE_TITLE,
+            message = if (isNew) Strings.LEAVE_NEW_MESSAGE else Strings.LEAVE_EDIT_MESSAGE,
+            onDismiss = { vm.onEvent(FlowEvent.ExitCancelled) },
+            buttons = buildList {
+                if (isNew) add(DialogAction(Strings.LEAVE_KEEP_DRAFT, Icons.Filled.Save, { vm.onEvent(FlowEvent.ExitKeepDraft) }))
+                add(DialogAction(Strings.LEAVE_DISCARD, Icons.Filled.Delete, { vm.onEvent(FlowEvent.ExitDiscard) }, ButtonKind.Danger))
+                add(DialogAction(Strings.KEEP_EDITING, Icons.Filled.Edit, { vm.onEvent(FlowEvent.ExitCancelled) }, ButtonKind.Secondary))
             },
-            confirmButton = {},
         )
     }
 }

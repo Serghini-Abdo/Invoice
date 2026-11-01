@@ -133,23 +133,52 @@ fun BigButton(
     )
 }
 
-/** The words, then the icon after them (on their left): the small buttons of dialogs. */
+/** One button of an [AppDialog]: always words and an icon, so no decision depends on colour. */
+class DialogAction(
+    val text: String,
+    val icon: ImageVector,
+    val onClick: () -> Unit,
+    val kind: ButtonKind = ButtonKind.Primary,
+)
+
+/**
+ * The app's one dialog: Material's window, but the content reads from the right and the buttons are
+ * full-width app buttons stacked inside it, the main action on top (each has its speaker when speakers are on).
+ * The title's speaker reads the title and the message as one sentence.
+ */
 @Composable
-private fun DialogButton(text: String, icon: ImageVector, onClick: () -> Unit, container: Color = Color.Transparent, content: Color = MaterialTheme.colorScheme.primary) {
-    StrictButton(
-        onClick = onClick,
-        modifier = Modifier.defaultMinSize(minHeight = 56.dp),
-        containerColor = container,
-        contentColor = content,
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-    ) {
-        FitText(text, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f, fill = false))
-        Spacer(Modifier.width(8.dp))
-        Icon(icon, contentDescription = null)
-    }
+fun AppDialog(
+    title: String,
+    message: String,
+    onDismiss: () -> Unit,
+    buttons: List<DialogAction>,
+    modifier: Modifier = Modifier,
+    spokenText: String = if (message.isEmpty()) title else "$title. $message",
+    icon: ImageVector? = null,
+    extra: @Composable (() -> Unit)? = null,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = modifier,
+        icon = icon?.let { { Icon(it, contentDescription = null, modifier = Modifier.size(36.dp)) } },
+        title = {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically) {
+                ArabicText(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f, fill = false))
+                RoundSpeaker(spokenText)
+            }
+        },
+        text = {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp), horizontalAlignment = Alignment.Start) {
+                if (message.isNotEmpty()) ArabicText(message, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth())
+                extra?.invoke()
+                buttons.forEach { action -> BigButton(action.text, action.icon, action.onClick, kind = action.kind) }
+            }
+        },
+        confirmButton = {},
+    )
 }
 
-/** A confirmation dialog with icon + text on both actions, so no decision depends on colour. */
+/** A confirmation dialog: the main action on top, "cancel" below it. */
 @Composable
 fun ConfirmDialog(
     title: String,
@@ -159,33 +188,19 @@ fun ConfirmDialog(
     confirmText: String = Strings.CONFIRM,
     dismissText: String = Strings.CANCEL,
     danger: Boolean = false,
+    confirmIcon: ImageVector = Icons.Filled.Check,
+    dismissIcon: ImageVector = Icons.Filled.Close,
     extra: @Composable (() -> Unit)? = null,
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start, verticalAlignment = Alignment.CenterVertically) {
-                ArabicText(title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f, fill = false))
-                RoundSpeaker(title)
-            }
-        },
-        text = {
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.Start) {
-                if (message.isNotEmpty()) ArabicText(message, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth())
-                extra?.invoke()
-            }
-        },
-        // Material orders the two buttons for the layout direction (right-to-left here).
-        confirmButton = {
-            DialogButton(
-                confirmText,
-                Icons.Filled.Check,
-                onConfirm,
-                container = if (danger) MaterialTheme.appPalette.error else MaterialTheme.colorScheme.primary,
-                content = MaterialTheme.appPalette.onColor,
-            )
-        },
-        dismissButton = { DialogButton(dismissText, Icons.Filled.Close, onDismiss) },
+    AppDialog(
+        title = title,
+        message = message,
+        onDismiss = onDismiss,
+        extra = extra,
+        buttons = listOf(
+            DialogAction(confirmText, confirmIcon, onConfirm, if (danger) ButtonKind.Danger else ButtonKind.Primary),
+            DialogAction(dismissText, dismissIcon, onDismiss, ButtonKind.Secondary),
+        ),
     )
 }
 
@@ -195,21 +210,15 @@ fun ConfirmDialog(
  */
 @Composable
 fun VoiceMissingDialog(onInstall: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        icon = { Icon(Icons.AutoMirrored.Filled.VolumeOff, contentDescription = null, modifier = Modifier.size(36.dp)) },
-        title = { ArabicText(Strings.VOICE_MISSING_TITLE, style = MaterialTheme.typography.titleLarge, modifier = Modifier.fillMaxWidth()) },
-        text = { ArabicText(Strings.VOICE_MISSING_MESSAGE, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.fillMaxWidth()) },
-        confirmButton = {
-            DialogButton(
-                Strings.AUDIO_INSTALL,
-                Icons.Filled.Download,
-                onInstall,
-                container = MaterialTheme.colorScheme.primary,
-                content = MaterialTheme.appPalette.onColor,
-            )
-        },
-        dismissButton = { DialogButton(Strings.LATER, Icons.Filled.Close, onDismiss) },
+    AppDialog(
+        title = Strings.VOICE_MISSING_TITLE,
+        message = Strings.VOICE_MISSING_MESSAGE,
+        onDismiss = onDismiss,
+        icon = Icons.AutoMirrored.Filled.VolumeOff,
+        buttons = listOf(
+            DialogAction(Strings.AUDIO_INSTALL, Icons.Filled.Download, onInstall),
+            DialogAction(Strings.LATER, Icons.Filled.Close, onDismiss, ButtonKind.Secondary),
+        ),
     )
 }
 

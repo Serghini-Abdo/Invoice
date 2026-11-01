@@ -112,27 +112,16 @@ fun MicButton(dictation: Dictation, maxLength: Int, onText: (String) -> Unit, mo
     }
 
     if (listening) {
-        AlertDialog(
-            onDismissRequest = {
-                dictation.cancel()
-                listening = false
-            },
-            icon = { Icon(Icons.Filled.Mic, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(48.dp)) },
-            title = { ArabicText(Strings.DICTATE_LISTENING, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center) },
-            confirmButton = {
-                StrictButton(
-                    onClick = {
-                        dictation.cancel()
-                        listening = false
-                    },
-                    modifier = Modifier.defaultMinSize(minHeight = 56.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                ) {
-                    ArabicText(Strings.CANCEL, style = MaterialTheme.typography.labelLarge)
-                    Spacer(Modifier.width(8.dp))
-                    Icon(Icons.Filled.Close, contentDescription = null)
-                }
-            },
+        val stop = {
+            dictation.cancel()
+            listening = false
+        }
+        AppDialog(
+            title = Strings.DICTATE_LISTENING,
+            message = "",
+            onDismiss = stop,
+            icon = Icons.Filled.Mic,
+            buttons = listOf(DialogAction(Strings.CANCEL, Icons.Filled.Close, stop, ButtonKind.Secondary)),
         )
     }
 }

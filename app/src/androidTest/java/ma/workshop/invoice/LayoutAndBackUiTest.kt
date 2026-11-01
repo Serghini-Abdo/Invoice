@@ -296,4 +296,35 @@ class LayoutAndBackUiTest {
         rule.onNodeWithText(Strings.KEEP_EDITING).performClick()
         waitForText(Strings.CUSTOMER_TITLE)
     }
+
+    @Test
+    fun theResumeDialogStacksFullWidthButtonsWithTheMainOneOnTopAndSpeakersThatOnlySpeak() {
+        goToCatalog()
+        rule.onNodeWithText("باب حديد").performClick()
+        waitForText(Strings.WIDTH)
+        rule.enterNumber("field-width", "1")
+        systemBack(); systemBack(); systemBack(); systemBack() // entry, catalogue, item list, customer
+        waitForText(Strings.LEAVE_TITLE)
+        rule.onNodeWithText(Strings.LEAVE_KEEP_DRAFT).performClick()
+        waitForText(Strings.NEW_INVOICE)
+        rule.onAllNodesWithText(Strings.NEW_INVOICE).onFirst().performClick()
+        waitForText(Strings.RESUME_DRAFT_TITLE)
+
+        val width = rootWidth()
+        val main = rule.onNodeWithText(Strings.RESUME).getBoundsInRoot()
+        assertTrue("the main button is wide, was $main of $width", main.width > width * 0.5f)
+        // the second button is the one right under it (the home screen behind has the same words)
+        val second = rule.onAllNodesWithText(Strings.START_NEW).fetchSemanticsNodes().map { it.boundsInRoot }
+            .filter { it.top >= main.bottom.value - 1f && it.top - main.bottom.value < 40f }
+        assertTrue("a second button sits under the main one", second.isNotEmpty())
+        assertTrue("both have the same width", kotlin.math.abs(second.first().width - main.width.value) < 2f)
+
+        // each button has a speaker, and a tap on it only speaks
+        val speaker = rule.onNodeWithContentDescription("${Strings.SPEAK_LABEL}: ${Strings.RESUME}")
+        speaker.assertWidthIsAtLeast(48.dp).assertHeightIsAtLeast(48.dp)
+        speaker.performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText(Strings.RESUME_DRAFT_TITLE).assertExists()
+        rule.onNodeWithText(Strings.RESUME).assertExists()
+    }
 }

@@ -347,6 +347,7 @@ fun ItemListScreen(
             onDismiss = onCancelRemove,
             confirmText = Strings.DELETE,
             danger = true,
+            confirmIcon = Icons.Filled.Delete,
         )
     }
 }

@@ -148,6 +148,7 @@ fun InvoiceDetailScreen(
             onDismiss = { confirmingDelete = false },
             confirmText = Strings.DELETE,
             danger = true,
+            confirmIcon = Icons.Filled.Delete,
         )
     }
 }

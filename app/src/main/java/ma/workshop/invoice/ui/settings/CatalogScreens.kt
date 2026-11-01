@@ -338,6 +338,7 @@ fun ProductEditScreen(
             onDismiss = { confirmingDelete = false },
             confirmText = Strings.DELETE,
             danger = true,
+            confirmIcon = Icons.Filled.Delete,
             extra = {
                 BigButton(Strings.DEACTIVATE_INSTEAD, Icons.Filled.Check, {
                     confirmingDelete = false
