@@ -1,6 +1,5 @@
 package ma.workshop.invoice.domain
 
-import ma.workshop.invoice.domain.format.ArabicTerms
 import ma.workshop.invoice.domain.format.DocumentRow
 import ma.workshop.invoice.domain.format.InvoiceDocument
 import ma.workshop.invoice.domain.layout.DrawOp
@@ -61,7 +60,7 @@ class InvoiceLayoutTest {
         thankYou: String? = "شكراً لثقتكم",
         hasDeposit: Boolean = true,
     ) = InvoiceDocument(
-        title = ArabicTerms.INVOICE, workshopName = "ورشة الأمل للحدادة", workshopPhone = "0522000000",
+        title = "فاتورة", workshopName = "ورشة الأمل للحدادة", workshopPhone = "0522000000",
         number = "0007", date = "25/10/2026", updatedNote = null,
         customerName = if (customer) "أحمد" else null, customerPhone = if (customer) "0612345678" else null,
         rows = (1..rows).map { row(it, name) },
@@ -105,7 +104,7 @@ class InvoiceLayoutTest {
         val layout = engine.layout(doc(), phone)
         assertEquals(1, layout.pages.size)
         val text = allTexts(layout).map { it.text }
-        for (expected in listOf("ورشة الأمل للحدادة", "0522000000", "وصل رقم 0007", "25/10/2026",
+        for (expected in listOf("ورشة الأمل للحدادة", "0522000000", "فاتورة رقم 0007", "25/10/2026",
             "الزبون: أحمد", "الهاتف: 0612345678", "1 380 DH", "500 DH", "880 DH", "المجموع", "التسبيق", "الباقي", "شكراً لثقتكم")) {
             assertTrue(expected in text, "missing '$expected'")
         }
@@ -340,7 +339,7 @@ class InvoiceLayoutTest {
             val t = texts(page)
             assertFalse(t.any { it.style == TextStyle.TITLE }, "page ${i + 1}: no workshop title block")
             assertFalse(t.any { it.text == "0522000000" || it.text.startsWith("الزبون") }, "page ${i + 1}: no customer block")
-            val slim = t.single { it.text == "ورشة الأمل للحدادة · وصل رقم 0007" }
+            val slim = t.single { it.text == "ورشة الأمل للحدادة · فاتورة رقم 0007" }
             assertEquals(HAlign.RIGHT, slim.align)
             val date = t.single { it.text == "25/10/2026" }
             assertEquals(HAlign.LEFT, date.align)
@@ -349,7 +348,7 @@ class InvoiceLayoutTest {
             assertEquals(a4.margin, slim.y, 0.01f, "the slim line is the first thing on the page")
         }
         // the date and invoice number occur once on page 1 as part of the full header, not as a slim line
-        assertFalse(first.any { it.text == "ورشة الأمل للحدادة · وصل رقم 0007" })
+        assertFalse(first.any { it.text == "ورشة الأمل للحدادة · فاتورة رقم 0007" })
     }
 
     @Test

@@ -11,8 +11,8 @@ The final state of every product decision. Later decisions replace earlier ones;
 
 * For one small workshop (doors, windows, garage gates, frames, accessories). Offline, no account.
   No taxes, no inventory, no accounting.
-* **[to build]** The document is a **فاتورة** (owner decision, 2026-11-01, reversing the earlier وصل). App
-  name "فواتير الورشة". Every screen, printed title and spoken text uses فاتورة / فواتير again (plan step 1.8).
+* The document is a **فاتورة** (owner decision, 2026-11-01, reversing the earlier وصل). App
+  name "فواتير الورشة". Every screen, printed title and spoken text uses فاتورة / فواتير again.
   No legal mentions (ICE etc.) are added.
 * Prices are typed on every line **by design**: each job has its own size and material, so the price
   differs most of the time. No default price per product and no suggested-price chips.

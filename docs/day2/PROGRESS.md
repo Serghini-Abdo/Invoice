@@ -38,8 +38,8 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
 * **Layout:** forced right-to-left on every phone (back arrow on the right, labels on the right, amounts on
   the left). Buttons and cards have no arrows; the only arrow is the back arrow in the top bar.
 * **Palette and name:** blue for actions and the launcher icon; green only for paid (badge, paid balance,
-  "خالص" banner) and on the printed invoice, which keeps its colours. The document is called وصل on screen, on paper
-  and in speech (shared files `wasl-0007-...`): **being switched back to فاتورة** (plan step 1.8).
+  "خالص" banner) and on the printed invoice, which keeps its colours. The document is called فاتورة on screen, on paper
+  and in speech (shared files `invoice-0007-...`).
 * **Settings:** six category cards with their own screens (see above).
 
 ## Still to check by hand on the phone
@@ -95,7 +95,7 @@ Still open (owner tasks):
    * `LayoutAndBackUiTest.leavingWithUnsavedWorkAsksFirst` used to fail on the phone (and on a5bffd2, so not caused by Sprint 1). The app was right: on the entry screens a Back press while the keyboard is open only closes the keyboard, and a real phone keeps its keyboard up after a width is typed. The test's system Back now closes the keyboard first when it is open. Passes on the phone.
 3. ~~Blue palette tokens and a blue launcher icon; green only for paid~~ (steps 1.2, 1.3): built; compiles and
    lint passes; the invoice colours are pinned by a domain test; the device suite passes. Hand check still to do.
-4. ~~Rename to وصل~~ (step 1.4): built, then **reversed by the owner**: back to فاتورة in step 1.8.
+4. ~~Back to فاتورة~~ (step 1.8): built (the owner reversed the وصل rename of step 1.4).
 5. ~~Fix the known issues: the product "not found" message, the unused string~~ (step 1.5): built.
 6. ~~No arrows on buttons and cards~~ (step 1.6): built; the device suite passes. Hand check still to do.
 7. ~~No automatic speech; remove the two automatic-totals switches~~ (step 1.7): built; the new

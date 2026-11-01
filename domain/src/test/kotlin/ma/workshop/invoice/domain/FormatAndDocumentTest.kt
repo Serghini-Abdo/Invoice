@@ -2,7 +2,6 @@ package ma.workshop.invoice.domain
 
 import ma.workshop.invoice.domain.format.ArabicFormat
 import ma.workshop.invoice.domain.format.ArabicNumberWords
-import ma.workshop.invoice.domain.format.ArabicTerms
 import ma.workshop.invoice.domain.format.InvoiceDocumentBuilder
 import ma.workshop.invoice.domain.format.ItemDescriber
 import ma.workshop.invoice.domain.format.SpokenText
@@ -111,7 +110,7 @@ class FormatAndDocumentTest {
         val invoice = Fixtures.invoice(now = 1_792_929_600_000)
         val doc = InvoiceDocumentBuilder.build(invoice, Fixtures.settings(), zone)
 
-        assertEquals(ArabicTerms.INVOICE, doc.title)
+        assertEquals("فاتورة", doc.title)
         assertEquals("ورشة الأمل للحدادة", doc.workshopName)
         assertEquals("0522000000", doc.workshopPhone)
         assertEquals("0001", doc.number)
@@ -169,14 +168,14 @@ class FormatAndDocumentTest {
     fun `an edited invoice is clearly marked`() {
         val edited = Fixtures.backupData().invoices[1].invoice
         val doc = InvoiceDocumentBuilder.build(edited, Fixtures.settings(), zone)
-        assertTrue(doc.updatedNote!!.startsWith(ArabicTerms.UPDATED))
+        assertTrue(doc.updatedNote!!.startsWith("فاتورة معدلة"))
     }
 
     @Test
     fun `file names are ASCII and descriptive`() {
         val invoice = Fixtures.invoice(number = 7, now = 1_792_929_600_000)
-        assertEquals("wasl-0007-2026-10-25.pdf", InvoiceDocumentBuilder.fileName(invoice, "pdf", zone))
-        assertEquals("wasl-0007-2026-10-25.png", InvoiceDocumentBuilder.fileName(invoice, "png", zone))
+        assertEquals("invoice-0007-2026-10-25.pdf", InvoiceDocumentBuilder.fileName(invoice, "pdf", zone))
+        assertEquals("invoice-0007-2026-10-25.png", InvoiceDocumentBuilder.fileName(invoice, "png", zone))
     }
 
     // ---- spoken text ----

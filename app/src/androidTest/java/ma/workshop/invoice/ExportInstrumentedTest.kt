@@ -129,7 +129,7 @@ class ExportInstrumentedTest {
         val files = export(invoice(4), ExportFormat.PNG)
         assertNull(files.pdf)
         val file = files.png!!
-        assertEquals("wasl-0007-2026-10-25.png", file.name)
+        assertEquals("invoice-0007-2026-10-25.png", file.name)
 
         val bitmap = BitmapFactory.decodeFile(file.path)
         assertNotNull("the PNG must decode", bitmap)
@@ -150,7 +150,7 @@ class ExportInstrumentedTest {
         val files = export(invoice(4), ExportFormat.PDF)
         assertNull(files.png)
         val pdf = files.pdf!!
-        assertEquals("wasl-0007-2026-10-25.pdf", pdf.name)
+        assertEquals("invoice-0007-2026-10-25.pdf", pdf.name)
         assertTrue(pdf.length() > 2_000)
 
         val pages = renderPdfPages(pdf)
@@ -204,7 +204,7 @@ class ExportInstrumentedTest {
         val pdf = files.pdf!!
         assertTrue(renderPdfPages(pdf).size >= 4)
         assertNotNull(files.preview)
-        val exports = File(context.cacheDir, "exports").listFiles { f -> f.name.startsWith("wasl-0007") }.orEmpty()
+        val exports = File(context.cacheDir, "exports").listFiles { f -> f.name.startsWith("invoice-0007") }.orEmpty()
         assertTrue("no PNG file is written", exports.none { it.name.endsWith(".png") })
     }
 
@@ -231,7 +231,7 @@ class ExportInstrumentedTest {
             now = 2,
         ).first
         val again = export(edited, ExportFormat.PNG)
-        val exports = File(context.cacheDir, "exports").listFiles { f -> f.name.startsWith("wasl-0007") }.orEmpty()
+        val exports = File(context.cacheDir, "exports").listFiles { f -> f.name.startsWith("invoice-0007") }.orEmpty()
         assertEquals(1, exports.size)
         assertEquals(again.png!!.name, exports.single().name)
     }

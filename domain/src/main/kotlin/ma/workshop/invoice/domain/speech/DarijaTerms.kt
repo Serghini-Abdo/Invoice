@@ -22,11 +22,11 @@ object DarijaTerms {
 
     // labels
     const val TOTAL = "المجموع"
-    const val INVOICE_TOTAL = "المجموع ديال الوصل"
+    const val INVOICE_TOTAL = "المجموع ديال الفاتورة"
     const val DEPOSIT = "التسبيق"
     const val REMAINING = "الباقي"
     const val NO_DEPOSIT = "ما كاين حتى تسبيق"
-    const val FULLY_PAID = "الوصل خالص"
+    const val FULLY_PAID = "الفاتورة خالصة"
     const val WIDTH = "العرض"
     const val HEIGHT = "الطول"
     const val QUANTITY = "العدد"

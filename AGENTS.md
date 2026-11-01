@@ -19,8 +19,8 @@ there are no real invoices on any phone yet.
 
 ## Decided in the 2026-11-01 review
 
-* The document is a **فاتورة** (invoice) in screen text, printed title and speech. Session 2 renamed it to وصل;
-  plan step 1.8 switches it back. Never use وصل. The palette is **blue**; green means paid only (and the printed invoice keeps its
+* The document is a **فاتورة** (invoice) in screen text, printed title and speech. Never use وصل
+  (the owner reversed that rename on 2026-11-01). The palette is **blue**; green means paid only (and the printed invoice keeps its
   own colours). Buttons and cards have no arrows. Nothing is spoken automatically.
 * Coming: speakers move to one system (`SpeakableText` / `SpeakableButton` and a speaker column); do not add
   new hand-placed speakers in the meantime.

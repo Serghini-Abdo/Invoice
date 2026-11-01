@@ -117,7 +117,7 @@ object ArabicFormat {
 
 /** Fixed Arabic vocabulary used on invoices and in spoken text. (App screens use string resources.) */
 object ArabicTerms {
-    const val INVOICE = "وصل"
+    const val INVOICE = "فاتورة"
     const val NUMBER = "رقم"
     const val DATE = "التاريخ"
     const val CUSTOMER = "الزبون"
@@ -129,7 +129,7 @@ object ArabicTerms {
     const val DEPOSIT = "التسبيق"
     const val REMAINING = "الباقي"
     const val FULLY_PAID = "خالص"
-    const val UPDATED = "وصل معدل"
+    const val UPDATED = "فاتورة معدلة"
     const val WIDTH = "العرض"
     const val HEIGHT = "الارتفاع"
     const val AREA = "المساحة"
