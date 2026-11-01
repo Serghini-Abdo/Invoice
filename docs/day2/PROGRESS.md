@@ -86,8 +86,9 @@ Still open (owner tasks):
 
 ### Sprint 1: layout, palette, name
 
-1. ~~Settings as categories with parent / child options~~ (plan step 1.0): built; compiles, lint clean, domain tests (211) pass; not run on a device yet.
-2. ~~Right-to-left app layout~~ (plan step 1.1): built; compiles and the instrumented tests compile; layout tests not run on a device yet.
+1. ~~Settings as categories with parent / child options~~ (plan step 1.0): built; compiles, lint clean, domain tests (211) pass; device suite run on a Samsung SM-S931B (Android 16): 82 of 83 pass, 1 skipped (old-Android test), 1 fails (see below). Hand check still to do.
+2. ~~Right-to-left app layout~~ (plan step 1.1): built; same device run as above, the layout tests pass. Hand check still to do.
+   * Known failure, **not caused by Sprint 1** (fails the same way on a5bffd2): `LayoutAndBackUiTest.leavingWithUnsavedWorkAsksFirst`. After typing a width on the item entry screen, a system Back leaves the screen on item entry instead of returning to the catalogue. Cause not yet found (a Back-handler on the entry screen, or the soft keyboard on a real phone, are the first suspects).
 3. Blue palette tokens and a blue launcher icon; green only for paid.
 4. Rename invoice to receipt (وصل) in screens, printed output and speech (no migration).
 5. Fix the known issues: the product "not found" message, the unused string.
