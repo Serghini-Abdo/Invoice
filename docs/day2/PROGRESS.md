@@ -1,622 +1,110 @@
-# Day 2 progress
-
-Decisions: [DECISIONS.md](DECISIONS.md). Mock-ups: [design-review.html](design-review.html).
-
-## Sprint plan
-
-There were no Sprint 1 or Sprint 2 branches when Sprint 3 started (2026-10-25); `day2/sprint-3` was
-branched from `main`. The owner chose to build the **speech core first** and to place speakers and mics
-on the screens after the layout sprint.
-
-| Sprint | Scope | State |
-|---|---|---|
-| Design | Four review rounds, approved 2026-10-25 | Done |
-| 3 (speech core) | TTS wrapper, voice check and prompt, Darija speech, speech rate, speech recognizer core | Done, see below |
-| 3 (add-on) | Spoken-language setting: Darija (default) or standard Arabic | Done, see below |
-| 4 (foundations) | Theme tokens, forced LTR, Arabic text and field components, top bar, speaker tile, Add button | Done, see below |
-| 5 (invoice output) | Table option A on paper and on screen, PDF headers and footer, totals colours, one PNG or point to PDF, paid badge, stacked Saved buttons | Done, see below |
-| 6 (units, fields, photos) | cm/m and unit-label settings, invoice unit, field icons, photo import, backup with images | Not started |
-| 7 (placement) | Speakers on every row/card/field/CTA; mic on customer name and product name; dictation status line | Not started (needs 4 to 6) |
-
-The step-by-step plan for sprints 4 to 7 and a starter prompt for the next session are in
-[Next sprints, step by step](#next-sprints-step-by-step) at the end of this file.
-
-## Sprint 3: speech core
-
-### Delivered
-
-* **Darija speech, offline** (`domain/speech`):
-  * `DarijaTerms`: every spoken label, in Darija spelling, kept apart from screen and invoice text.
-  * `DarijaNumbers`: numbers as Darija words (جوج, تلاتة, حضاش, عشرين, ميتين, تلت آلاف, مليون …),
-    decimals ("جوج فاصلة تنين و خمسين"), metres ("متر و عشرين سانتي") and centimetres.
-  * `DarijaSpeech`: prices (درهم / دراهم / سنتيم), quantities, measurements, and one natural sentence per
-    row, per calculation card and per total + deposit + balance card. Method names come from one table,
-    so no new `when (formula)` branch was added.
-* **TextToSpeech wrapper** (`platform/SpeechController`, `platform/Speaker`):
-  * offline voices only (a voice that needs the network counts as missing); ar-MA first, then any Arabic;
-  * every speech uses `QUEUE_FLUSH`, so tapping another speaker stops the current one;
-  * speech-rate setting applied on every utterance;
-  * voice on/off is the existing audio switch; `Speaker` (through the pure `SpeechGate`) never speaks
-    with audio off and never shows a prompt then;
-  * automatic speech (totals on arrival) only plays when a voice is ready; it never prompts.
-* **Missing Arabic voice**: the first speaker tap without an offline Arabic voice opens a clear dialog
-  (`VoiceMissingDialog`) with "تثبيت صوت عربي" (opens the system voice-data screen) and "لاحقاً"; once per
-  app run, later taps stay silent with a short toast. The flow re-checks the voice when it resumes.
-  The Settings banner and install button were already there.
-* **Existing speech switched to Darija**: product name on catalogue cards, item total on the confirmation
-  screen, invoice summary on the review screen, "تجربة الصوت" in Settings.
-* **Speech rate**: `AppSettings.speechRate` (slow 0.8 / normal 1.0 / fast 1.25), three large choices in the
-  Settings audio section. Room schema **version 2** (`MIGRATION_1_2`, `app_settings.speechRate` default
-  `normal`) with a migration test; backups carry the rate, and older backups restore with `normal`.
-* **Speak-to-fill core** (`platform/Dictation`, `ui/components/MicButton`):
-  * `SpeechRecognizer`, ar-MA, `EXTRA_PREFER_OFFLINE`; recognised text is tidied and limited to the
-    field's length, then put in the field as ordinary editable text;
-  * microphone permission (`RECORD_AUDIO`) requested on the first mic tap only, after a short
-    explanation; later refusals only show a hint;
-  * hint when the offline Arabic pack is missing (checked up front on Android 13+, otherwise from the
-    recognizer's error), plus hints for no recogniser, nothing understood and busy;
-  * `MicButton` is built but **not placed on any field yet** (placement sprint).
-
-### Tests
-
-| Test | Where | Result |
-|---|---|---|
-| Darija number words for prices, quantities, measurements; row, calculation and totals sentences | `domain` `SpeechTest` (13 tests) | Pass (JVM) |
-| Voice off never speaks and never prompts; missing voice prompts once | `domain` `SpeechTest` | Pass (JVM) |
-| Recognizer error mapping, recognised-text tidying | `domain` `SpeechTest` | Pass (JVM) |
-| Speech rate in backups, older backups restore at normal | `domain` `SpeechTest` | Pass (JVM) |
-| All existing domain tests | `./gradlew -p domain test` | Pass |
-| Speaker tap on a product card never selects | `SpeakerTapTest` (instrumented) | Pass (phone) |
-| Replay speaker on the confirmation never confirms or leaves | `SpeakerTapTest` (instrumented) | Pass (phone) |
-| Voice off: speakers silent, no prompt, flow continues | `VoiceOffFlowTest` (instrumented) | Pass (phone) |
-| Migration 1 → 2 keeps settings and adds the normal rate | `MigrationTest` (instrumented) | Pass (phone) |
-| All instrumented tests | Samsung SM-S931B, Android 16 | **OK (49 tests)**: 48 pass, 1 skipped (`AppFolderStoreTest.a_…`, Android 7–9 only) |
-| Build, lint | `assembleDebug`, `assembleDebugAndroidTest`, `lintDebug` | Pass |
-| Mic button only on text fields | (placement sprint) | Not yet testable: the mic is not placed |
-
-### Verified on the emulator vs. must be tested on a real phone
-
-The instrumented suite ran on the owner's phone (Samsung SM-S931B, Android 16) with the owner's approval,
-after the API 37 emulator could not start the app in time on this PC (7.7 GB RAM; the app process hit an
-"app not responding" timeout at startup and Gradle ran out of memory). The app on that phone holds only test
-data. The suite was run with `adb shell am instrument` on the APKs built by `assembleDebug` /
-`assembleDebugAndroidTest`.
-
-**Verified automatically (JVM tests and on the phone):**
-
-* Darija words for prices, quantities and measurements; the row, calculation-card and totals sentences.
-* Speaker taps never select, confirm or navigate (product card, confirmation replay).
-* With voice off, speakers are silent, no voice prompt appears, and the invoice flow continues.
-* The missing-voice prompt logic (once per run, never with audio off); recognizer error to hint mapping.
-* Schema 1 → 2 migration and backup compatibility of the speech rate.
-* Build, lint and every existing test.
-
-**Not verified yet; must be tested by hand on a real phone (ideally the owner's):**
-
-* Whether an **offline Arabic voice** is installed, and what Settings → الصوت shows (ready / no Arabic voice).
-* **Voice quality** and how the Darija spelling and the Darija **number words** actually sound
-  ("ألفين و خمس مية و عشرين درهم", "متر و عشرين سانتي"); adjust `DarijaTerms` / `DarijaNumbers` if a voice
-  mispronounces them.
-* **Speech rate**: whether slow / normal / fast (0.8 / 1.0 / 1.25) feel right; "تجربة الصوت" at each.
-* The **missing-voice dialog** on the first speaker tap, and the **voice download** flow through
-  "تثبيت صوت عربي", then that the app picks up the new voice when it comes back.
-* Tapping another speaker while one is talking stops the first.
-* **Speak-to-fill** is not on any screen yet (placement sprint). When it is: the microphone permission
-  explanation and system dialog on the first mic tap only, recognition of Moroccan Arabic names with the
-  **offline ar-MA pack**, the hint when the pack is missing, and that the text stays editable.
-
-## Sprint 3 add-on: spoken language (Darija or standard Arabic)
-
-Requested by the owner after the speech core.
-
-### Delivered
-
-* `SpeechLanguage` setting (`darija` default, `standard`); Settings → الصوت → "لغة الكلام" with two choices
-  in the same style as the speech rate (no speakers in Settings). "تجربة الصوت" speaks its sample in the
-  chosen language.
-* One interface, `SpeechText` (amount, quantity, length, rate, row, item total, calculation card, method,
-  totals card, voice test), picked with `SpeechTexts.of(language)`:
-  * Darija = `DarijaSpeech` (unchanged sentences);
-  * standard Arabic = `StandardSpeech`, built on the existing `ArabicNumberWords` and `SpokenText`, plus
-    the missing sentences (rows, calculation card, rates, metres/centimetres with "متر واحد / متران /
-    أمتار", "سنتيمتر / سنتيمتران / سنتيمترات"). Method names come from one table per language.
-* Room schema **version 3** (`MIGRATION_2_3`, `app_settings.speechLanguage` default `darija`); the v2
-  schema is unchanged. Backups carry the language; older backups and unknown values restore as Darija.
-
-### Tests
-
-| Test | Where | Result |
-|---|---|---|
-| Standard Arabic prices, quantities, measurements, row, calculation and totals sentences; language switch; backup default | `domain` `StandardSpeechTest` (8 tests) | Pass (JVM) |
-| All domain tests | `./gradlew -p domain test` | Pass (188 tests) |
-| Build, lint | `assembleDebug`, `assembleDebugAndroidTest`, `lintDebug` | Pass |
-| Migration 2 → 3 keeps settings and adds Darija | `MigrationTest` (instrumented) | Pass (phone) |
-| All instrumented tests | Samsung SM-S931B, Android 16 | 49 pass, 1 skipped (Android 7–9 only) of 50. The first run failed the 2 migration tests only because the test APK was packaged before `3.json` existed; after rebuilding it, `MigrationTest` is OK (3 tests). |
-
-### Must be heard on a real phone
-
-* The **standard-Arabic reading** with the installed Arabic voice: numbers ("ألفان وخمسمائة وعشرون درهم"),
-  measurements ("متر واحد وعشرون سنتيمتر"), the calculation and totals sentences.
-* Known simplification inherited from `SpokenText`: the number before a noun is not put in construct state
-  ("مائتان درهم" rather than the formal "مائتا درهم"; "عشرون سنتيمتر" rather than "سنتيمتراً"). It is
-  understandable when spoken; fix in `SpokenText` / `StandardSpeech` if the owner wants formal grammar.
-* Switching the language in Settings and pressing "تجربة الصوت" in each language.
-
-### Notes for the next sprints
-
-* `Strings.AUDIO_TEST_SENTENCE` is no longer used (the voice test speaks `SpeechText.voiceTest` in the chosen language).
-* Placement must use `Speaker.say(...)` for taps and `Speaker.sayIfReady(...)` for automatic speech, and
-  `SpeechTexts.of(settings.speechLanguage)` for every sentence (never `DarijaSpeech` directly).
-* Instrumented tests clear the app database: always target one device explicitly (`adb -s` /
-  `ANDROID_SERIAL`), and never a phone with real invoices.
-* On this PC the emulator and Gradle do not fit in memory together: build first, stop Gradle
-  (`./gradlew --stop`), then start the emulator; or install the APKs and run `adb shell am instrument`.
-
-## Sprint 4: foundations
-
-Branch `day2/sprint-4` (from `day2/sprint-3`).
-
-### Delivered
-
-* **One palette** (`domain/palette/Palette`): every colour of DECISIONS.md as ARGB. The screen theme
-  (`ui/theme/Theme.kt`) builds the Material `ColorScheme` and a small `AppPalette` (`MaterialTheme.appPalette`:
-  paid green, balance yellow + pressed + edge, error, gray, gray-strong, surface, ink, banner colours) from it,
-  and the printed invoice's `InvoiceColors` now points at the same table. `AppColors` is gone; no screen uses
-  `AppColors.*` or `Color.White` any more.
-  * Green means paid only: unpaid balances, item totals and invoice totals on screens are ink; the paid
-    balance and the "خالص" badge stay green. On the **printed invoice** the unpaid balance is ink too, and the
-    workshop name, muted text, dividers and panels use the new palette (rust is gone). The rest of the invoice
-    layout is unchanged (sprint 5, invoice output).
-  * Buttons: primary/success green with white, danger red with white, secondary white with a gray edge and
-    ink text, accent yellow with ink text and a `#A67C00` edge. Home cards: green, yellow (dark text, dark
-    edge), white (gray edge), as in the mock-up.
-* **Forced LTR**: `MainActivity` and `InvoiceTheme` use `LayoutDirection.Ltr`. `ArabicText` (in
-  `ui/components/Foundations.kt`) is a right-to-left paragraph, right-aligned; every screen text uses it.
-  Every row was re-ordered so labels stay on the right and amounts on the left; icons sit on the right of
-  their words. Choices read from the right (speech language, speech rate, metre/cm, picture grid). The renderer
-  of the printed invoice is unchanged (still RTL).
-  * One RTL island on purpose: the product-catalogue grid keeps today's order (first product top-right,
-    decided); each card inside is LTR again. The category chips use `reverseLayout`.
-* **`AppTextField`**: label above on the right (optional small hint such as "(اختياري)"), box below with
-  right-aligned text (a phone number keeps its digit order), optional illustration beside it on the right,
-  optional `trailing` slot inside the box on the left (for the mic in sprint 7), error line with icon. It
-  replaces all 9 `OutlinedTextField`s (customer name/phone, product name, category, workshop name/phone/
-  thank-you, history search). No illustrations are passed yet (field icons are sprint 6).
-* **Arrows**: forward arrows point right, on the right of the label ("→ متابعة"); back arrow on the left.
-* **`AppTopBar`** replaces `ScreenHeader` on every screen: back left (56 dp), title right with an optional
-  speaker slot, optional centred 44 dp picture (item details and item confirmation) with the title limited
-  to the right half and ending with "…". The mute chip of confirmation and review moved to `AppSubBar`, a
-  slim line under the bar. On the confirmation screen the large picture moved into the bar (as in the mock-up).
-* **`SpokenButton` / `SpeakerTile`**: `| speaker | button |`, the tile copies the button's colours, border,
-  radius and height, 4 dp gap, at least 48 × 48 dp, own target that only speaks; stays usable (and speaks)
-  when its button is disabled. Used only by the add button for now (placement is sprint 7).
-* **"+ إضافة منتوج"** (`AddProductButton`): yellow `#F2B705`, ink text, `#A67C00` edge, 64 dp, plus in a dark
-  circle on the right of the label, pressed state darker (`#D9A404`) and shrinking slightly. Shown in both the
-  empty and the filled item list. Its tile speaks the new `SpeechText.addProduct` ("زيد منتوج" in Darija,
-  "إضافة منتوج" in standard Arabic) through `Speaker.say`.
-* `strictClickable` / `StrictButton` accept an interaction source (for the pressed state) and a content
-  description (for icon-only buttons such as the tile).
-
-### Tests
-
-| Test | Where | Result |
-|---|---|---|
-| Add-product sentence in both languages | `domain` `StandardSpeechTest` | Pass (JVM) |
-| All domain tests | `./gradlew -p domain test` | Pass (189 tests) |
-| Build, lint | `assembleDebug`, `assembleDebugAndroidTest`, `lintDebug` | Pass (lint: 0 errors, 62 warnings, none in changed code: Gradle versions, KTX, launcher icon) |
-| Back arrow left, title right, home cards and Continue large | `LayoutAndBackUiTest` (rewritten for LTR) | Pass (phone) |
-| Field labels and typed text right-aligned (Arabic name, phone number) | `LayoutAndBackUiTest` (new) | Pass (phone) |
-| Yellow add button ≥ 64 dp; tile left of it, 4 dp gap, same height, ≥ 48 dp; a tile tap never opens the catalogue | `LayoutAndBackUiTest` (new) | Pass (phone) |
-| Centred picture in the item-details bar, title in the right half; mute chip in the sub-bar on the left on confirmation | `LayoutAndBackUiTest` (new) | Pass (phone) |
-| Catalogue first product top-right, speakers ≥ 48 dp, speaker tap and finger slide never select, keypad, system Back | `LayoutAndBackUiTest` (kept) | Pass (phone) |
-| Export: payment summary found on PNG / last PNG / last PDF page | `ExportInstrumentedTest` | Pass (phone), see note |
-| All instrumented tests | Samsung SM-S931B, Android 16 | **OK (53 tests)**: 52 pass, 1 skipped (`AppFolderStoreTest.a_…`, Android 7–9 only) |
-
-Test changes besides `LayoutAndBackUiTest`:
-
-* The add button's visible label is now "إضافة منتوج" (the plus is an icon), so the locator in
-  `InvoiceFlowUiTest`, `ScreenshotTourTest` and `SpeechUiTest` changed from `"+ إضافة منتوج"` to
-  `Strings.ADD_PRODUCT`. The flows themselves are unchanged.
-* `ExportInstrumentedTest` found the payment summary by the old rust balance colour, which no longer exists
-  (unpaid balance = ink). It now looks for the summary box itself: the tallest block in the invoice panel
-  colour (the column-title strip has the same fill but is one line high), and also checks that page 1 of the
-  long PDF has no summary. The first run of the suite failed only these 2 tests for that reason.
-
-### Verified on a device vs. must be checked by hand
-
-The suite ran on the owner's Samsung SM-S931B (Android 16, test data only) with the owner's approval,
-targeted with `adb -s`, after building and stopping Gradle.
-
-**Verified automatically:** LTR placement of the back arrow, titles, field labels, typed text, the add
-button and its tile, the centred picture and the sub-bar; touch-target sizes; speaker taps never act;
-every existing flow, export, backup, migration and speech test.
-
-**Must be checked by eye on the phone (not covered by tests):**
-
-* Colours on every screen against the mock-ups: the yellow add button and the yellow history card (dark text,
-  dark edge), the white settings card, white secondary buttons with a gray edge, banners (info gray, warning
-  pale yellow, error pale red, success pale green).
-* The add button's **pressed state** (darker yellow, slight shrink) is visible under a real finger.
-* Arrow directions and icon sides: "→ متابعة", icons on the right of every button label and banner, the
-  forward arrow at the left of the Settings cards pointing right.
-* Arabic text that starts with digits or Latin (amounts "2 520,00 DH", "DH / م²", the customer line
-  "أحمد • 0612 …", invoice numbers, dates) reads in the right order and sits on the right.
-* Long product names in the item-details bar end with "…" before the centred picture.
-* Dialogs (save, delete, leave, restore, voice missing, mic listening): title and text on the right,
-  cancel on the left and confirm on the right; the Material date picker in history.
-* The printed invoice (PNG and PDF) with the new colours: workshop name green, unpaid balance ink.
-* The add button's speaker tile with the voice on: it says "زيد منتوج" (Darija) / "إضافة منتوج" (standard).
-
-### Notes for the next sprints
-
-* Use `ArabicText` for every new screen text, `AppTextField` for text input, `AppTopBar` for headers,
-  `SpokenButton` for labelled buttons and colours only from `MaterialTheme.colorScheme` / `appPalette`.
-* In LTR a `Column` aligns children left: give content columns `horizontalAlignment = Alignment.End`
-  (`SectionCard` already does) and put the right-hand element last in a `Row`.
-* The empty item list card is still a button (it opens the catalogue); the mock-up makes it a message with
-  its own speaker: change it with the speaker placement in sprint 7.
-
-## Sprint 5: invoice output
-
-Branch `day2/sprint-5` (from `day2/sprint-4`). Not pushed.
-
-### Delivered
-
-* **Table option A** (`InvoiceLayoutEngine`): columns left to right Price | Measurement / Formula | Quantity |
-  Name with its picture. The unit price is inside the formula cell ("2,52 م² × 500 DH", per piece
-  "35 DH / قطعة"); the quantity has its own centred column with 8-unit margins; "DH" is written once, in the
-  column title "المبلغ (DH)"; no divider lines in the table. New `DocumentRow.formula` / `totalNumber`,
-  `ItemDescriber.formula`, `InvoiceDocumentBuilder.row` (shared with the screens).
-* **Thumbnails 34 units** (26 pt, about 9 mm on A4). To get 26 pt the PDF is laid out about 778 units wide
-  (`PDF_SCALE = 26/34`), margin 28; table text prints at about 9 pt. The PNG is still 360 units = 1080 px.
-* **PDF:** full header on page 1 only; pages 2+ start with one slim line (workshop · invoice · date) above the
-  column titles; footer "صفحة 2 / 3" on every page; total, deposit and balance on the last page only, with at
-  least the last row. Deposit green and smaller (18 vs 20); balance in a yellow band, dark text, total's size.
-  The "خالص" badge on the paper stays when fully paid.
-* **One PNG** (`PngLimits`, 8,000 px): the multi-PNG split is gone. A too-tall invoice gets no PNG, the PDF is
-  made even if the format is "image", and the Saved screen / invoice detail show "هذه الفاتورة طويلة على صورة
-  واحدة. شاركها كملف PDF" with the PDF share and print buttons (`ExportFiles.pngTooLong`, `ExportUi.pngTooLong`).
-  `ExportFiles.png` is now a single `File?`.
-* **Same compact table on screen** (`ui/components/InvoiceTable.kt`): item list (36 dp pictures, one title
-  strip, each row a card with | حذف | تعديل | below), review (32 dp), invoice detail (32 dp). No dividers; a long
-  calculation wraps inside its cell. The old `ReadOnlyItem` and per-item cards are gone.
-* **Paid state on review:** "0 DH" in green with the `PaidBadge` (check icon + "خالص") on the balance line;
-  the banner is gone. An open balance stays bold ink. (Invoice detail keeps its banner: not in the list.)
-* **Saved screen:** "فاتورة جديدة" and "الرئيسية" stacked, full width.
-
-### Tests
-
-| Test | Where | Result |
-|---|---|---|
-| Column order, quantity column/margins, currency once, long formula wraps, no dividers, 34-unit thumbnails (32–40) | `InvoiceLayoutTest` | Pass (JVM) |
-| Deposit green and smaller, balance in a yellow band; paid badge | `InvoiceLayoutTest` | Pass (JVM) |
-| PNG limit (8,000 px, about 55 items); rows per page; slim line, full header on page 1 only; footer on every page; totals on the last page only | `InvoiceLayoutTest` | Pass (JVM) |
-| Row formula / bare total | `FormatAndDocumentTest` | Pass (JVM) |
-| All domain tests | `./gradlew -p domain test` | **198 pass** |
-| Build, lint | `assembleDebug`, `assembleDebugAndroidTest`, `lintDebug` | Pass (no errors) |
-| One PNG of 45 items + several PDF pages, yellow band and summary on the last page only | `ExportInstrumentedTest` | Pass (phone) |
-| 90 items: no PNG, PDF made although "image" is chosen | `ExportInstrumentedTest` | Pass (phone) |
-| Table order amount < formula < quantity < name on item list, review, detail; actions delete-left / edit-right | `InvoiceTableUiTest` (new) | Pass (phone) |
-| Paid badge only when deposit = total | `InvoiceTableUiTest` | Pass (phone) |
-| Saved buttons stacked, same left edge and width | `InvoiceTableUiTest` | Pass (phone) |
-| All instrumented tests | Samsung SM-S931B, Android 16 | **OK (57 tests)** |
-
-Test changes: the old 60-item "BOTH formats" test (split PNG) was replaced; `ExportFiles.png` is a single file.
-Test fixes during the run were test bugs only (a wait satisfied by the empty list, a yellow match too loose
-against illustration colours, a deposit typed twice).
-
-### Verified on a device vs. must be checked by hand
-
-Run on the owner's Samsung SM-S931B (test data only, with the owner's approval), targeted with `adb -s`,
-after building and stopping Gradle.
-
-**Verified automatically:** column order and sizes of the table on three screens, paid badge logic, stacked
-Saved buttons, PNG height under 8,000 px for 45 items, PDF page size and pagination, yellow band only on the last
-page, PDF fallback for a too-long invoice, every earlier test.
-
-**Check by eye on the phone (not covered):**
-
-* The PNG and PDF of a real invoice (open them from Saved → share): table spacing, 9 mm pictures, formula wrapping,
-  the yellow balance band, green deposit, footer "صفحة 1 / 1". Also print preview on paper if possible.
-* The compact table on the item list, review and detail at real size: 13 sp text, column titles fit, long names
-  and long formulas wrap without overlap; the picture sits right of the name.
-* The review paid line: badge left of "0 DH", reads correctly in Arabic.
-* The long-invoice message on Saved with 56+ items and format "image" (only the PDF buttons show).
-* Bidi order of "2,52 م² × 500 DH" and "صفحة 2 / 3" in the PDF.
-
-### Owner tweaks after the first device run
-
-* Thin divider between table rows (paper and the review/detail tables; none after the last row).
-* Balance: the yellow is behind the amount only, the word "الباقي" stays on the panel.
-* Quantity column wider (56 units on paper, 54 dp on screen); label "الكمية" is now "العدد" everywhere
-  (screens, paper, standard-Arabic speech, DECISIONS.md).
-* The "فاتورة معدلة" line is no longer printed on the shared invoice.
-* No thumbnails on the shared invoice (PNG and PDF): the name takes the space. Screens keep their pictures.
-* PDF text is bigger: one layout unit = one point (table text 12 pt, was about 9 pt), so fewer rows per page.
-* **Verification:** domain tests, build and lint pass, and the full instrumented suite was rerun on the Samsung SM-S931B after these tweaks: **OK (57 tests)**. Still to check by eye: PNG/PDF divider weight, the yellow patch width (estimated from the digit count) and the quantity column. `ExportInstrumentedTest` no longer looks for thumbnails.
-
-### Second round of tweaks and photo import (pulled forward from sprint 6, step 6)
-
-* Balance amount is **yellow text, no patch** (dark yellow `#A67C00`, because pure `#F2B705` is unreadable on
-  white paper; change `InvoiceColors.BALANCE_TEXT` for the bright one). PDF scale 1.1 pt per unit: table text
-  prints at 13.2 pt (was 12).
-* **Photo import (product edit only):** "اختيار صورة من الهاتف" opens the system photo picker; the photo is
-  downscaled to 512 px and stored in `filesDir/photos` (`PhotoStore`). It is kept in the existing
-  `illustration` text as `photo:<file>.jpg` (`PhotoKey`), so **no Room change or migration**: this differs from
-  the sprint-6 plan, which wanted `products.imageFile` / `invoice_items.imageFile` columns.
-  * Confirming a new item copies the file for that item (`copyFor`), so editing or deleting the product photo
-    never changes an invoice. Photos nothing refers to (products, items, revision snapshots, drafts) are swept
-    after a product save/delete and at app start.
-  * `IllustrationImage` shows the photo on the product list, catalogue, item bar, and the item/review/detail
-    tables; a missing file falls back to the generic picture. The shared PNG/PDF has no pictures at all now.
-* **Not done from sprint 6:** backups do **not** include the photo files yet (step 7). A restore on another phone
-  keeps the names but shows the generic picture. Do not rely on photos surviving a restore until step 7.
-* Tests: `PhotoKeyTest` (JVM), `PhotoStoreTest` (device: 512 px downscale, private storage, literal copy, sweep).
-  Domain tests pass; full instrumented suite on the Samsung: **OK (61 tests)**. By hand: pick a real photo in
-  product edit (picker UI, rotation of a portrait photo), see it in the catalogue and item list.
-
-* **Deposit only if entered:** the printed/shared invoice (PNG and PDF) shows the total only when no deposit
-  was entered; deposit, balance and the paid badge appear only with a deposit (`InvoiceDocument.hasDeposit`).
-  Tests: `InvoiceLayoutTest`, `FormatAndDocumentTest`; full device suite OK (61 tests). Screens are unchanged.
-
-### Speaker icons behind a Settings switch (part of sprint 7, pulled forward)
-
-* Settings → الصوت → "إظهار أيقونات النطق" (`AppSettings.showSpeakers`, **off by default**). Room **v4**
-  (`MIGRATION_3_4`, `4.json` committed, `MigrationTest` case); backups carry it, older ones restore with it off.
-* On: every title gets a round speaker next to it (`AppTopBar`), every labelled `BigButton` gets a `| speaker |`
-  tile of its own style (spoken text = its label), and table rows (item list, review, detail) get a round speaker
-  reading the row (`itemLine`, in the chosen spoken language). Speakers never act: they only speak, with the same
-  voice-missing dialog and toasts as the rest. Settings and Backup never show them (the product screens do).
-* **Not placed yet:** speakers inside the Home and catalogue cards, on field labels, on the totals card
-  and on the customer chip, and the empty-list message. Those are still sprint 7.
-* Tests: `SpeakerToggleUiTest` (hidden by default; on: title speaker + Continue tile, tap does not navigate;
-  never in Settings). Full instrumented suite on the Samsung SM-S931B: **OK (65 tests)** (the first attempt failed only because the phone was locked).
-
-### Units and field pictures (sprint 6, steps 1-5)
-
-* **Settings → الوحدات:** `lengthUnit` (m default / cm) and `unitLabelScript` (Arabic سم / م default, Latin cm / m), no
-  speakers. Room **v5** (`MIGRATION_4_5`, `5.json`, `MigrationTest` case); backups carry both with defaults.
-* **One unit per invoice:** the m / cm switch is gone from item entry and the "default unit" card from product edit
-  (`UnitToggle` deleted). The entry shows only the unit label where the switch was. A new item takes the unit of the
-  invoice's first measured item, else the Settings unit; reopening an item keeps the unit it was typed in, so old mixed
-  invoices stay as typed. **Deviation:** the unit is derived from the first item, not stored in a new
-  `invoices.lengthUnit` column (a per-piece-only invoice then follows the current Settings unit). Add the column if
-  that edge matters.
-* **Labels follow the script** on entry, confirmation, item list, review, detail, and the printed PNG/PDF (also
-  re-exports of old invoices): `ItemDescriber` / `InvoiceDocumentBuilder` take the script, `LocalUnitScript` carries it
-  to screens. Latin parts are wrapped in LRI…PDI isolates; digits never change.
-* **Field pictures** (soft green box beside the field, label above it): ↔ width, ↕ height, DH coin (price and the
-  review deposit), stacked boxes for quantity, person and phone for the customer.
-* Tests: `UnitScriptTest` (JVM), `MigrationTest`, `UnitsUiTest` (device). `ScreenshotTourTest` now types its cm item as
-  metres (one unit per invoice) and the field-width test allows for the picture. Full suite: **OK (69 tests)**.
-* By hand: the Latin labels in the PDF/PNG (order of "120 × 85 cm" and "2,52 m² × 500 DH"), the pictures' look and
-  alignment, and the unit label position on the entry screen.
-
-### Speakers placed, and the width / height pictures fixed
-
-* The width / height pictures were Material's two offset arrows (see the owner's photo); they are now the mock-up's
-  single double-headed ↔ and ↕ (`FieldIcons`).
-* **Every speaker is behind the Settings switch now** (off = none anywhere): the catalogue-card speakers, the replay
-  speakers on confirmation and review and the add-product tile used to be always visible and are hidden too.
-* New with the switch on: a speaker inside each Home card (own target, corner), on every field label (customer
-  name/phone, width, height, price, quantity, deposit), on dialog titles, in front of the customer chip, one for the
-  calculation card on confirmation, one for the payment card on the invoice detail, one per history card, one per
-  product-list row, one for the empty-list message (the empty card is a message now, not a button), and the disabled
-  "متابعة" tile says "أضف منتوجاً واحداً على الأقل للمتابعة".
-* Still missing: a speaker in the review sub-bar and one for the review totals card besides the replay (the replay
-  speaker reads the invoice summary), the mic (customer name / product name) and its status line in Settings.
-* Tests: `SpeakerToggleUiTest` (none with the switch off, including catalogue cards and the add tile; home cards,
-  message, add tile, disabled continue and catalogue cards when on; tapping the message speaker does not open the
-  catalogue); `SpeakerTapTest` and the layout tests now provide / set the switch on. Full suite on the phone:
-  **OK (71 tests)**. (Two earlier runs failed only because the phone's screen went off.)
-
-### Tight text with the speaker icons on (owner's photo of the confirm screen)
-
-* **Cause:** each tile takes 52 dp, so two buttons in a row broke their labels inside a word ("إلغا / ء", "تأكي / د"),
-  and the title was cut ("تأكيد ال…").
-* **Fixes:** `FitText` (shrinks the type to 70 % to stay on one line, then wraps only at word boundaries, at most two
-  lines with "…") is used for every button label, small row actions, dialog buttons, category and choice chips,
-  table titles and amounts, title-bar titles and the item-entry total. On bars with a centred picture the title
-  speaker moves to the left of the picture, so the title keeps its room. With speakers on, confirm / cancel are
-  stacked full width (confirm above cancel; side by side as before when off), the entry bar's Continue is 190 dp, and
-  a table row's speaker sits under its amount instead of taking a column.
-* **Test:** `SpeakerLayoutSweepTest` walks home, customer, empty list, catalogue, entry (empty and filled),
-  confirmation, item list, review, save dialog, saved, history, detail and settings with the switch on and fails on any
-  word broken in the middle (it caught the entry total "1 260 DH" before the last fix); it also checks the stacked
-  confirm buttons. Full suite: **OK (73 tests)**, domain tests and lint pass.
-* Not covered by the sweep: the product list and product edit screens, the voice dialogs, and anything that needs
-  data the sweep does not create (several items, a long customer name). Look at those by hand with the icons on.
-
-### Notes for the next sprints
-
-* Latin unit labels and photos will reach the table through `DocumentRow` / `IllustrationImage` (sprint 6).
-* Speaker tiles on the item-list actions and a speaker per table row come in sprint 7.
-
-## Next sprints, step by step
-
-Rules for every sprint below:
-
-* Branch `day2/sprint-N` from the previous sprint's branch (sprint 4 from `day2/sprint-3`). Do not push
-  unless the owner asks.
-* Read `CLAUDE.md`, [DECISIONS.md](DECISIONS.md) and the mock-ups in [design-review.html](design-review.html)
-  first. Build only what the sprint lists.
-* Definition of done: `./gradlew -p domain test`, `:app:assembleDebug`, `:app:assembleDebugAndroidTest`,
-  `:app:lintDebug`, the instrumented suite on **one** explicitly targeted device (ask the owner before
-  using the phone), this file updated (delivered, tests, verified vs. still to check by hand), one commit.
-* Every Room version bump ships a migration, a `MigrationTest` case and the committed schema JSON.
-  The schema is at version 3 now, so the next bump is 4.
-* No new `when (formula)` branches: calculation stays pluggable.
-
-### Sprint 4: foundations (theme, LTR, base components)
-
-1. **Theme tokens.** Replace `AppColors` with the palette in DECISIONS.md as `ColorScheme` tokens plus a
-   small `AppPalette` (paid green, balance yellow, error, gray, surface). Remove every direct
-   `AppColors.*` and hard-coded `Color.White` use in the 8 UI files (Basics, Inputs, Home,
-   CustomerAndItems, ReviewAndSaved, History, InvoiceDetail, Catalog). Put the printed-invoice colours
-   (`InvoiceColors` in the domain) in one shared palette table so screens and invoice cannot drift.
-   Unpaid balance becomes ink; green means paid only.
-2. **Forced LTR.** Switch `MainActivity` and `InvoiceTheme` to `LayoutDirection.Ltr`. Add one
-   `ArabicText` composable (right-aligned, RTL text direction) and use it for screen text, so strings
-   that start with digits or Latin ("DH / م²", phone numbers) stay right-aligned. Labels stay on the
-   right, amounts on the left. The printed invoice stays RTL (renderer unchanged).
-3. **App text field.** Replace the 9 Material `OutlinedTextField`s (customer name/phone, product name,
-   category, workshop name/phone/thank-you, history search) with one app field: label above on the
-   right, box below, optional illustration beside it, optional trailing slot (for the mic in sprint 7).
-4. **Arrows.** Forward arrows point right and sit on the right of the label ("→ متابعة"); back arrow on
-   the left.
-5. **`AppTopBar`** (replaces `ScreenHeader`): back on the left, title on the right with its speaker
-   slot, optional centred icon (item details, item confirmation), title ellipsis before the icon. Move the
-   mute chip on confirm/review to a slim sub-bar under the header.
-6. **`SpokenButton`**: a speaker tile on the button's left, styled like its button (colour, border,
-   radius, height), 4 dp gap, its own target of at least 48 dp. Build it and use it for the
-   "+ إضافة منتوج" button now; full placement waits for sprint 7.
-7. **"+ إضافة منتوج"**: yellow (`#F2B705`, dark text, `#A67C00` edge), 64 dp, plus in a dark circle,
-   visible pressed state.
-8. **Tests.** Rewrite `LayoutAndBackUiTest` for LTR (back arrow left, title right); keep the touch-target
-   checks; update `ScreenshotTourTest` if it asserts positions. Existing flow tests must pass unchanged.
-
-### Sprint 5: invoice output (screens and paper)
-
-Moved before units and photos on the owner's request (2026-10-25): it needs no database change and works
-with today's data. The Latin unit labels and imported photos reach the output in sprint 6.
-
-1. **Table option A** in `InvoiceLayoutEngine`: columns left to right Price | Measurement / Formula |
-   Quantity | Name/Icon; unit price inside the formula cell ("2,52 م² × 500 DH"), quantity dropped from
-   that cell; "DH" in the column header; quantity column with its own margins, centred, no dividers.
-2. **Thumbnails** 34 units on the PNG (26 pt ≈ 9 mm on A4); change `InvoiceLayoutTest`'s 60–80 check to
-   the new 32–40 range.
-3. **PDF.** Full header on page 1 only; pages 2+ start with one slim line (workshop · invoice number ·
-   date) above the column titles; footer "صفحة 2 / 3" on every page; total, deposit and balance only on
-   the last page with at least the last row. Deposit in green, slightly smaller than the total; balance
-   in a yellow band (dark text), same size as the total.
-4. **PNG.** One image. If it would be taller than 8,000 px (about 55 items), the saved screen shows
-   "هذه الفاتورة طويلة على صورة واحدة. شاركها كملف PDF" and the PDF buttons instead of the image button,
-   even when the format setting is "image". Remove the multi-PNG split.
-5. **The same compact table on screen** (in the mock-ups, in no sprint before): one shared composable,
-   right to left: product with its picture, quantity in its own column, measurement and calculation (unit
-   price in the cell), amount in DH; column titles above; no dividers; a long formula wraps inside its cell.
-   * Item list: 36 dp pictures; each row keeps its actions below it, | حذف | تعديل | (delete left, edit
-     right; their speaker tiles come in sprint 7).
-   * Review: 32 dp pictures.
-   * Invoice detail: the same table as the paper.
-6. **Paid state on Review**: when the deposit equals the total, the balance line shows "0 DH" in green with
-   the "خالص" badge (check icon + word) on the same line, instead of the separate banner. An open balance
-   stays bold ink.
-7. **Saved screen**: the two bottom buttons (الرئيسية, فاتورة جديدة) stacked, full width.
-8. **Tests.** Pagination (rows per page, slim header, footer, totals on the last page only), the PNG limit
-   switch; on-screen table column order (amount left, product right) on the item list, review and detail;
-   the paid badge only when fully paid; the stacked Saved buttons.
-
-### Sprint 6: units, fields, photos
-
-1. **Settings.** `lengthUnit` (cm / m) and `unitLabelScript` (Arabic سم / م, Latin cm / m) in
-   `AppSettings`, Room v4 migration, backup fields with defaults (older backups: metres, Arabic labels).
-   Both shown in Settings as in the mock-up, without speakers.
-2. **Invoice unit.** New nullable `invoices.lengthUnit`: set on create; old invoices that mix m and cm
-   take their first item's unit; existing lines stay as typed. Editing uses the invoice's unit, not the
-   current setting. `ItemEntryForm` gets one unit for both dimensions.
-3. **Remove the per-item unit switch.** `UnitToggle` goes from item entry and product edit; the box shows
-   only the unit, where the switch was. `ProductDefinition.defaultUnit` stays in the database, unused.
-4. **Unit labels.** Pass the label script into `ItemDescriber` and `InvoiceDocumentBuilder` (screens,
-   printed invoices and re-exports of old invoices). Wrap Latin labels as LTR isolates (see the bidi demo
-   in the mock-ups).
-5. **Field icons.** ↔ width, ↕ height, DH coin for the unit price, stacked boxes for quantity, person and
-   phone for the customer. Labels on the right, directly above their icons.
-6. **Photo import (product edit only).** System photo picker, downscale to about 512 px, store in app
-   storage; `products.imageFile` (nullable). On item confirmation copy the file for that item
-   (`invoice_items.imageFile`, a literal copy per item); delete it with its item or invoice.
-   `IllustrationImage` and the renderer show the photo when present, otherwise the built-in picture.
-   The choose-product screen has no image change.
-7. **Backup with images.** Backup format v2: a ZIP with `backup.json` plus `images/`. Restore accepts
-   v1 JSON and v2 ZIP; images are staged and swapped in with the DB transaction; the validator checks
-   every referenced file; the safety copy includes images; update file names, MIME types and the Drive
-   upload. Show the backup size line in Backup.
-8. **Tests.** Migration 3 → 4, invoice unit on create / edit / old mixed invoices, label script in
-   descriptions (both scripts, bidi isolation), image copy per item, backup v1 and v2 round trips; both
-   label scripts in the printed output and the on-screen table from sprint 5; a photo shown as the
-   thumbnail in the table, the PNG and the PDF.
-
-### Sprint 7: placement (speakers and mic)
-
-1. **Speakers**, following DECISIONS.md: `SpokenButton` tiles on every labelled button in the invoice
-   flow, history and product catalogue; speaker inside the Home and catalogue cards; one round speaker
-   per title, field label, item row and invoice line in previews and history; one speaker for the
-   calculation card and one for the total + deposit + balance card. None on icon-only controls, none in
-   Settings or Backup except the المنتوجات card and its screens (product list, product edit, including
-   the calculation-method options).
-2. **Speech calls.** Taps use `Speaker.say(...)`, automatic speech `Speaker.sayIfReady(...)`, and every
-   sentence comes from `SpeechTexts.of(settings.speechLanguage)` (never `DarijaSpeech` directly). Add any
-   missing sentence (history card, product list row) to both `DarijaSpeech` and `StandardSpeech`.
-3. **Mic.** `MicButton` in the trailing slot of the customer-name and product-name fields only.
-   Settings → الصوت gets one status line for dictation (ready / offline Arabic pack missing / no recogniser),
-   next to the voice status, as in the mock-up (in no sprint before), without a speaker.
-4. **Tests.** A speaker tap never selects, presses or navigates (one per screen type); the mic appears
-   only on the two text fields; voice off keeps the whole flow usable; the missing-voice dialog appears
-   once.
-5. **By hand on the phone.** Voice quality in both languages, speech rate, the voice download flow,
-   dictation with and without the offline ar-MA pack, the microphone permission flow.
-
-### Open items outside the sprints
-
-* Listen on the phone to the Darija and standard-Arabic readings (see the checklists above).
-* Decide whether to keep the test build installed on the Samsung phone (it holds only test data).
-* Existing bug: the product "not found" state of `ProductEditScreen` shows "الفاتورة غير موجودة".
-* Cleanup: `Strings.AUDIO_TEST_SENTENCE` is unused.
-* Optional, not decided: recolour the rust launcher icon.
-
-### Starter prompt for the next session
-
-```text
-Day 2, Sprint 5 (invoice output) of the Workshop Invoice app in C:\dev\projects\Kotlin\Invoice.
-Read CLAUDE.md, docs/day2/DECISIONS.md, docs/day2/PROGRESS.md (sections "Sprint 4: foundations" and
-"Next sprints, step by step") and the approved mock-ups in docs/day2/design-review.html first
-(sections "Unit-price column", "Long invoice", item list, review, saved, history).
-Create branch day2/sprint-5 from day2/sprint-4 and build exactly the Sprint 5 steps listed in
-PROGRESS.md: table option A on the printed invoice, 34-unit thumbnails, PDF page header/footer and
-totals on the last page, one PNG or point to PDF, the same compact table on the item list, review and
-invoice detail screens, the paid badge on review, stacked Saved buttons, and their tests. Use the Sprint 4
-components (ArabicText, AppTopBar, SpokenButton, appPalette). No features beyond that list; units,
-photos and speakers come later.
-Safety: instrumented tests wipe the app database. Target one device explicitly (adb -s / ANDROID_SERIAL)
-and ask me before using my phone. This PC cannot run the emulator and Gradle together (7.7 GB RAM):
-build first, stop Gradle, then run the APKs with adb shell am instrument.
-Before ending: build, run all tests, update docs/day2/PROGRESS.md, commit on day2/sprint-5 (do not
-push), and tell me what was verified on a device and what I must check by hand.
-```
-
-
-## Entry and pricing update — 2026-10-27
-
-Requested by the owner after the Day 2 work; see the matching section in DECISIONS.md.
-
-### Delivered
-
-* Multiple size lines for one selected product, independent quantities and rates, one inline confirmation.
-* A copied unchanged rate stays yellow with a text cue until edited, confirmed or accepted by adding a line.
-* Native dismissible numeric keyboards for dimensions, rate, quantity and deposit; the custom keypad is removed.
-* Per-product measurement visibility (none / width / height / both) for per-piece products.
-* Width-only, height-only and fixed pricing, plus custom named labour charges without catalogue entries.
-* Snapshot, invoice output, speech, backup and draft support for the new methods and variations.
-* Room version 6 migration retains previous product visibility and leaves saved invoice rows untouched.
-
-### Verification
-
-* 210 domain tests pass, including batch totals, independent edits, copied-price acknowledgement,
-  incomplete-line rejection, draft recovery, informational measurements, fixed charges and validated backups.
-* Debug APK and instrumentation APK build; Android lint passes with no errors.
-* Device checks: pending isolated-emulator run. No tests were run against the owner's phone or existing AVD data.
-
-## Entry-flow design prototype — 2026-10-29
-
-* Review-only standalone prototype: [product-entry-flow.html](prototypes/product-entry-flow.html).
-  Reuses the approved design-review illustrations, field layout, speaker placement and green/yellow styling.
-* Proposed flow: optional customer details directly to the illustrated picker; one expanded size at a time;
-  compact editable size summaries; carried-forward rate acknowledgement; grouped products with newest additions
-  first; editing replaces the existing group; optional deposit and remaining balance on review.
-* Includes quantity steppers, custom charges as a DH catalogue card, editable simulated dictation, manual-only
-  speech and settings options inside their parent categories. A sample invoice lets the owner explore editing.
-* All artwork and interaction code are embedded; no external script or image downloads are required.
-* Verification: 29 logic/event-handler checks pass, plus exported HTML structure, embedded SVG validation and
-  JavaScript syntax checks. Browser visual verification remains unavailable because local-file browser access
-  was blocked. Microphone recognition, actual invoice saving and backup operations are simulations.
-* Awaiting design feedback. No Android implementation, data migration or device tests were performed for this prototype.
+# Progress
+
+What is built, what is verified, what is open, and what comes next. Decisions live in
+[DECISIONS.md](DECISIONS.md). The detailed logs of sprints 3 to 5 and the 2026-10-27 entry update are in
+git history: `git show 7926659:docs/day2/PROGRESS.md`.
+
+## Current state (2026-11-01)
+
+* Branch `main`, commit `7926659` (multi-size entry, new pricing methods, fixed charges, Room v6).
+  **Not pushed.** The last patch ("another size" only for products with a width or height) has not been
+  compiled.
+* Room schema **version 6**. Every version has a migration, a `MigrationTest` case and its committed JSON.
+* Tests at the last run: **210 domain tests pass**; build and lint pass. The instrumented suite last ran
+  before the 2026-10-27 entry update: **OK (73 tests)** on the owner's Samsung SM-S931B, Android 16
+  (test data only). The entry update has **not** run on a device yet.
+
+## What is built
+
+* **Receipt flow:** optional customer, item list, picture catalogue, multi-size entry on one page with
+  rate carry-over, custom charges, review with deposit, balance and paid badge, save, then share.
+  Drafts auto-save; leaving with unsaved work asks first.
+* **Pricing:** per piece, area, perimeter, width, height, fixed. Integer money, exact cm / m conversion.
+* **History:** search by name, phone or number, date filter, receipt detail, edit with a revision log, delete.
+* **Printed receipt:** PNG and PDF from one layout engine (table option A, pagination, footer, totals on the
+  last page, PDF fallback for long receipts).
+* **Settings:** product catalogue (with photo import), workshop name / phone / thank-you line, output
+  format, units and unit labels, audio (on / off, rate, spoken language, speaker icons switch), backup.
+* **Backup:** automatic (off / daily / weekly) to the phone and / or Google Drive, back up now, staged and
+  validated restore.
+* **Speech:** offline TextToSpeech in Darija or standard Arabic, speakers behind a switch (off by default),
+  dictation on customer name and product name.
+* **Layout:** forced left-to-right with right-aligned Arabic (to be replaced, see the roadmap), green palette.
+
+## Still to check by hand on the phone
+
+* Voice quality in Darija and standard Arabic, speech rates, the voice download flow, a speaker stopping the
+  previous one.
+* Dictation with and without the offline ar-MA pack, and the microphone permission flow.
+* The new entry flow end to end: several sizes, the yellow copied rate, custom charge, editing a line.
+* PNG and PDF of a real receipt: divider weight, Latin unit labels ("120 × 85 cm"), bidi order of
+  "2,52 م² × 500 DH" and "صفحة 2 / 3", balance colour.
+* Photo import with a real photo (picker, a portrait photo's rotation).
+* Product list and product edit, voice dialogs, and screens with several items or a long customer name,
+  with the speaker icons on (the layout sweep does not cover them).
+
+## Not proven at all
+
+* Google Drive backup and restore against a real Google account (needs the OAuth setup in
+  [google-drive-setup.md](../google-drive-setup.md)).
+* Automatic backups firing on schedule on a real phone (Doze, reboot).
+* A physical Android 7 to 9 phone, device restart, airplane mode, a failing share target.
+
+## Known issues
+
+* Product edit's "not found" state shows "الفاتورة غير موجودة" (the receipt message).
+* `Strings.AUDIO_TEST_SENTENCE` is unused.
+* Backups do not include photo files: a restore on another phone shows the generic picture.
+* A receipt's unit is derived from its first measured item, not stored; a per-piece-only receipt follows the
+  current Settings unit.
+* Standard-Arabic speech does not put numbers before nouns in construct state ("مائتان درهم").
+
+## Roadmap (Day 3, from the 2026-11-01 review)
+
+Each sprint: branch `day3/sprint-N` from `main`, build only what is listed, then the definition of done below.
+
+### Sprint 0: safety (before anything else)
+
+1. Compile, run the domain tests, lint, and the instrumented suite on one targeted device for the entry update.
+2. One real backup and one restore on the owner's phone (phone folder, and Google Drive after its setup),
+   before the owner keeps any real receipts.
+3. Push `main`.
+
+### Sprint 1: layout, palette, name
+
+1. Right-to-left app layout (replace forced LTR); update the layout tests.
+2. Blue palette tokens and a blue launcher icon; green only for paid.
+3. Rename invoice to receipt (وصل) in screens, printed output and speech (no migration).
+4. Fix the known issues: the product "not found" message, the unused string.
+
+### Sprint 2: fewer taps
+
+1. Remove the save confirmation dialog.
+2. Recent customers as one-tap choices; saved-customer suggestions matched by phone (derive from saved
+   receipts if that is enough, before adding a table).
+3. Optional "send to the customer's WhatsApp" next to the share sheet.
+4. Version mark "نسخة N" on re-shared receipts from version 2 on.
+
+### Sprint 3: speakers and large fonts
+
+1. `SpeakableText` / `SpeakableButton` and the speaker column, with the two exceptions (title, grid cards).
+2. Extend the layout sweep: every visible Arabic text has a speaker or is exempt; run it at font scale 1.0,
+   1.3 and 1.5.
+3. Fix every screen that breaks at large font scales.
+4. Local speaker-tap counter on a hidden Settings screen.
+
+### Later
+
+Cancel instead of delete, dated payments, unpaid balances on Home and in history, quotes, discount, photos
+in backups.
+
+## Definition of done and device safety
+
+* `./gradlew -p domain test`, `:app:assembleDebug`, `:app:assembleDebugAndroidTest`, `:app:lintDebug`, and
+  the instrumented suite (`-PdeviceTests`) on **one** explicitly targeted device; this file updated; one commit.
+* Instrumented tests **wipe the app database**: target one device (`adb -s` / `ANDROID_SERIAL`), ask the owner
+  before using the phone, never run them on a phone with real receipts.
+* This PC cannot run the emulator and Gradle together (7.7 GB RAM): build first, `./gradlew --stop`, then
+  install the APKs and run `adb shell am instrument`.
+* Every Room version bump ships a migration, a `MigrationTest` case and the committed schema JSON. The next
+  version is 7.

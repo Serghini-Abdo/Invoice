@@ -9,6 +9,11 @@ who reads little: large buttons, large numbers, one decision per screen, optiona
   the phone and optionally on Google Drive) are configured in Settings.
 * No taxes, no inventory, no accounting: invoices only.
 
+> **Where it is going.** Product decisions, including the planned changes from the 2026-11-01 review
+> (receipts instead of invoices, right-to-left layout, blue palette), are in
+> [docs/day2/DECISIONS.md](docs/day2/DECISIONS.md); current state and roadmap in
+> [docs/day2/PROGRESS.md](docs/day2/PROGRESS.md). This README describes the app as built.
+
 > **Status.** The app is built and tested by the GitHub Actions workflow in this repository
 > (`.github/workflows/ci.yml`): domain unit tests, Android build, lint and an emulator run of the
 > instrumented tests. See [Verification](#verification-what-has-and-has-not-been-proven) for exactly what is
@@ -24,10 +29,10 @@ New invoice:
 1. **Customer** (optional): name and phone. Continue immediately if you like.
 2. **Items**: the list of items so far, each with a small picture, measurements and total; a big
    **+ إضافة منتوج** button; **متابعة** to go on. Items can be edited or removed (removal asks first).
-3. **Choose a product** from the picture grid (two columns). Tapping the picture selects it; the small
-   speaker under each card only speaks the name and never selects.
+3. **Choose a product** from the picture grid (two columns). Tapping the picture selects it. With the speaker
+   icons switched on in Settings, each card has its own speaker that only speaks the name and never selects.
 4. **Details and confirmation**: enter the size, rate and quantity with the phone's numeric keyboard.
-   Dismiss it with Done, Back or the hide-keyboard button. Use **إضافة قياس آخر** to add another size of
+   Dismiss it with Done, Back or the hide-keyboard button. Use **إضافة قياس آخر** (products with a width or height) to add another size of
    the same product. Its rate carries over in yellow with a text cue until changed, confirmed or accepted
    by adding another line. Review the calculations and total below the fields, then confirm all lines together.
 5. **Review**: all items, the total, an editable deposit (default 0, cannot exceed the total), the remaining
@@ -43,8 +48,9 @@ required measurements for calculated prices cannot be hidden.
 The same product can be added any number of times; every addition is an independent item with its own size,
 rate and quantity. Nothing is merged.
 
-Settings contains only: the product catalog, workshop name/phone (and an optional thank-you line),
-the invoice format (PNG / PDF / both and choose when sharing), audio, and backup/restore.
+Settings contains only: the product catalog (with photo import in product edit), workshop name/phone (and
+an optional thank-you line), the invoice format (PNG / PDF / both and choose when sharing), units (cm or m,
+Arabic or Latin labels), audio (on/off, speech rate, spoken language, speaker icons), and backup/restore.
 
 ### Backups
 
@@ -104,7 +110,7 @@ signed with a different, throw-away key: moving to this build needs one uninstal
 
 ```
 domain/   pure Kotlin/JVM (no Android): everything that must be correct
-  money/ pricing/ input/        exact money + measurements, pricing engine, validation, keypad rules
+  money/ pricing/ input/        exact money + measurements, pricing engine, input parsing and validation
   flow/                         InvoiceFlow: the workflow as a pure state machine; draft auto-save codec
   invoice/                      models, payment math, versioning/audit, history search
   format/ layout/               Arabic formatting, invoice document model, page layout + pagination
@@ -145,10 +151,10 @@ Data model and migration strategy: [docs/data-and-migrations.md](docs/data-and-m
 
 Proven by the CI workflow (`.github/workflows/ci.yml`), on every push:
 
-* 145 domain unit tests pass on a plain JDK.
+* The domain unit tests pass on a plain JDK (210 at the last run).
 * The Android app builds (debug and unsigned release APK), passes lint, and the committed Room schema equals
   the one generated from the entities.
-* 32 instrumented tests run on real Android system images: **Android 14 (API 34)** and **Android 7.0 (API 24,
+* The instrumented tests (73 at the last run) run on real Android system images: **Android 14 (API 34)** and **Android 7.0 (API 24,
   the oldest supported; the 2 screenshot tests need API 26 and are skipped there)**. They cover the Room
   database (reopening, repeated items, edits with audit revisions, catalog changes not touching invoices,
   backup round trip, a failed restore leaving data intact), PNG and PDF export (files decoded and measured),
@@ -167,7 +173,8 @@ Not proven, stated plainly:
   Android 7 to 9 phone with the real permission dialog, and the file picker opening in that folder was not observed.
   Details: `docs/testing.md`.
 * Spoken Arabic quality (the CI emulators have no Arabic voice).
-* Any physical phone, any screen smaller than the Pixel 5 profile, device restart, airplane mode, and a
+* Any physical phone other than the owner's Samsung (Android 16, where the instrumented suite ran with test
+  data only), any screen smaller than the Pixel 5 profile, large system font sizes, device restart, airplane mode, and a
   failing share target.
 
 The mapping of the 20 acceptance scenarios to tests, with the exact gaps, is in
@@ -191,12 +198,12 @@ These are real, current limits, not future plans:
   (Moroccan Arabic if present). Darija pronunciation is *not* promised or verified; spoken amounts use
   standard Arabic number words. CI emulators have no Arabic voice, so speech output itself is only verified
   to degrade correctly (clear "unavailable" state, everything still on screen), not to sound right.
-* **Tested on emulators only**: Android 7.0 (API 24) and Android 14 (API 34), x86_64, Pixel 5 profile
-  (1080 x 2340), not on physical phones or smaller screens. Touch-target sizes and right-to-left placement are
+* **Tested on emulators and one phone**: Android 7.0 (API 24) and Android 14 (API 34) emulators, Pixel 5
+  profile (1080 x 2340), and the owner's Samsung (Android 16); not on smaller screens or large font sizes. Touch-target sizes and right-to-left placement are
   asserted in density-independent pixels by automated UI tests rather than checked by hand on hardware. On a
   small phone the item-entry form scrolls and keeps the field being typed into in view.
-* **Product pictures are the 16 built-in illustrations** (the owner can add any number of products, each
-  using one of them). Taking or importing photos of products is not implemented.
+* **Product pictures** are the 16 built-in illustrations or a photo imported in product edit. **Backups do not
+  include the photo files yet**: a restore on another phone shows the generic picture.
 * **Phones are locked to portrait.** Tablets may rotate; on a tablet in landscape the item-entry screen is
   usable but compact (it scrolls).
 * **The app is Arabic-only** by design; there is no language switch.

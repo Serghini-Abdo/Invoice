@@ -1,101 +1,163 @@
-# Day 2 decisions
+# Product decisions
 
-Approved by the owner on 2026-10-25 after four design rounds. The mock-ups are in
-[design-review.html](design-review.html). Later rounds override earlier ones; this file is the final state.
+The final state of every product decision. Later decisions replace earlier ones; nothing here is history.
+
+* Day 2 design rounds: approved by the owner on 2026-10-25, entry and pricing update on 2026-10-27.
+* Day 3 product review: approved on 2026-11-01.
+* **[to build]** marks a decision that is not in the app yet. Everything without the mark is built.
+* Mock-ups: [design-review.html](design-review.html) (Day 2). Entry-flow proposal:
+  [prototypes/product-entry-flow.html](prototypes/product-entry-flow.html) (awaiting feedback, see Open questions).
+
+## Scope
+
+* For one small workshop (doors, windows, garage gates, frames, accessories). Offline, no account.
+  No taxes, no inventory, no accounting.
+* **[to build]** The document is a **receipt (وصل)**, not a legal invoice. Rename it everywhere: app name
+  (proposed "وصولات الورشة"), Home buttons, screen titles, Saved screen, printed title and spoken text.
+  No data migration: the app is still in development and holds no real receipts.
+* Prices are typed on every line **by design**: each job has its own size and material, so the price
+  differs most of the time. No default price per product and no suggested-price chips.
 
 ## Layout and header
 
-* The app layout is forced **LTR**. Arabic text stays right-aligned inside its element. The printed and
-  exported invoice stays **RTL**.
-* Labels on the right, amounts on the left (as on the printed invoice).
-* One reusable top bar: back arrow on the **left**, title on the **right** with its speaker just left of it.
-  Screens with their own icon (item details, item confirmation) show it **centred**.
-* Forward arrows point **right** and sit on the right of the label ("→ متابعة").
+* **[to build]** The app follows Arabic **right-to-left** layout, like the other apps the owner uses.
+  This replaces the forced left-to-right layout of Day 2: back arrow on the right, forward arrows point left.
+  Labels stay on the right and amounts on the left. The printed receipt is right-to-left (unchanged).
+* One top bar on every screen: back arrow, title, and the title's speaker beside it. Item entry shows the
+  product's picture centred in the bar.
 * The catalogue grid order is not important; keep today's order.
 
 ## Palette (theme tokens only, no hard-coded colours)
 
-* Primary green `#2E7D32` (light `#66BB6A`), secondary yellow `#F2B705`, error `#D32F2F`, gray `#6B7280`,
-  surface `#F3F4F6`. Never white text on yellow (1.8 : 1); yellow buttons get a `#A67C00` edge.
-* Green means "paid". An unpaid balance is bold ink, not green.
-* The "+ إضافة منتوج" button is yellow, at least 48 dp (64 dp drawn), with a visible pressed state.
+* **[to build]** Primary **blue** (about `#1F5FAF`, white text on it at least 4.5 : 1) for buttons and
+  accents, replacing green. The launcher icon becomes blue too.
+* **Green `#2E7D32` means paid, and only paid.** An unpaid balance is bold ink.
+* Yellow `#F2B705` for the add button and balance highlights. Never white text on yellow; yellow buttons
+  get a `#A67C00` edge. On paper the balance amount is dark yellow `#A67C00` (bright yellow is unreadable).
+* Error `#D32F2F`, gray `#6B7280`, surface `#F3F4F6`.
+* Colour is never the only signal: every state also has an icon and a word.
 
-## Speakers (TextToSpeech, offline, free, no recordings)
+## Speakers (TextToSpeech, offline, no recordings)
 
-* **Labelled buttons**: a speaker tile on the button's **left**, `| speaker | label/icon |`, styled like its
-  button (same colour, border, radius, height), 4 dp gap, its own target of at least 48 dp.
-* **Home cards and product-catalogue cards** keep the speaker **inside** the card, as its own target.
-* **Content** (titles, field labels, item rows, invoice lines in previews and history): one round speaker each.
-* **One speaker per card** for the calculation card ("الحساب: بالمتر المربع") and for the
-  total + deposit + balance card; it reads the card as one natural sentence.
-* **No speaker** on icon-only controls (back arrow, keypad keys, − / +, mic, photo button).
-* **No speakers in Settings and Backup**, except the المنتوجات card in Settings and its screens
-  (product list, product edit, including the calculation-method options).
-* A speaker tap never selects, presses or navigates. Tapping another speaker stops the current speech.
-* Voice settings: on/off (existing), speech rate as **3 presets** (slow / normal / fast).
-* Spoken language: **Darija by default**; standard Arabic can be chosen in Settings → الصوت → "لغة الكلام"
-  (الدارجة / العربية الفصحى). Numbers are spoken as words generated offline in the chosen language.
-  Screens and printed invoices are not affected.
-* No Arabic voice installed: a clear prompt explains how to download the voice data; everything stays
-  usable silently.
+* All speakers sit behind Settings > الصوت > "إظهار أيقونات النطق", **off by default** (see the usage
+  counter below before changing the default).
+* A speaker tap only speaks: it never selects, presses or navigates. Tapping another speaker stops the
+  current speech. No speaker on icon-only controls (back arrow, − / +, mic, photo button).
+* No speakers in Settings and Backup, except the product screens (list, edit, calculation methods).
+* Speech rate: 3 presets (slow / normal / fast). Spoken language: Darija by default, standard Arabic in
+  Settings > الصوت > "لغة الكلام". Numbers are spoken as words generated offline. Screens and printed
+  receipts are not affected by the spoken language.
+* No Arabic voice installed: a clear prompt explains how to download one; everything stays usable silently.
+* **[to build] Placement: one system instead of per-element rules.**
+  1. **One look:** the same round speaker icon, size and colour everywhere. No tiles styled like their button.
+  2. **Speaker column:** full-width elements (buttons, list rows, field labels, summary cards) have their
+     speaker in one column along the left edge of the screen, outside the element, so a speaker tap can
+     never press a button. A field's speaker sits beside its label, not its box. One speaker per element,
+     reading the whole element as one sentence (a summary card is one sentence).
+  3. **Two exceptions:** the title's speaker stays beside the title in the top bar; grid cards (Home,
+     choose product) carry their speaker as their own round target in the card's top-left corner.
+  4. **Built in, not placed by hand:** screens use `SpeakableText` / `SpeakableButton`, which add the
+     speaker when the switch is on. The layout sweep test fails when visible Arabic text has no speaker
+     and is not on a short exempt list.
+  5. The column costs about 48 dp of width: check it at large font scales before finishing.
+* **[to build] Usage counter:** count speaker taps per screen, on the phone only (no network), shown on a
+  hidden Settings screen. After about two weeks of real use with speakers on, decide the default.
 
 ## Speak-to-fill (mic)
 
-* Android `SpeechRecognizer`, locale ar-MA, offline preferred. The microphone permission is accepted;
-  it is requested on the first mic tap only. If the offline speech pack is missing, show a hint.
-* Mic only on **customer name** and **product name**. There is no notes field (none will be added) and
-  no mic on search or on any numeric field. Recognised text stays editable.
+* Android `SpeechRecognizer`, ar-MA (retries once with plain Arabic), offline preferred. The microphone
+  permission is requested on the first mic tap only. A failure message ends with the recognizer's error code.
+* Mic only on **customer name** and **product name**. No notes field, no mic on search or numeric fields.
+  Recognised text stays editable.
 
 ## Units
 
-* One global setting: cm or m. The per-item m/cm switch is removed; the field shows only the unit from
-  Settings, where the switch was. Labels (العرض, الارتفاع, الثمن للمتر المربع, العدد) sit on the right,
-  directly above their icons.
-* Second setting: unit label script, Arabic (سم / م) or Latin (cm / m); labels only, digits unchanged.
-  It applies to screens, printed invoices, and re-exports of old invoices.
-* Stored values keep the existing normalisation. Each invoice stores the unit it was created with; an old
-  invoice that mixes m and cm takes its first item's unit, and its existing lines stay as typed.
-* Latin unit labels inside RTL text must be wrapped as LTR isolates.
+* One global setting: cm or m. Second setting: unit label script, Arabic (سم / م) or Latin (cm / m),
+  labels only, digits unchanged; it applies to screens, printed receipts and re-exports.
+* A receipt uses the unit of its first measured item (else the Settings unit); old mixed items stay as typed.
+* Latin unit labels inside right-to-left text are wrapped as LTR isolates.
 
 ## Fields and pictures
 
-* Small illustration beside each field: ↔ width, ↕ height, DH coin for the unit price (never "$"),
-  stacked boxes for quantity, person and phone for the customer.
-* Image import (system photo picker) **only in product edit**. The choose-product screen has no image change.
-* Each invoice item keeps its **own literal copy** of the image file. Backups include the image files.
+* Small illustration beside each field: ↔ width, ↕ height, DH coin for prices (never "$"), stacked boxes
+  for quantity, person and phone for the customer.
+* Photo import (system photo picker) **only in product edit**, downscaled to 512 px. Each receipt item keeps
+  its own copy of the picture.
+* **[to build]** Backups include the photo files (today a restore shows the generic picture).
 
-## Invoice output
+## Customer
 
-* Table columns, left to right: Price (line total) | Measurement / Formula | Quantity | Name/Icon.
-  **Option A**: the unit price is shown inside the Measurement / Formula cell ("2,52 م² × 500 DH").
-* The quantity column has its own margins and is centred; no divider lines anywhere.
-* Thumbnails 32 to 40 dp (26 pt ≈ 9 mm on A4).
-* One tall PNG. If it would exceed 8,000 px (about 55 items), point the user to the PDF instead.
-* PDF: page numbers in the footer ("صفحة 2 / 3"); the full header on page 1 only; pages 2+ repeat one
-  slim line (workshop · invoice number · date) above the column titles; total, deposit and balance only
-  on the last page. Deposit in green, slightly smaller than the total; balance in a yellow band.
+* Customer name and phone are optional; the owner can continue without them.
+* **[to build]** The customer step shows **recent customers** as one-tap choices, and suggests **saved
+  customers** while typing, matched by phone number.
 
-## Unchanged
+## Item entry
 
-Quantity defaults to 1; repeated products stay separate items; confirming an item returns to the item
-list; area / perimeter / per-piece calculation and rounding; immutable invoice snapshots and revisions;
-no taxes. The calculation method must stay pluggable (no new `when (formula)` branches in new code).
+* Choose a product once from the picture grid, then enter one or more independent size lines on the same
+  page and confirm them together below the fields. Each line stays separately editable later.
+* "إضافة قياس آخر" (another size) appears only for products that take a width and / or a height.
+* The next line copies the previous line's rate, shown in yellow with a text cue until it is changed,
+  confirmed, or accepted by adding another line.
+* System numeric keyboard (decimal for lengths and rates, integer for quantity, also for the deposit),
+  dismissible with Done, Back or the hide-keyboard action.
+* Pricing methods: per piece, area, perimeter, width × rate × quantity, height × rate × quantity, fixed
+  amount. Per-piece products may show width, height or both for information only; measurements a method
+  needs cannot be hidden.
+* "إضافة مبلغ خاص": a custom charge (for example labour) with only a description and an amount, no
+  catalogue product.
+* Quantity defaults to 1. The same product added twice gives two independent items; nothing is merged.
 
+## Review and saving
 
-## Entry and pricing update — 2026-10-27
+* Review shows all items, the total, an editable deposit (default 0, never above the total), the balance,
+  and a "خالص" badge when fully paid.
+* **[to build]** No "حفظ الفاتورة؟" dialog: the review screen is the confirmation, and an edit can undo a save.
+* Saving is separate from exporting and sharing: if export or sharing fails, the receipt is already saved.
 
-This owner-approved update supersedes the single-size entry and separate confirmation screen above.
+## Printed receipt (PNG and PDF)
 
-* Select a product once, enter multiple independent size lines, and confirm the batch below the fields
-  on the same page. Each line remains separately editable in the invoice.
-* Use the system numeric keyboard (decimal for measurements/rates, integer for quantity), dismissible
-  with Done, Back or the hide-keyboard action. Deposit entry also uses the system keyboard.
-* Carry the preceding line's rate into the next line. Keep an unchanged copied rate yellow, with a text
-  cue, until Confirm or Add another size accepts it. Changing the rate also clears that cue.
-* Product configuration separates measurements from pricing. Per-piece products can hide measurements
-  or show width, height or both for information. Inputs required by a pricing method remain visible.
-* Add width × rate × quantity and height × rate × quantity. Length rates use metres, converting cm exactly.
-* Add fixed charges: an amount with no quantity or measurements. A custom charge (e.g. labour) needs only
-  a description and amount, without creating a catalogue product.
-* Keep integer money, exact length conversion, one final rounding, independent snapshots, drafts,
-  speaker-only speech actions and backwards-compatible restoration of old backups.
+* Columns, left to right: Price (line total) | Measurement / Formula | Quantity | Name. The unit price sits
+  inside the formula cell ("2,52 م² × 500 DH"); "DH" appears once, in the column title.
+* Thin dividers between rows (none after the last). No pictures on the shared receipt; screens keep them.
+* Deposit and balance appear only when a deposit was entered; otherwise only the total.
+* One tall PNG; above 8,000 px (about 55 items) the PDF is offered instead.
+* PDF: page numbers in the footer ("صفحة 2 / 3"); the full header on page 1 only; later pages repeat one slim
+  line (workshop, number, date) above the column titles; totals on the last page only.
+* **[to build] Version mark:** from the second version on, a re-shared receipt shows "نسخة N" (version N)
+  beside its number. The first version shows nothing. No "edited" wording.
+
+## Sharing
+
+* Android share sheet (WhatsApp appears there when installed).
+* **[to build]** An **option** to send straight to the customer's WhatsApp using the saved phone number,
+  next to the share sheet, not instead of it.
+
+## Accessibility
+
+* Large type, pictures, one decision per screen. Touch targets at least 48 dp.
+* **[to build]** Every screen must work at the phone's large font sizes (font scale 1.3 and 1.5): no clipped
+  or overlapping text, checked on the owner's phone.
+
+## Data rules (unchanged)
+
+* Integer money (centimes) and exact length conversion, one final rounding per item
+  ([calculation-rules.md](../calculation-rules.md)).
+* Receipt items are immutable snapshots; edits keep the number and store a revision with the full previous
+  version. Numbers never repeat.
+* The calculation method stays pluggable: no new `when (formula)` branches.
+* Old backups stay restorable.
+
+## Agreed for later (not scheduled)
+
+* Cancel instead of delete: a cancelled receipt keeps its number, is stamped ملغاة and hidden by default.
+* Payments as a dated list ("تسجيل دفعة" on the receipt), with the balance computed from it.
+* Unpaid balances: a total on Home and an "unpaid" filter in history.
+* Quotes (عرض ثمن) that turn into a receipt with one tap.
+* A discount or rounding down of the total.
+
+## Open questions
+
+* The word: **وصل** is proposed; confirm, or choose "bon" or another word.
+* Printed receipt colours with the blue palette: proposed mostly black and white, blue only in the header.
+* The speaker column's side once the layout is right-to-left: left edge proposed; confirm in a prototype.
+* The entry-flow prototype of 2026-10-29 (one expanded size at a time, grouped products): awaiting feedback.

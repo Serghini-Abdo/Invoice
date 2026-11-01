@@ -1,14 +1,12 @@
 # Testing: what is covered, and what is not
 
-## Entry update verification (2026-10-27)
+Last counts: **210 domain tests** pass; the instrumented suite was **OK (73 tests)** on the owner's Samsung
+(Android 16, test data only) before the 2026-10-27 entry update, which has not run on a device yet. The
+current state of every check is in [day2/PROGRESS.md](day2/PROGRESS.md).
 
-The current entry flow confirms multiple size lines on one page and uses the native numeric keyboard.
-The older scenario descriptions below refer to the original separate confirmation screen and custom keypad.
-`VariationEntryTest` covers batch entry, copied rates, draft recovery, new pricing methods and backup validation.
-`InvoiceFlowUiTest`, `UnitsUiTest`, the screen tests and `MigrationTest` have been updated for the new flow.
-
-210 domain tests pass. The debug APK, instrumentation APK and lint checks pass. Device execution is recorded
-in `docs/day2/PROGRESS.md`; compilation alone is not proof that the keyboard or migration ran on a device.
+The item entry confirms several size lines on one page and uses the system numeric keyboard.
+`VariationEntryTest` covers batch entry, copied rates, draft recovery, the new pricing methods and backup
+validation.
 
 
 Every statement below was produced by the CI workflow in `.github/workflows/ci.yml`, not by assumption.
@@ -16,7 +14,7 @@ The workflow has four jobs. A fresh checkout reproduces all of them with the com
 
 | Job | What runs | Needs |
 | --- | --- | --- |
-| Domain unit tests | 145 pure Kotlin tests (`./gradlew -p domain test`) | a JDK only |
+| Domain unit tests | the pure Kotlin tests (`./gradlew -p domain test`) | a JDK only |
 | Android build, unit tests, lint | `:app:testDebugUnitTest`, `lintDebug`, `assembleDebug`, `assembleRelease`, and a check that the Room schema JSON in git equals the one generated from the entities | Android SDK |
 | Emulator tests, Android 7.0 (API 24) | the instrumented tests below, on the oldest Android the app supports | emulator |
 | Emulator tests, Android 14 (API 34) | the same tests plus the screenshot tour | emulator |
@@ -31,7 +29,7 @@ below), so it runs on the oldest and a current Android version.
 
 | # | Scenario | Where it is tested |
 | --- | --- | --- |
-| 1 | Door 1.20 m x 2.10 m, 500 DH/m2, quantity 1 gives 1,260 DH | Domain `PricingEngineTest`; emulator `InvoiceFlowUiTest` (typed on the keypad, confirm screen shows 1 260 DH) |
+| 1 | Door 1.20 m x 2.10 m, 500 DH/m2, quantity 1 gives 1,260 DH | Domain `PricingEngineTest`; emulator `InvoiceFlowUiTest` (typed with the numeric keyboard, the entry total shows 1 260 DH) |
 | 2 | Quantity 2 gives 2,520 DH | Domain `PricingEngineTest` |
 | 3 | Perimeter product: perimeter x rate x quantity | Domain `PricingEngineTest`; emulator `ScreenshotTourTest` (frame 150 x 200 cm, 80 DH/m, quantity 3 shows 1 680 DH) |
 | 4 | Per-item product: quantity x unit price | Domain `PricingEngineTest`, `FormatAndDocumentTest` |
@@ -46,18 +44,22 @@ below), so it runs on the oldest and a current Android version.
 | 13 | Editing one repeated item does not change the other | Domain `InvoiceFlowTest`; emulator `DatabaseTest` |
 | 14 | Editing a catalog definition does not change historical invoices | Domain `VersioningAndDraftTest`; emulator `DatabaseTest` (edit, deactivate and delete a catalog product, saved invoices unchanged) |
 | 15 | Invoices remain after closing and reopening the app and after restart | Emulator `DatabaseTest` (database closed and reopened). **Device restart itself was not tested**: Room writes to disk in a committed transaction, which is why a reopen is the available proxy |
-| 16 | PDF and PNG contain correct Arabic text, thumbnails, measurements, totals, deposits, balances | Domain `FormatAndDocumentTest` (document content), `InvoiceLayoutTest`; emulator `ExportInstrumentedTest` (real PNG and PDF files are decoded; size, thumbnails and the payment summary colours are checked). **The Arabic text pixels were checked by eye in the published screenshots, not by OCR** |
-| 17 | Long invoices export without clipping or unreadable text | Domain `InvoiceLayoutTest` (pagination rules); emulator `ExportInstrumentedTest` (a 60-item invoice in both formats) |
+| 16 | PDF and PNG contain correct Arabic text, measurements, totals, deposits, balances | Domain `FormatAndDocumentTest` (document content), `InvoiceLayoutTest`; emulator `ExportInstrumentedTest` (real PNG and PDF files are decoded; size and the payment summary are checked; the shared files carry no pictures). **The Arabic text pixels were checked by eye in the published screenshots, not by OCR** |
+| 17 | Long invoices export without clipping or unreadable text | Domain `InvoiceLayoutTest` (pagination rules); emulator `ExportInstrumentedTest` (45 items: one PNG and a paged PDF; 90 items: no PNG, the PDF is made instead) |
 | 18 | Failed sharing does not lose a saved invoice | Domain `InvoiceFlowTest` (saving completes before and independently of export and sharing); by construction the share step runs after the save transaction. A failing share intent is not simulated on the emulator |
 | 19 | Invalid or interrupted backup restore does not corrupt existing data | Domain `BackupTest` (truncated, wrong version, tampered totals); emulator `DatabaseTest` (a restore that fails leaves existing data untouched) |
 | 20 | The main workflow works with audio disabled and with no internet | Emulator `InvoiceFlowUiTest` runs the full workflow with audio disabled. **No internet use exists in that path** (Drive is only reached from the backup screen), but the emulator was not put in airplane mode, so "works offline" is established by design and by the absence of network calls, not by a test that cuts the network |
 
 ## Other emulator checks
 
-* `LayoutAndBackUiTest`: right-to-left placement (back arrow on the right, first catalog product on the right),
-  button and keypad touch targets of at least 48 dp, the speaker tapping without selecting the product, a finger sliding off a product not selecting it, the system
-  Back button walking back through the steps, leaving with unsaved work asking first, and typing on the keypad
-  filling each field without wiping the others.
+* `LayoutAndBackUiTest`: placement in the current left-to-right layout (back arrow on the left, titles, labels
+  and typed text on the right, first catalogue product top-right), touch targets of at least 48 dp, a speaker tap
+  or a finger sliding off a product never selecting it, the system Back button walking back through the steps,
+  and leaving with unsaved work asking first.
+* `SpeakerToggleUiTest`, `SpeakerTapTest`, `SpeakerLayoutSweepTest`: no speakers with the switch off; with it on,
+  speakers only speak, and no screen breaks a word in the middle.
+* `InvoiceTableUiTest`, `UnitsUiTest`, `PhotoStoreTest`: table column order, paid badge, unit settings and labels,
+  photo downscale, private storage, per-item copy and sweep.
 * `BackupWorkerTest`: the real `BackupWorker` run through work-testing with in-memory fakes for the phone folder
   and for Google Drive: a local backup is written, validated and recorded; retention keeps the newest 10 and never
   touches foreign files; a write failure retries and is then recorded; a disabled schedule does nothing; Drive
@@ -85,28 +87,24 @@ below), so it runs on the oldest and a current Android version.
 * Domain `AutoBackupTest`: file names (ASCII, sortable, no collisions), retention rules (never the new copy, always
   at least one, foreign files untouched), Play Services and HTTP error mapping, the "more than twice the interval"
   warning, catch-up decisions.
-* `MigrationTest`: the committed Room schema version 1 opens and matches the entities. (The backup schedule and
-  history are kept in SharedPreferences, so the Room schema did not change.)
+* `MigrationTest`: every committed Room schema from version 1 to 6 migrates with data in it and matches the
+  entities. (The backup schedule and history are kept in SharedPreferences, outside Room.)
 * `DatabaseTest`: invoice numbers are sequential and never reused, deleting an invoice removes its items and
   revisions, the starter catalog is seeded once, settings persist, drafts round trip, backup round trips
   including the audit trail.
 
 ## Defects found by the emulator (not visible to the JVM tests)
 
-These were real bugs in code that all 145 JVM tests passed:
+These were real bugs in code that all the JVM tests of the time passed:
 
-1. **The keypad did not work.** The item-entry screen passed `::onKey` to the keypad. Compose treats two
-   references to the same local function as equal, so it kept calling the first one, which held the original
-   empty form, and every key press overwrote the other fields. Fixed with plain lambdas and guarded by
-   `typingOnTheKeypadFillsEachFieldWithoutWipingTheOthers`.
-2. **Every price calculation crashed on Android.** `BigInteger.longValueExact` does not exist on Android
+1. **Every price calculation crashed on Android.** `BigInteger.longValueExact` does not exist on Android
    before API 31, and the money rounding used it. 19 of the first 31 emulator tests failed with it.
-3. **`java.time` is not available on Android 7** (API 24, 25) without library desugaring, which lint caught.
-4. **A rate of 401 with quantity 1 was drawn as "1 401"** on the invoice, because of how the Latin letters
+2. **`java.time` is not available on Android 7** (API 24, 25) without library desugaring, which lint caught.
+3. **A rate of 401 with quantity 1 was drawn as "1 401"** on the invoice, because of how the Latin letters
    "DH" interact with the right-to-left text direction. An invisible direction mark after the rate fixed it.
-5. **A four-item invoice spilled onto a second PDF page** because the Cairo font has very tall line boxes.
+4. **A four-item invoice spilled onto a second PDF page** because the Cairo font has very tall line boxes.
    Line height is now fixed at 1.4 em and the quantity shares the measurements line.
-6. **The total on the confirmation screen was below the fold** and the share buttons after saving were below a
+5. **The item total was below the fold** and the share buttons after saving were below a
    large preview. Both screens now put the important thing first.
 
 ## What is deliberately not verified
@@ -117,8 +115,9 @@ These were real bugs in code that all 145 JVM tests passed:
   directly; the periodic and catch-up scheduling calls are exercised only by the app starting.
 * **The file picker opening inside `Documents/Fawatir Warsha`** (it is a hint to the system; not observable here).
 * **Arabic speech quality.** The CI emulators have no Arabic voice. Only the "voice unavailable" path is exercised.
-* **Physical phones.** Emulators only: API 24 and API 34, Pixel 5 profile (1080 x 2340, 440 dpi). Smaller
-  screens are handled by scrolling and by moving the active field into view, but were not run.
+* **Physical phones beyond one.** CI uses emulators (API 24 and API 34, Pixel 5 profile, 1080 x 2340); the
+  instrumented suite also ran on the owner's Samsung (Android 16). Smaller screens and large system font sizes
+  were not run.
 * **Device restart, airplane mode, low storage, and a failing share target** (see scenarios 15, 18, 20).
 * **Text rendering pixel-perfection of the exported files.** The files are decoded and measured by tests;
   legibility was reviewed by looking at the generated images.

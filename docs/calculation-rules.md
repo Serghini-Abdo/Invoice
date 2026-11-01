@@ -26,7 +26,15 @@ AREA       area (m2)      = width (m) x height (m)
 PERIMETER  perimeter (m)  = 2 x (width (m) + height (m))
            item total     = perimeter x rate per linear metre x quantity
 
-PER_ITEM   item total     = quantity x rate per piece        (dimensions are not used or stored)
+WIDTH      item total     = width (m) x rate per metre x quantity
+
+HEIGHT     item total     = height (m) x rate per metre x quantity
+
+PER_ITEM   item total     = quantity x rate per piece
+           (width and / or height may be shown and stored for information; they never change the price)
+
+FIXED      item total     = the amount typed                 (no quantity, no measurements)
+           also used for a custom charge such as labour: a description and an amount, no catalogue product
 
 invoice total     = sum of the item totals
 remaining balance = invoice total - deposit
@@ -47,9 +55,9 @@ No VAT, sales tax or any other tax is ever added.
 
 | Field | Rule |
 |---|---|
-| Width / height (area and perimeter products only) | required, > 0, at most 50 m, at most 3 decimals |
-| Quantity | integer, 1 to 9 999 |
-| Unit rate | required, > 0, at most 1 000 000 DH, at most 2 decimals |
+| Width / height | required when the method uses it (area, perimeter, width, height); optional and informational on per-piece products; > 0, at most 50 m, at most 3 decimals |
+| Quantity | integer, 1 to 9 999 (not used by fixed amounts) |
+| Unit rate / fixed amount | required, > 0, at most 1 000 000 DH, at most 2 decimals |
 | Deposit | empty means 0; must satisfy 0 <= deposit <= invoice total |
 | Any number | digits with one `.` / `,` / `٫` separator (Western or Arabic-Indic digits); a minus sign is reported as "negative"; extra decimals are an error, not rounded |
 

@@ -2,16 +2,18 @@
 
 Local storage is Room over SQLite (`ma.workshop.invoice.data.db`). Everything works offline.
 
-## Tables (schema version 3)
+## Tables (schema version 6)
 
 | Table | Purpose | Notes |
 |---|---|---|
-| `products` | Catalog definitions | Arabic name, illustration key, pricing formula, default unit, category, `isActive`, sort order, timestamps. **No price column.** |
+| `products` | Catalog definitions | Arabic name, picture (`illustration`: a built-in key or `photo:<file>.jpg`), pricing formula, `measurements` shown (`none` / `width` / `height` / `both`), default unit (legacy, the unit is now global), category, `isActive`, sort order, timestamps. **No price column, by design.** |
 | `invoices` | One row per invoice | Stable text id (UUID), unique sequential `number`, created/updated timestamps, `revision`, customer name/phone **snapshot**, total / deposit / remaining (centimes), item count. Indexed on number, createdAt, customerName. |
-| `invoice_items` | Items of an invoice | FK to `invoices` (`CASCADE`), optional FK to `products` (`SET NULL`). Product name, illustration, formula, original dimensions + units, normalised micrometres, quantity, unit rate, rate basis, exact base amount, total: all snapshots. |
+| `invoice_items` | Items of an invoice | FK to `invoices` (`CASCADE`), optional FK to `products` (`SET NULL`). Product name, picture (its own photo copy), formula, original dimensions + units, normalised micrometres, quantity, unit rate, rate basis, exact base amount, total: all snapshots. |
 | `invoice_revisions` | Audit trail | One row per saved edit: what changed, old/new totals and deposits, and the **complete previous version** of the invoice as JSON. |
-| `app_settings` | Single row | Workshop name/phone, export format, audio switches, speech rate (`slow` / `normal` / `fast`, added in version 2), spoken language (`darija` / `standard`, added in version 3), thank-you text, next invoice number, "starter catalog seeded" flag. |
-| `drafts` | Auto-saved unfinished invoice | JSON of the in-progress workflow state; removed when the invoice is saved or discarded. |
+| `app_settings` | Single row | Workshop name/phone, thank-you text, export format, audio switches, speech rate, spoken language, speaker icons switch, length unit, unit label script, next invoice number, "starter catalog seeded" flag. |
+| `drafts` | Auto-saved unfinished invoice | JSON of the in-progress workflow state (including unfinished size lines); removed when the invoice is saved or discarded. |
+
+Photos live in the app's private `filesDir/photos`, not in Room. Backups do not include them yet.
 
 ## Transactions
 
@@ -39,26 +41,19 @@ Local storage is Room over SQLite (`ma.workshop.invoice.data.db`). Everything wo
 | Version | Change | Migration |
 |---|---|---|
 | 1 | Initial schema. | - |
-| 2 | `app_settings.speechRate TEXT NOT NULL DEFAULT 'normal'` (Day 2, sprint 3). Backups gained an optional `speechRate`; older backups restore with `normal`. | `MIGRATION_1_2` |
-| 3 | `app_settings.speechLanguage TEXT NOT NULL DEFAULT 'darija'` (Day 2, sprint 3 add-on). Backups gained an optional `speechLanguage`; older backups restore as Darija. | `MIGRATION_2_3` |
+| 2 | `app_settings.speechRate` (default `normal`). | `MIGRATION_1_2` |
+| 3 | `app_settings.speechLanguage` (default `darija`). | `MIGRATION_2_3` |
+| 4 | `app_settings.showSpeakers` (default off). | `MIGRATION_3_4` |
+| 5 | `app_settings.lengthUnit` (default `m`) and `unitLabelScript` (default `arabic`). | `MIGRATION_4_5` |
+| 6 | `products.measurements`: existing area and perimeter products become `both`, per-piece products `none`. Invoices untouched. Width, height and fixed pricing use new formula ids in the existing columns. | `MIGRATION_5_6` |
 
-## Adding a column (example)
+Every new setting is also carried by backups; older backups restore with the default. Fixed charges store
+quantity 1 internally but never show a quantity. Old backups without `measurements` derive it from the formula.
 
-1. Change the entity, bump `version = 2`.
-2. Add `val MIGRATION_1_2 = object : Migration(1, 2) { override fun migrate(db: SupportSQLiteDatabase) { db.execSQL("ALTER TABLE ...") } }`
-   and put it in `MIGRATIONS`.
-3. Build once so Room writes `app/schemas/.../2.json`; commit it.
-4. Extend `MigrationTest` for 1 -> 2.
+## Adding a column
 
-
-## Version 6: product measurement visibility (2026-10-27)
-
-`MIGRATION_5_6` adds `products.measurements` (`none`, `width`, `height`, `both`). Existing area and
-perimeter products migrate to `both`; existing per-piece products to `none`. Invoices and item snapshots
-are untouched. The schema is exported as `app/schemas/ma.workshop.invoice.data.db.AppDatabase/6.json`.
-
-Width-only, height-only and fixed pricing use new stable formula ids in the existing snapshot columns.
-Per-piece snapshots may now retain informational measurements. Fixed charges store quantity 1 internally
-but omit quantity in forms, speech and printed output. Backups include the measurement setting; old
-backups without it derive visibility from the original formula. Drafts retain all unfinished variations
-and copied-price acknowledgement state.
+1. Change the entity and bump `version` to N+1 (the next is 7).
+2. Add `MIGRATION_N_N+1` (`ALTER TABLE ...`) to `AppDatabase.MIGRATIONS`.
+3. Build once so Room writes `app/schemas/.../N+1.json`; commit it.
+4. Extend `MigrationTest` to open version N with data in it.
+5. If the backup format changes, keep older backups restorable with a default.
