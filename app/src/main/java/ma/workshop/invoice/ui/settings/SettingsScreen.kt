@@ -16,7 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Check
@@ -55,7 +54,7 @@ internal fun NavCard(title: String, hint: String, icon: ImageVector, onClick: ()
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 2.dp,
     ) {
-        // Badge and words on the right; the forward arrow on the far left, pointing left.
+        // Badge and words on the right. No arrow: the card is the button (owner decision, 2026-11-01).
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             IconBadge(icon, size = 56)
             Spacer(Modifier.width(16.dp))
@@ -63,7 +62,6 @@ internal fun NavCard(title: String, hint: String, icon: ImageVector, onClick: ()
                 ArabicText(title, style = MaterialTheme.typography.titleLarge)
                 ArabicText(hint, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(28.dp))
         }
     }
 }

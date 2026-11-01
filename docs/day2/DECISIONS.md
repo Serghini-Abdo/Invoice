@@ -23,8 +23,9 @@ The final state of every product decision. Later decisions replace earlier ones;
 * The app follows Arabic **right-to-left** layout, like the other apps the owner uses.
   This replaces the forced left-to-right layout of Day 2: back arrow on the right.
   Labels stay on the right and amounts on the left. The printed receipt is right-to-left (unchanged).
-* **[to build]** Buttons and cards have **no arrows**: the only arrow in the app is the back arrow in the top
-  bar. Buttons keep icons that carry meaning (share, edit, delete, save check, add plus).
+* Buttons have no arrows; the only arrow is the back arrow in the top bar. This covers the Settings category
+  cards and every other navigation card. Buttons keep icons that carry meaning (share, edit, delete, save
+  check, add plus).
 * One top bar on every screen: back arrow, title, and the title's speaker beside it. Item entry shows the
   product's picture centred in the bar.
 * The catalogue grid order is not important; keep today's order.

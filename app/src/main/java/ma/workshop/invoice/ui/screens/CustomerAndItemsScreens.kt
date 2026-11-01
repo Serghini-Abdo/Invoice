@@ -29,7 +29,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -142,7 +141,7 @@ fun CustomerScreen(
         Surface(shadowElevation = 8.dp, color = MaterialTheme.colorScheme.surface) {
             BigButton(
                 text = Strings.CONTINUE,
-                icon = Icons.AutoMirrored.Filled.ArrowForward,
+                icon = null,
                 onClick = {
                     focus.clearFocus()
                     onContinue()
@@ -320,7 +319,7 @@ fun ItemListScreen(
                 AddProductButton(onClick = onAdd, onSpeak = onSpeakAdd, speechAvailable = speechAvailable)
                 BigButton(
                     Strings.CONTINUE,
-                    Icons.AutoMirrored.Filled.ArrowForward,
+                    null,
                     onContinue,
                     enabled = state.items.isNotEmpty(),
                     spokenText = if (state.items.isEmpty()) Strings.NEED_ONE_ITEM else null,

@@ -68,9 +68,10 @@ internal fun buttonColors(kind: ButtonKind, enabled: Boolean, pressed: Boolean):
 }
 
 /**
- * The app's one button: always an icon AND a label (colour is never the only cue), at least 64dp tall.
- * The icon comes after the label in Arabic reading order (on its left: "متابعة ←"), and a forward arrow
- * points left. Pressed, the button darkens (yellow) and shrinks a little, so the press is visible.
+ * The app's one button: a label (colour is never the only cue) and, when it carries a meaning, an icon
+ * after the label in Arabic reading order (on its left). Navigation buttons such as "متابعة" have no icon:
+ * the only arrow in the app is the back arrow in the top bar. At least 64dp tall. Pressed, the button
+ * darkens (yellow) and shrinks a little, so the press is visible.
  */
 @Composable
 fun BigButton(
