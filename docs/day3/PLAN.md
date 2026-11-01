@@ -144,7 +144,7 @@ Written 2026-11-01 from the owner's product review. The decisions behind every s
      (`rememberSaveable`) on the workshop screen. Every change still calls `onUpdate` immediately.
   3. **Audio screen, parent / child:** "تشغيل الصوت" first. When it is **off**, show only it and the line
      `AUDIO_OFF`; hide the rest. When on, show in groups: speaker icons switch; spoken language; speech rate;
-     automatic totals (`AUDIO_ITEM_TOTALS`, `AUDIO_INVOICE_TOTALS`); voice status, test and install; dictation
+     voice status, test and install; dictation
      status. Hidden values are kept, never reset.
   4. Make a small reusable `ChildOptions(visible: Boolean, content)` so any future parent / child pair uses
      the same rule (hidden, not greyed out). Use it for the audio children.
@@ -265,7 +265,7 @@ Written 2026-11-01 from the owner's product review. The decisions behind every s
 | Strings.kt | INVOICE_NOT_FOUND | الفاتورة غير موجودة | الوصل غير موجود |
 | Strings.kt | INVOICE_UNREADABLE | تعذر قراءة هذه الفاتورة | تعذر قراءة هذا الوصل |
 | Strings.kt | EXPORT_FORMAT | شكل الفاتورة | شكل الوصل |
-| Strings.kt | AUDIO_INVOICE_TOTALS | نطق مجموع الفاتورة والباقي | نطق مجموع الوصل والباقي |
+| Strings.kt | AUDIO_INVOICE_TOTALS | نطق مجموع الفاتورة والباقي | (deleted in step 1.7: skip) |
 | Strings.kt | NO_PRICE_NOTE | ... داخل الفاتورة | ... داخل الوصل |
 | Strings.kt | DELETE_PRODUCT_MESSAGE | الفواتير القديمة لن تتغير... | الوصولات القديمة لن تتغير... |
 | Strings.kt | FORMULA_LOCKED_NOTE | الفواتير القديمة تحتفظ... | الوصولات القديمة تحتفظ... |
@@ -298,6 +298,45 @@ Written 2026-11-01 from the owner's product review. The decisions behind every s
    `PRODUCT_NOT_FOUND = "المنتوج غير موجود"` and use it.
 2. Delete `Strings.AUDIO_TEST_SENTENCE` (unused; confirm with a search first).
 * **Done when:** build passes and the search for `AUDIO_TEST_SENTENCE` is empty.
+
+### Step 1.6 No arrows on buttons and cards
+
+* **Goal:** the only arrow in the app is the back arrow in the top bar (owner decision, 2026-11-01).
+* **Files:** `ui/components/Foundations.kt` / `Basics.kt` (`BigButton`, `AddProductButton`), `ui/settings/`
+  (`NavCard`), every screen that passes an arrow icon to a button (search `Icons.AutoMirrored` and `Arrow`).
+* **Do:**
+  1. Remove the forward arrow from "متابعة" and every other action button, and the arrow / chevron from the
+     Settings category cards and any other navigation card.
+  2. Keep the back arrow in `AppTopBar`. Keep icons that carry meaning: share, edit, delete, the save check,
+     the add plus, field pictures.
+  3. If a button's label now sits off-centre because its icon slot is gone, centre it.
+* **Tests:** update tests that find or measure those arrows. Search afterwards: arrow icons appear only in
+  `AppTopBar`.
+* **Done when:** no button or card shows an arrow; layout tests pass.
+
+### Step 1.7 No automatic speech
+
+* **Goal:** nothing is spoken unless the owner taps a speaker or "تجربة الصوت" (owner decision, 2026-11-01).
+* **Today:** `ui/flow/InvoiceFlowViewModel.kt` line ~159 speaks the item total (`sayIfReady`) and line ~261
+  speaks the receipt summary when `speakInvoiceTotals` is on. Settings > الصوت has the two switches
+  `AUDIO_ITEM_TOTALS` and `AUDIO_INVOICE_TOTALS`.
+* **Do:**
+  1. Delete both automatic calls. Then search `app/src/main` for any other speech that is not started by a
+     speaker tap or the voice test (`sayIfReady`, speech in `LaunchedEffect`, on navigation, on save) and
+     delete it. If `Speaker.sayIfReady` has no callers left, delete it.
+  2. Remove the two switches from the audio screen and their strings (`AUDIO_ITEM_TOTALS`,
+     `AUDIO_INVOICE_TOTALS`).
+  3. **Keep** `AppSettings.speakItemTotals` / `speakInvoiceTotals`, their Room columns and their backup fields
+     exactly as they are, unused. **No Room change**; old backups must still restore. Add a one-line comment on
+     the fields: "unused since 2026-11-01, kept for schema and backup compatibility".
+  4. Replay or mute controls that only existed for automatic speech (for example a mute chip in `AppSubBar` on
+     review or entry): remove them. A replay speaker that reads on tap is a normal speaker: keep it. List what
+     you removed in the hand-off.
+  5. README: remove "automatic totals" from the Settings description.
+* **Tests:** delete or update tests that expect automatic speech. Add one: with audio on and a voice ready,
+  opening item entry, confirming lines and opening review produce **no** utterance (use the test speaker /
+  recorder the speech tests already use). Existing tests: a speaker tap still speaks.
+* **Done when:** with audio on, the app is silent until a speaker is tapped; all tests pass.
 
 ---
 

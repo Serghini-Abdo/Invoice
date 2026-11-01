@@ -20,8 +20,10 @@ The final state of every product decision. Later decisions replace earlier ones;
 ## Layout and header
 
 * The app follows Arabic **right-to-left** layout, like the other apps the owner uses.
-  This replaces the forced left-to-right layout of Day 2: back arrow on the right, forward arrows point left.
+  This replaces the forced left-to-right layout of Day 2: back arrow on the right.
   Labels stay on the right and amounts on the left. The printed receipt is right-to-left (unchanged).
+* **[to build]** Buttons and cards have **no arrows**: the only arrow in the app is the back arrow in the top
+  bar. Buttons keep icons that carry meaning (share, edit, delete, save check, add plus).
 * One top bar on every screen: back arrow, title, and the title's speaker beside it. Item entry shows the
   product's picture centred in the bar.
 * The catalogue grid order is not important; keep today's order.
@@ -42,7 +44,10 @@ The final state of every product decision. Later decisions replace earlier ones;
 * All speakers sit behind Settings > الصوت > "إظهار أيقونات النطق", **off by default** (see the usage
   counter below before changing the default).
 * A speaker tap only speaks: it never selects, presses or navigates. Tapping another speaker stops the
-  current speech. No speaker on icon-only controls (back arrow, − / +, mic, photo button).
+  current speech.
+* **[to build] Nothing is spoken automatically.** Speech happens only when the owner taps a speaker or
+  "تجربة الصوت". No reading on screen arrival, after a value changes, or after saving. The two automatic-totals
+  switches are removed from Settings (their stored values stay, unused). No speaker on icon-only controls (back arrow, − / +, mic, photo button).
 * No speakers in Settings and Backup, except the product screens (list, edit, calculation methods).
 * Speech rate: 3 presets (slow / normal / fast). Spoken language: Darija by default, standard Arabic in
   Settings > الصوت > "لغة الكلام". Numbers are spoken as words generated offline. Screens and printed
@@ -141,7 +146,7 @@ The final state of every product decision. Later decisions replace earlier ones;
   (for example "متوقف" or "مفعل · الدارجة · عادي"), so the owner can see the state without opening it.
 * **Parent and child options:** an option that only matters when another is on is its child. When the parent
   is off, its children are **hidden** (not greyed out) and one line says why ("الصوت متوقف"). Their saved
-  values are kept. Under الصوت, everything else (speaker icons, automatic totals, language, rate, voice test,
+  values are kept. Under الصوت, everything else (speaker icons, language, rate, voice test,
   dictation status) is a child of "تشغيل الصوت".
 * Changes still save immediately; there is no save button. No speakers on any Settings screen except the
   product screens (unchanged).

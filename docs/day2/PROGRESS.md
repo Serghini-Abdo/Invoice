@@ -92,6 +92,8 @@ Still open (owner tasks):
 3. Blue palette tokens and a blue launcher icon; green only for paid.
 4. Rename invoice to receipt (وصل) in screens, printed output and speech (no migration).
 5. Fix the known issues: the product "not found" message, the unused string.
+6. No arrows on buttons and cards (plan step 1.6).
+7. No automatic speech; remove the two automatic-totals switches (plan step 1.7).
 
 ### Sprint 2: fewer taps
 
