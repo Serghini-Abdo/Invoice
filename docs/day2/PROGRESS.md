@@ -11,9 +11,7 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
 * Room schema **version 6** (no change in chapter 1). Every version has a migration, a `MigrationTest` case
   and its committed JSON.
 * Tests at the last run (2026-11-01): **214 domain tests pass**; `:app:assembleDebug`,
-  `:app:compileDebugAndroidTestKotlin` and `:app:lintDebug` pass after step 1.11. The instrumented suite last ran
-  after step 1.7, **before steps 1.8 to 1.11 (not run on a device since)**, on the owner's Samsung SM-S931B (Android 16, test data only): **84 tests, 0 failed,
-  1 skipped** (the old-Android storage test). That includes the new `NoAutomaticSpeechTest`, which ran with a
+  `:app:compileDebugAndroidTestKotlin` and `:app:lintDebug` pass after step 1.11. The instrumented suite ran after step 1.11 on the owner's Samsung SM-S931B (Android 16, test data only): **86 tests, 0 failed** (the one failure of the first run was a bug in the new resume-dialog test, fixed and re-run: `LayoutAndBackUiTest` 12 of 12 pass). That includes `NoAutomaticSpeechTest`, which ran with a
   real Arabic voice (it skips on a phone without one).
 
 ## What is built
@@ -100,10 +98,9 @@ Still open (owner tasks):
 6. ~~No arrows on buttons and cards~~ (step 1.6): built; the device suite passes. Hand check still to do.
 7. ~~No automatic speech; remove the two automatic-totals switches~~ (step 1.7): built; the new
    `NoAutomaticSpeechTest` passes on the phone.
-8. ~~Compact item list~~ (step 1.9): built, compiles; its new UI test has not run on a device. Hand check still to do.
-9. ~~Dialogs: app buttons, right-to-left, meaningful icons, speakers~~ (step 1.10): built, compiles; its new UI
-   test has not run on a device. Hand check still to do.
-10. ~~Yellow only for attention; tonal blue add button~~ (step 1.11): built, compiles. Hand check still to do.
+8. ~~Compact item list~~ (step 1.9): built; the device suite passes. Hand check still to do.
+9. ~~Dialogs: app buttons, right-to-left, meaningful icons, speakers~~ (step 1.10): built; the device suite passes. Hand check still to do.
+10. ~~Yellow only for attention; tonal blue add button~~ (step 1.11): built; the device suite passes. Hand check still to do.
 
 ### Sprint 2: fewer taps
 

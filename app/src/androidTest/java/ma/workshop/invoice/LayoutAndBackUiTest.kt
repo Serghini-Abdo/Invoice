@@ -310,14 +310,16 @@ class LayoutAndBackUiTest {
         rule.onAllNodesWithText(Strings.NEW_INVOICE).onFirst().performClick()
         waitForText(Strings.RESUME_DRAFT_TITLE)
 
-        val width = rootWidth()
+        // the dialog is a second root next to the screen: measure in dp against the widest root
+        val density = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext.resources.displayMetrics.density
+        val width = rule.onAllNodes(androidx.compose.ui.test.isRoot()).fetchSemanticsNodes().maxOf { it.boundsInRoot.width } / density
         val main = rule.onNodeWithText(Strings.RESUME).getBoundsInRoot()
-        assertTrue("the main button is wide, was $main of $width", main.width > width * 0.5f)
+        assertTrue("the main button is wide, was $main of $width", main.width.value > width * 0.5f)
         // the second button is the one right under it (the home screen behind has the same words)
         val second = rule.onAllNodesWithText(Strings.START_NEW).fetchSemanticsNodes().map { it.boundsInRoot }
-            .filter { it.top >= main.bottom.value - 1f && it.top - main.bottom.value < 40f }
+            .filter { it.top / density >= main.bottom.value - 1f && it.top / density - main.bottom.value < 40f }
         assertTrue("a second button sits under the main one", second.isNotEmpty())
-        assertTrue("both have the same width", kotlin.math.abs(second.first().width - main.width.value) < 2f)
+        assertTrue("both have the same width", kotlin.math.abs(second.first().width / density - main.width.value) < 2f)
 
         // each button has a speaker, and a tap on it only speaks
         val speaker = rule.onNodeWithContentDescription("${Strings.SPEAK_LABEL}: ${Strings.RESUME}")
