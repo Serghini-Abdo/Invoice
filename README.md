@@ -48,9 +48,12 @@ required measurements for calculated prices cannot be hidden.
 The same product can be added any number of times; every addition is an independent item with its own size,
 rate and quantity. Nothing is merged.
 
-Settings contains only: the product catalog (with photo import in product edit), workshop name/phone (and
-an optional thank-you line), the invoice format (PNG / PDF / both and choose when sharing), units (cm or m,
-Arabic or Latin labels), audio (on/off, speech rate, spoken language, speaker icons), and backup/restore.
+Settings is a short list of six category cards, each showing its current value in one line and opening its own
+screen: the product catalog (with photo import in product edit), workshop information (name, phone and an
+optional thank-you line), the receipt format (PNG / PDF / both and choose when sharing), units (cm or m, Arabic
+or Latin labels), audio, and backup/restore. Audio is a parent switch: while "تشغيل الصوت" is off its other
+options (speaker icons, spoken language, speech rate, automatic totals, voice test, dictation status) are hidden,
+with their saved values kept. There is no save button; every change is saved at once.
 
 ### Backups
 

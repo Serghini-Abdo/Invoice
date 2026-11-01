@@ -147,6 +147,18 @@ class ScreenshotTourTest {
         click(Strings.SETTINGS)
         waitForText(Strings.SETTINGS_TITLE)
         shot("13-settings")
+        for ((title, name) in listOf(
+            Strings.WORKSHOP_INFO to "13a-settings-workshop",
+            Strings.EXPORT_FORMAT to "13b-settings-format",
+            Strings.UNITS to "13c-settings-units",
+            Strings.AUDIO to "13d-settings-audio",
+        )) {
+            click(title)
+            waitForText(title)
+            shot(name)
+            rule.onNodeWithContentDescription(Strings.BACK).performClick()
+            waitForText(Strings.SETTINGS_TITLE)
+        }
         click(Strings.PRODUCT_CATALOG)
         waitForText(Strings.CATALOG_TITLE)
         shot("14-catalog-management")

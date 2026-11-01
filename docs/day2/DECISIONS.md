@@ -136,7 +136,7 @@ The final state of every product decision. Later decisions replace earlier ones;
 
 ## Settings
 
-* **[to build]** Settings is a short list of **categories**, each opening its own screen: المنتوجات,
+* Settings is a short list of **categories**, each opening its own screen: المنتوجات,
   معلومات الورشة, شكل الوصل, الوحدات, الصوت, النسخ الاحتياطي. Each card shows its current value in one line
   (for example "متوقف" or "مفعل · الدارجة · عادي"), so the owner can see the state without opening it.
 * **Parent and child options:** an option that only matters when another is on is its child. When the parent

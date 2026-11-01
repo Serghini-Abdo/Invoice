@@ -6,6 +6,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -154,7 +155,20 @@ class SpeakerLayoutSweepTest {
     fun noWordIsBrokenInSettingsAndTheProductScreens() {
         rule.waitForTextOrExplain(Strings.SETTINGS)
         click(Strings.SETTINGS)
-        rule.waitForTextOrExplain(Strings.SHOW_SPEAKERS)
+        rule.waitForTextOrExplain(Strings.SETTINGS_TITLE)
         check("settings")
+        for (title in listOf(Strings.WORKSHOP_INFO, Strings.EXPORT_FORMAT, Strings.UNITS)) {
+            click(title)
+            rule.waitForTextOrExplain(title)
+            check("settings: $title")
+            rule.onNodeWithContentDescription(Strings.BACK).performClick()
+            rule.waitForTextOrExplain(Strings.SETTINGS_TITLE)
+        }
+        click(Strings.AUDIO)
+        rule.waitForTextOrExplain(Strings.AUDIO_ENABLED)
+        check("settings: audio off")
+        click(Strings.AUDIO_ENABLED)
+        rule.waitForTextOrExplain(Strings.SHOW_SPEAKERS)
+        check("settings: audio on")
     }
 }

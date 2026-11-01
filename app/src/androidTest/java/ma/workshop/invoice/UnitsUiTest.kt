@@ -97,7 +97,8 @@ class UnitsUiTest {
     fun settingsOffersTheTwoChoices() {
         launch(LengthUnit.METER, UnitLabelScript.ARABIC)
         click(Strings.SETTINGS)
-        rule.waitForTextOrExplain(Strings.UNITS)
+        click(Strings.UNITS)
+        rule.waitUntil(10_000) { rule.onAllNodesWithTag("unit-cm").fetchSemanticsNodes().isNotEmpty() }
         rule.onNodeWithTag("unit-cm").performScrollTo().performClick()
         rule.onNodeWithTag("script-latin").performScrollTo().performClick()
         rule.waitUntil(10_000) {

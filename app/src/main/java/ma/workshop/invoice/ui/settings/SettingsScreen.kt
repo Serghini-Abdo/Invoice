@@ -1,19 +1,5 @@
 package ma.workshop.invoice.ui.settings
 
-import ma.workshop.invoice.ui.components.LocalDictation
-
-import androidx.core.content.ContextCompat
-
-import androidx.compose.ui.platform.LocalContext
-
-import androidx.compose.runtime.remember
-
-import androidx.compose.runtime.LaunchedEffect
-
-import android.content.pm.PackageManager
-
-import android.Manifest
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -28,58 +14,41 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.RecordVoiceOver
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Storefront
+import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
-import ma.workshop.invoice.domain.pricing.LengthUnit
-import ma.workshop.invoice.domain.settings.UnitLabelScript
-import ma.workshop.invoice.domain.format.ArabicTerms
 import androidx.compose.ui.platform.testTag
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ma.workshop.invoice.domain.settings.AppSettings
-import ma.workshop.invoice.domain.settings.ExportFormat
-import ma.workshop.invoice.domain.settings.SpeechLanguage
-import ma.workshop.invoice.domain.settings.SpeechRate
-import ma.workshop.invoice.platform.SpeechProblem
-import ma.workshop.invoice.platform.SpeechStatus
 import ma.workshop.invoice.ui.Strings
-import ma.workshop.invoice.ui.components.BannerKind
-import ma.workshop.invoice.ui.components.BigButton
-import ma.workshop.invoice.ui.components.ButtonKind
 import ma.workshop.invoice.ui.components.IconBadge
-import ma.workshop.invoice.ui.components.AppTextField
 import ma.workshop.invoice.ui.components.AppTopBar
 import ma.workshop.invoice.ui.components.ArabicText
 import ma.workshop.invoice.ui.components.FitText
-import ma.workshop.invoice.ui.components.SectionCard
-import ma.workshop.invoice.ui.components.StatusBanner
 import ma.workshop.invoice.ui.components.strictClickable
 
 @Composable
-private fun NavCard(title: String, hint: String, icon: ImageVector, onClick: () -> Unit) {
+internal fun NavCard(title: String, hint: String, icon: ImageVector, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .strictClickable(role = Role.Button, onClickLabel = title, onClick = onClick),
         shape = RoundedCornerShape(20.dp),
@@ -87,14 +56,14 @@ private fun NavCard(title: String, hint: String, icon: ImageVector, onClick: () 
         shadowElevation = 2.dp,
     ) {
         // Badge and words on the right; the forward arrow on the far left, pointing right.
-        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(28.dp))
             Column(Modifier.weight(1f).padding(start = 8.dp), horizontalAlignment = Alignment.End) {
                 ArabicText(title, style = MaterialTheme.typography.titleLarge)
-                ArabicText(hint, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                ArabicText(hint, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Spacer(Modifier.width(16.dp))
-            IconBadge(icon, size = 64)
+            IconBadge(icon, size = 56)
         }
     }
 }
@@ -121,7 +90,7 @@ internal fun FormatOption(title: String, hint: String, selected: Boolean, onClic
 
 /** One choice of a small option group (speech rate, speech language). The chosen one has a check mark and a thick border, not only a colour. */
 @Composable
-private fun ChoiceOption(label: String, selected: Boolean, enabled: Boolean, modifier: Modifier, onClick: () -> Unit) {
+internal fun ChoiceOption(label: String, selected: Boolean, enabled: Boolean, modifier: Modifier, onClick: () -> Unit) {
     Surface(
         modifier = modifier
             .heightIn(min = 56.dp)
@@ -146,7 +115,7 @@ private fun ChoiceOption(label: String, selected: Boolean, enabled: Boolean, mod
 }
 
 @Composable
-private fun SwitchRow(label: String, checked: Boolean, enabled: Boolean = true, onChange: (Boolean) -> Unit) {
+internal fun SwitchRow(label: String, checked: Boolean, enabled: Boolean = true, onChange: (Boolean) -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
@@ -165,23 +134,20 @@ private fun SwitchRow(label: String, checked: Boolean, enabled: Boolean = true, 
     }
 }
 
+/** Settings: six category cards, each with its current value in one line. Each card opens its own screen. */
 @Composable
 fun SettingsScreen(
     settings: AppSettings,
-    speechStatus: SpeechStatus,
-    onUpdate: ((AppSettings) -> AppSettings) -> Unit,
-    onOpenCatalog: () -> Unit,
-    onOpenBackup: () -> Unit,
+    activeProducts: Int,
     backupHint: String,
-    onTestVoice: () -> Unit,
-    onInstallVoice: () -> Unit,
+    onOpenCatalog: () -> Unit,
+    onOpenWorkshop: () -> Unit,
+    onOpenFormat: () -> Unit,
+    onOpenUnits: () -> Unit,
+    onOpenAudio: () -> Unit,
+    onOpenBackup: () -> Unit,
     onBack: () -> Unit,
 ) {
-    // Local copies keep the cursor stable while typing; every change is saved immediately.
-    var name by rememberSaveable { mutableStateOf<String?>(null) }
-    var phone by rememberSaveable { mutableStateOf<String?>(null) }
-    var thanks by rememberSaveable { mutableStateOf<String?>(null) }
-
     Column(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         AppTopBar(Strings.SETTINGS_TITLE, onBack)
         Column(
@@ -189,159 +155,14 @@ fun SettingsScreen(
                 .weight(1f)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            NavCard(Strings.PRODUCT_CATALOG, Strings.PRODUCT_CATALOG_HINT, Icons.Filled.Category, onOpenCatalog)
-
-            SectionCard {
-                ArabicText(Strings.WORKSHOP_INFO, style = MaterialTheme.typography.titleLarge)
-                AppTextField(
-                    value = name ?: settings.workshopName,
-                    onValueChange = {
-                        name = it.take(60)
-                        onUpdate { s -> s.copy(workshopName = it.take(60)) }
-                    },
-                    label = Strings.WORKSHOP_NAME,
-                    textStyle = MaterialTheme.typography.bodyLarge,
-                    tag = "workshop-name",
-                )
-                AppTextField(
-                    value = phone ?: settings.workshopPhone,
-                    onValueChange = { v ->
-                        val clean = v.filter { it.isDigit() || it == '+' || it == ' ' }.take(20)
-                        phone = clean
-                        onUpdate { s -> s.copy(workshopPhone = clean) }
-                    },
-                    label = Strings.WORKSHOP_PHONE,
-                    textStyle = MaterialTheme.typography.bodyLarge,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    tag = "workshop-phone",
-                )
-                AppTextField(
-                    value = thanks ?: settings.thankYouMessage,
-                    onValueChange = {
-                        thanks = it.take(80)
-                        onUpdate { s -> s.copy(thankYouMessage = it.take(80)) }
-                    },
-                    label = Strings.THANK_YOU_MESSAGE,
-                    textStyle = MaterialTheme.typography.bodyLarge,
-                    tag = "workshop-thanks",
-                )
-            }
-
-            SectionCard {
-                ArabicText(Strings.EXPORT_FORMAT, style = MaterialTheme.typography.titleLarge)
-                FormatOption(Strings.FORMAT_PNG, Strings.FORMAT_PNG_HINT, settings.exportFormat == ExportFormat.PNG) {
-                    onUpdate { it.copy(exportFormat = ExportFormat.PNG) }
-                }
-                FormatOption(Strings.FORMAT_PDF, Strings.FORMAT_PDF_HINT, settings.exportFormat == ExportFormat.PDF) {
-                    onUpdate { it.copy(exportFormat = ExportFormat.PDF) }
-                }
-                FormatOption(Strings.FORMAT_BOTH, Strings.FORMAT_BOTH_HINT, settings.exportFormat == ExportFormat.BOTH) {
-                    onUpdate { it.copy(exportFormat = ExportFormat.BOTH) }
-                }
-            }
-
-            SectionCard {
-                ArabicText(Strings.UNITS, style = MaterialTheme.typography.titleLarge)
-                ArabicText(Strings.LENGTH_UNIT, style = MaterialTheme.typography.titleMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    for ((unit, label) in listOf(
-                        LengthUnit.METER to ArabicTerms.METER,
-                        LengthUnit.CENTIMETER to ArabicTerms.CENTIMETER,
-                    ).reversed()) {
-                        ChoiceOption(label, selected = settings.lengthUnit == unit, enabled = true, modifier = Modifier.weight(1f).testTag("unit-${unit.id}")) {
-                            onUpdate { it.copy(lengthUnit = unit) }
-                        }
-                    }
-                }
-                ArabicText(Strings.UNIT_LABELS, style = MaterialTheme.typography.titleMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    for ((script, label) in listOf(
-                        UnitLabelScript.ARABIC to Strings.UNIT_LABELS_ARABIC,
-                        UnitLabelScript.LATIN to Strings.UNIT_LABELS_LATIN,
-                    ).reversed()) {
-                        ChoiceOption(label, selected = settings.unitLabelScript == script, enabled = true, modifier = Modifier.weight(1f).testTag("script-${script.id}")) {
-                            onUpdate { it.copy(unitLabelScript = script) }
-                        }
-                    }
-                }
-            }
-
-            SectionCard {
-                ArabicText(Strings.AUDIO, style = MaterialTheme.typography.titleLarge)
-                SwitchRow(Strings.AUDIO_ENABLED, settings.audioEnabled) { v -> onUpdate { it.copy(audioEnabled = v) } }
-                SwitchRow(Strings.SHOW_SPEAKERS, settings.showSpeakers) { v -> onUpdate { it.copy(showSpeakers = v) } }
-                ArabicText(Strings.SPEECH_LANGUAGE, style = MaterialTheme.typography.titleMedium)
-                // Choices read from the right: the first (default) one is on the right.
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    for ((language, label) in listOf(
-                        SpeechLanguage.DARIJA to Strings.SPEECH_LANGUAGE_DARIJA,
-                        SpeechLanguage.STANDARD to Strings.SPEECH_LANGUAGE_STANDARD,
-                    ).reversed()) {
-                        ChoiceOption(label, selected = settings.speechLanguage == language, enabled = settings.audioEnabled, modifier = Modifier.weight(1f)) {
-                            onUpdate { it.copy(speechLanguage = language) }
-                        }
-                    }
-                }
-                ArabicText(Strings.SPEECH_RATE, style = MaterialTheme.typography.titleMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    for ((rate, label) in listOf(
-                        SpeechRate.SLOW to Strings.SPEECH_RATE_SLOW,
-                        SpeechRate.NORMAL to Strings.SPEECH_RATE_NORMAL,
-                        SpeechRate.FAST to Strings.SPEECH_RATE_FAST,
-                    ).reversed()) {
-                        ChoiceOption(label, selected = settings.speechRate == rate, enabled = settings.audioEnabled, modifier = Modifier.weight(1f)) {
-                            onUpdate { it.copy(speechRate = rate) }
-                        }
-                    }
-                }
-                SwitchRow(Strings.AUDIO_ITEM_TOTALS, settings.speakItemTotals, enabled = settings.audioEnabled) { v ->
-                    onUpdate { it.copy(speakItemTotals = v) }
-                }
-                SwitchRow(Strings.AUDIO_INVOICE_TOTALS, settings.speakInvoiceTotals, enabled = settings.audioEnabled) { v ->
-                    onUpdate { it.copy(speakInvoiceTotals = v) }
-                }
-                when {
-                    !settings.audioEnabled -> StatusBanner(Strings.AUDIO_OFF, BannerKind.Info)
-                    speechStatus is SpeechStatus.Checking -> StatusBanner(Strings.AUDIO_CHECKING, BannerKind.Info)
-                    speechStatus is SpeechStatus.Ready -> {
-                        StatusBanner(Strings.AUDIO_READY, BannerKind.Success)
-                        BigButton(Strings.AUDIO_TEST, Icons.Filled.VolumeUp, onTestVoice, kind = ButtonKind.Secondary)
-                    }
-                    speechStatus is SpeechStatus.Unavailable -> {
-                        StatusBanner(
-                            when (speechStatus.problem) {
-                                SpeechProblem.NO_ENGINE -> Strings.AUDIO_NO_ENGINE
-                                SpeechProblem.NO_ARABIC -> Strings.AUDIO_NO_ARABIC
-                                SpeechProblem.INIT_FAILED -> Strings.AUDIO_INIT_FAILED
-                            },
-                            BannerKind.Warning,
-                        )
-                        BigButton(Strings.AUDIO_INSTALL, Icons.Filled.RecordVoiceOver, onInstallVoice, kind = ButtonKind.Secondary)
-                    }
-                }
-                MicStatusLine()
-            }
-
-            NavCard(Strings.BACKUP, backupHint, Icons.Filled.Backup, onOpenBackup)
+            NavCard(Strings.PRODUCT_CATALOG, productsValue(activeProducts), Icons.Filled.Category, onOpenCatalog, Modifier.testTag("card-catalog"))
+            NavCard(Strings.WORKSHOP_INFO, workshopValue(settings), Icons.Filled.Storefront, onOpenWorkshop, Modifier.testTag("card-workshop"))
+            NavCard(Strings.EXPORT_FORMAT, formatValue(settings), Icons.Filled.Description, onOpenFormat, Modifier.testTag("card-format"))
+            NavCard(Strings.UNITS, unitsValue(settings), Icons.Filled.Straighten, onOpenUnits, Modifier.testTag("card-units"))
+            NavCard(Strings.AUDIO, audioValue(settings), Icons.Filled.VolumeUp, onOpenAudio, Modifier.testTag("card-audio"))
+            NavCard(Strings.BACKUP, backupHint, Icons.Filled.Backup, onOpenBackup, Modifier.testTag("card-backup"))
         }
-    }
-}
-
-/** Settings status line for speak-to-fill (the mic on customer name and product name). */
-@Composable
-private fun MicStatusLine() {
-    val dictation = LocalDictation.current ?: return
-    val context = LocalContext.current
-    var offlinePack by remember { mutableStateOf<Boolean?>(null) }
-    LaunchedEffect(Unit) { dictation.checkOfflinePack { offlinePack = it } }
-    val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-    ArabicText(Strings.DICTATE, style = MaterialTheme.typography.titleMedium)
-    when {
-        !dictation.isAvailable() -> StatusBanner(Strings.DICTATE_NOT_AVAILABLE, BannerKind.Warning)
-        offlinePack == false -> StatusBanner(Strings.DICTATE_OFFLINE_MISSING, BannerKind.Warning)
-        !granted -> StatusBanner(Strings.DICTATE_NEEDS_PERMISSION, BannerKind.Info)
-        else -> StatusBanner(Strings.DICTATE_READY, BannerKind.Success)
     }
 }

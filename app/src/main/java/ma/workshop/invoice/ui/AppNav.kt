@@ -61,7 +61,11 @@ import ma.workshop.invoice.ui.settings.CatalogManagementScreen
 import ma.workshop.invoice.ui.settings.CatalogViewModel
 import ma.workshop.invoice.ui.settings.ProductEditScreen
 import ma.workshop.invoice.ui.settings.ProductEditViewModel
+import ma.workshop.invoice.ui.settings.AudioSettingsScreen
+import ma.workshop.invoice.ui.settings.FormatSettingsScreen
 import ma.workshop.invoice.ui.settings.SettingsScreen
+import ma.workshop.invoice.ui.settings.UnitsSettingsScreen
+import ma.workshop.invoice.ui.settings.WorkshopSettingsScreen
 import ma.workshop.invoice.ui.settings.SettingsViewModel
 
 private object Routes {
@@ -71,6 +75,10 @@ private object Routes {
     const val HISTORY = "history"
     const val DETAIL = "history/{id}"
     const val SETTINGS = "settings"
+    const val SETTINGS_WORKSHOP = "settings/workshop"
+    const val SETTINGS_FORMAT = "settings/format"
+    const val SETTINGS_UNITS = "settings/units"
+    const val SETTINGS_AUDIO = "settings/audio"
     const val CATALOG = "settings/catalog"
     const val PRODUCT = "settings/catalog/{productId}"
     const val BACKUP = "settings/backup"
@@ -80,12 +88,22 @@ private object Routes {
     fun product(id: Long) = "settings/catalog/$id"
 }
 
+/** Screens that never show speaker icons (the product screens, which are under Settings, still do). */
+private val speakerFreeRoutes = setOf(
+    Routes.SETTINGS,
+    Routes.SETTINGS_WORKSHOP,
+    Routes.SETTINGS_FORMAT,
+    Routes.SETTINGS_UNITS,
+    Routes.SETTINGS_AUDIO,
+    Routes.BACKUP,
+)
+
 @Composable
 fun AppNav(container: AppContainer) {
     val nav = rememberNavController()
     val context = LocalContext.current
 
-    // The speaker icons: one switch in Settings; Settings and Backup themselves never show them.
+    // The speaker icons: one switch in Settings > Audio; the Settings screens and Backup themselves never show them.
     val appSettings by container.settings.settings.collectAsStateWithLifecycle(AppSettings())
     val route by nav.currentBackStackEntryAsState()
     var askForVoice by remember { mutableStateOf(false) }
@@ -109,7 +127,7 @@ fun AppNav(container: AppContainer) {
         )
     }
     val currentRoute = route?.destination?.route
-    val shownUi = if (currentRoute == Routes.SETTINGS || currentRoute == Routes.BACKUP) speakerUi.hidden() else speakerUi
+    val shownUi = if (currentRoute in speakerFreeRoutes) speakerUi.hidden() else speakerUi
     if (askForVoice) {
         VoiceMissingDialog(
             onInstall = {
@@ -229,16 +247,49 @@ fun AppNav(container: AppContainer) {
             composable(Routes.SETTINGS) {
                 val vm: SettingsViewModel = viewModel(factory = VmFactory { SettingsViewModel(container) })
                 val settings by vm.settings.collectAsStateWithLifecycle()
-                val speech by vm.speechStatus.collectAsStateWithLifecycle()
+                val activeProducts by vm.activeProducts.collectAsStateWithLifecycle()
                 val backupPlan by container.backupPrefs.plan.collectAsStateWithLifecycle()
                 val backupStatus by container.backupPrefs.status.collectAsStateWithLifecycle()
                 SettingsScreen(
+                    settings = settings,
+                    activeProducts = activeProducts,
                     backupHint = backupHint(backupPlan, BackupHealth.alerts(backupPlan, backupStatus, System.currentTimeMillis())),
+                    onOpenCatalog = { nav.navigate(Routes.CATALOG) },
+                    onOpenWorkshop = { nav.navigate(Routes.SETTINGS_WORKSHOP) },
+                    onOpenFormat = { nav.navigate(Routes.SETTINGS_FORMAT) },
+                    onOpenUnits = { nav.navigate(Routes.SETTINGS_UNITS) },
+                    onOpenAudio = { nav.navigate(Routes.SETTINGS_AUDIO) },
+                    onOpenBackup = { nav.navigate(Routes.BACKUP) },
+                    onBack = { nav.popBackStack() },
+                )
+            }
+
+            composable(Routes.SETTINGS_WORKSHOP) {
+                val vm: SettingsViewModel = viewModel(factory = VmFactory { SettingsViewModel(container) })
+                val settings by vm.settings.collectAsStateWithLifecycle()
+                WorkshopSettingsScreen(settings = settings, onUpdate = vm::update, onBack = { nav.popBackStack() })
+            }
+
+            composable(Routes.SETTINGS_FORMAT) {
+                val vm: SettingsViewModel = viewModel(factory = VmFactory { SettingsViewModel(container) })
+                val settings by vm.settings.collectAsStateWithLifecycle()
+                FormatSettingsScreen(settings = settings, onUpdate = vm::update, onBack = { nav.popBackStack() })
+            }
+
+            composable(Routes.SETTINGS_UNITS) {
+                val vm: SettingsViewModel = viewModel(factory = VmFactory { SettingsViewModel(container) })
+                val settings by vm.settings.collectAsStateWithLifecycle()
+                UnitsSettingsScreen(settings = settings, onUpdate = vm::update, onBack = { nav.popBackStack() })
+            }
+
+            composable(Routes.SETTINGS_AUDIO) {
+                val vm: SettingsViewModel = viewModel(factory = VmFactory { SettingsViewModel(container) })
+                val settings by vm.settings.collectAsStateWithLifecycle()
+                val speech by vm.speechStatus.collectAsStateWithLifecycle()
+                AudioSettingsScreen(
                     settings = settings,
                     speechStatus = speech,
                     onUpdate = vm::update,
-                    onOpenCatalog = { nav.navigate(Routes.CATALOG) },
-                    onOpenBackup = { nav.navigate(Routes.BACKUP) },
                     onTestVoice = vm::testVoice,
                     onInstallVoice = {
                         try {

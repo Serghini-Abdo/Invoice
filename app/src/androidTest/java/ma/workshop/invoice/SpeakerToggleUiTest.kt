@@ -78,8 +78,14 @@ class SpeakerToggleUiTest {
         launch(showSpeakers = true)
         rule.waitForTextOrExplain(Strings.SETTINGS)
         rule.onNodeWithText(Strings.SETTINGS).performClick()
+        rule.waitForTextOrExplain(Strings.AUDIO)
+        assertEquals("the Settings list has no speakers", 0, speakers())
+        rule.onNodeWithText(Strings.AUDIO).performClick()
+        rule.waitForTextOrExplain(Strings.AUDIO_ENABLED)
+        // audio is off here, so the speaker switch (a child of the audio switch) is hidden until audio is turned on
+        rule.onNodeWithText(Strings.AUDIO_ENABLED).performClick()
         rule.waitForTextOrExplain(Strings.SHOW_SPEAKERS)
-        assertEquals(0, speakers())
+        assertEquals("the audio screen has no speakers", 0, speakers())
     }
 
     private fun openItemList() {

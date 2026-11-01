@@ -56,6 +56,8 @@ below), so it runs on the oldest and a current Android version.
   and typed text on the right, first catalogue product top-right), touch targets of at least 48 dp, a speaker tap
   or a finger sliding off a product never selecting it, the system Back button walking back through the steps,
   and leaving with unsaved work asking first.
+* `SettingsCategoriesUiTest`: the six Settings cards and their value lines (all on screen without scrolling), each
+  card opening its screen and Back returning, and the audio children hidden while audio is off with their values kept.
 * `SpeakerToggleUiTest`, `SpeakerTapTest`, `SpeakerLayoutSweepTest`: no speakers with the switch off; with it on,
   speakers only speak, and no screen breaks a word in the middle.
 * `InvoiceTableUiTest`, `UnitsUiTest`, `PhotoStoreTest`: table column order, paid badge, unit settings and labels,
