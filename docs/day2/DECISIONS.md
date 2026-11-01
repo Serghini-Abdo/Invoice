@@ -30,8 +30,8 @@ The final state of every product decision. Later decisions replace earlier ones;
 
 ## Palette (theme tokens only, no hard-coded colours)
 
-* **[to build]** Primary **blue** (about `#1F5FAF`, white text on it at least 4.5 : 1) for buttons and
-  accents, replacing green. The launcher icon becomes blue too.
+* Primary **blue** `#1F5FAF` (white text on it at least 4.5 : 1) for buttons and accents; the launcher icon
+  is blue too.
 * **Green `#2E7D32` means paid, and only paid.** An unpaid balance is bold ink.
 * Yellow `#F2B705` for the add button and balance highlights. Never white text on yellow; yellow buttons
   get a `#A67C00` edge. On paper the balance amount is dark yellow `#A67C00` (bright yellow is unreadable).
