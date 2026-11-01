@@ -40,6 +40,9 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
   and in speech (shared files `invoice-0007-...`).
 * **Settings:** six category cards with their own screens (see above).
 
+* **Catalogue:** the owner's 9 products with pictures drawn after his sketches (branch
+  `day3/catalog-sketches`, 2026-11-01). **Not compiled yet**; new domain and device tests added, not run.
+
 ## Still to check by hand on the phone
 
 * **Sprint 1, steps 1.0 to 1.11 (phone set to French):** Settings list and its child screens, every screen of
