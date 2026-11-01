@@ -217,7 +217,7 @@ class DatabaseTest {
         )
         products.addWorkshopProducts()
         val after = db.products().getAll()
-        assertEquals(9, after.size) // 8 added; his garage door is skipped because the name is taken
+        assertEquals(10, after.size) // 9 added; his garage door is skipped because the name is taken
         assertEquals(1, after.count { it.name == "باب الكراج" })
         assertTrue(after.any { it.name == "شباك" && it.illustration == "sk_window" && it.formula == "area" })
 

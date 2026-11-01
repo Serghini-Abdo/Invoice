@@ -22,13 +22,15 @@ object SeedCatalog {
     /**
      * The owner's own products, named as he says them (Darija, or French written in Arabic) and drawn after
      * his sketches (2026-11-01). Methods follow his paper invoices: windows by area, faux-cadres by perimeter,
-     * the rest per piece. A balcony grille is priced per piece but shows its width and height.
+     * the rest per piece. A balcony grille is two products: per piece (showing its width and height) and by length.
      */
     private val workshopSeeds = listOf(
         Seed("باب", "sk_door", PricingFormula.PER_ITEM, LengthUnit.METER),
         Seed("شباك", "sk_window", PricingFormula.AREA, LengthUnit.METER),
         Seed("فوكادر", "sk_fauxcadre", PricingFormula.PERIMETER, LengthUnit.METER),
         Seed("شباك بالكو", "sk_balcony", PricingFormula.PER_ITEM, LengthUnit.METER, Measurements.BOTH),
+        // The same railing when the job is priced by its length (the picture adds a length arrow).
+        Seed("شباك بالكو بالطول", "sk_balcony_length", PricingFormula.WIDTH, LengthUnit.METER),
         Seed("ضواية السطح", "sk_skylight", PricingFormula.PER_ITEM, LengthUnit.METER),
         Seed("نشارات", "sk_clothesrack", PricingFormula.PER_ITEM, LengthUnit.METER),
         Seed("روكار", "sk_regard", // regard d'eau PricingFormula.PER_ITEM, LengthUnit.METER),

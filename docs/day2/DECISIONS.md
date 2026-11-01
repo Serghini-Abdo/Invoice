@@ -105,6 +105,7 @@ The final state of every product decision. Later decisions replace earlier ones;
 * The owner's own products, **named as he says them** (Darija, or French written in Arabic) and **drawn after
   his own sketches** in black ink lines, because he recognises his drawings, not the words (2026-11-01):
   باب (per piece), شباك (area), فوكادر (perimeter), شباك بالكو (per piece, shows width and height),
+  شباك بالكو بالطول (by length; its picture adds a length arrow),
   ضواية السطح, نشارات (roof clothes-drying rack), روكار (regard d'eau), كاش ريدو (per piece), باب الكراج (area). Fresh installations get them after the
   original examples; existing ones get them once at start-up, skipping any name or picture already there.
 * New product pictures follow the same style: simple black line drawings like his sketches, not coloured art.
@@ -203,9 +204,6 @@ The final state of every product decision. Later decisions replace earlier ones;
 
 ## Open questions
 
-* **شباك بالكو** is priced per piece **or** by length, depending on the job. Today a product has one method.
-  Options: a second method per product, chosen on each line (needs Room v7), or two catalogue entries.
-* Door and cache-rideau pictures: owner to pick between two new versions each.
 * **Window + faux-cadre pairs:** on his paper invoices every شباك is followed by a فوكادر with the same sizes
   and quantity. Offer "add the faux-cadre with the same sizes" after a window? (not decided)
 * His paper says **دفع** for the deposit and **الباقي** for the balance; the app says التسبيق. Switch to دفع?

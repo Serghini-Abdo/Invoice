@@ -203,11 +203,13 @@ object Illustrations {
         },
         // ---- Drawn after the owner's own sketches (2026-11-01): black ink lines, so he recognises them. ----
         illustration("sk_door", "باب") {
-            fill("M26 5h48v90h-48Z", PAPER)
-            stroke("M26 5h48v90h-48Z", INK, 5f)
-            fill("M60.8 46a3.2 3.2 0 1 0 6.4 0a3.2 3.2 0 1 0 -6.4 0Z", INK)
-            stroke("M38 60h14v16h-14Z", INK, 5f)
-            stroke("M43 64v9", INK, 5f)
+            fill("M24 4h52v92h-52Z", PAPER)
+            stroke("M24 4h52v92h-52Z", INK, 5f)
+            stroke("M34 14h32v26h-32Z", INK, 5f)
+            stroke("M42.7 14V40M51.3 14V40M59.9 14V40", INK, 5f)
+            stroke("M60 54h10", INK, 5f)
+            fill("M60.4 54a2.6 2.6 0 1 0 5.2 0a2.6 2.6 0 1 0 -5.2 0Z", INK)
+            stroke("M24 82H76", INK, 5f)
         },
         illustration("sk_window", "شباك") {
             fill("M14 14h72v72h-72Z", PAPER)
@@ -231,6 +233,19 @@ object Illustrations {
             stroke("M54 33q3 8.75 0 17.5q-3 8.75 0 17.5", INK, 5f)
             stroke("M66 33q3 8.75 0 17.5q-3 8.75 0 17.5", INK, 5f)
             stroke("M78 33q3 8.75 0 17.5q-3 8.75 0 17.5", INK, 5f)
+        },
+        illustration("sk_balcony_length", "شباك بالكو بالطول") {
+            stroke("M6 22H88q6 0 6 6V66", INK, 5f)
+            stroke("M6 29H86V66", INK, 5f)
+            stroke("M18 29q3 7.25 0 14.5q-3 7.25 0 14.5", INK, 5f)
+            stroke("M30 29q3 7.25 0 14.5q-3 7.25 0 14.5", INK, 5f)
+            stroke("M42 29q3 7.25 0 14.5q-3 7.25 0 14.5", INK, 5f)
+            stroke("M54 29q3 7.25 0 14.5q-3 7.25 0 14.5", INK, 5f)
+            stroke("M66 29q3 7.25 0 14.5q-3 7.25 0 14.5", INK, 5f)
+            stroke("M78 29q3 7.25 0 14.5q-3 7.25 0 14.5", INK, 5f)
+            stroke("M10 84H90", INK, 5f)
+            stroke("M18 77L10 84L18 91", INK, 5f)
+            stroke("M82 77L90 84L82 91", INK, 5f)
         },
         illustration("sk_skylight", "ضواية السطح") {
             fill("M8 24h84v52h-84Z", PAPER)
@@ -260,11 +275,14 @@ object Illustrations {
             stroke("M14 26h72v48h-72Z", INK, 5f)
         },
         illustration("sk_cacherideau", "كاش ريدو") {
-            fill("M14 18h72v64h-72Z", PAPER)
-            stroke("M14 18h72v64h-72Z", INK, 5f)
-            stroke("M8 30H92", INK, 5f)
-            stroke("M14 46H86", INK, 5f)
-            stroke("M30 38h8M50 37h12M70 39h6", INK, 5f)
+            fill("M8 10H84q8 0 8 9v4q0 9 -8 9H8Z", PAPER)
+            stroke("M8 10H84q8 0 8 9v4q0 9 -8 9H8Z", INK, 5f)
+            stroke("M14 32V92M86 32V92", INK, 5f)
+            stroke("M14 42H86", INK, 5f)
+            stroke("M14 52H86", INK, 5f)
+            stroke("M14 62H86", INK, 5f)
+            stroke("M14 66H86", INK, 5f)
+            stroke("M44 72h12", INK, 5f)
         },
         illustration("sk_garage", "باب الكراج") {
             fill("M10 6h80v88h-80Z", PAPER)
