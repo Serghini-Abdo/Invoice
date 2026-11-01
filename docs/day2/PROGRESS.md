@@ -6,13 +6,13 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
 
 ## Current state (2026-11-01)
 
-* Branch `day3/sprint-1`. **Not pushed.** Chapter 1 of the Day 3 plan (steps 1.0 to 1.7) is built; the
+* Branch `day3/sprint-1`. **Not pushed.** Chapter 1 of the Day 3 plan (steps 1.0 to 1.11) is built; the
   chapter 0 owner tasks below are still open.
 * Room schema **version 6** (no change in chapter 1). Every version has a migration, a `MigrationTest` case
   and its committed JSON.
 * Tests at the last run (2026-11-01): **214 domain tests pass**; `:app:assembleDebug`,
-  `:app:compileDebugAndroidTestKotlin` and `:app:lintDebug` pass after step 1.7. The instrumented suite ran
-  after step 1.7 on the owner's Samsung SM-S931B (Android 16, test data only): **84 tests, 0 failed,
+  `:app:compileDebugAndroidTestKotlin` and `:app:lintDebug` pass after step 1.11. The instrumented suite last ran
+  after step 1.7, **before steps 1.8 to 1.11 (not run on a device since)**, on the owner's Samsung SM-S931B (Android 16, test data only): **84 tests, 0 failed,
   1 skipped** (the old-Android storage test). That includes the new `NoAutomaticSpeechTest`, which ran with a
   real Arabic voice (it skips on a phone without one).
 
@@ -44,7 +44,7 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
 
 ## Still to check by hand on the phone
 
-* **Sprint 1, steps 1.0 to 1.7 (phone set to French):** Settings list and its child screens, every screen of
+* **Sprint 1, steps 1.0 to 1.11 (phone set to French):** Settings list and its child screens, every screen of
   the invoice flow, history, catalogue and backup read from the right, buttons and cards without arrows, the
   blue palette (green only on paid states), the blue launcher icon, the wording (after step 1.8: فاتورة جديدة, الفواتير السابقة, "الفاتورة خالصة" in Darija), and silence until a speaker is tapped (list in the hand-off report).
 
@@ -54,7 +54,7 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
 * Google sign-in messages: on a phone without the Google Cloud setup, choosing an account shows "setup
   incomplete" with `api 10`; pressing Back on Google's screen shows "you closed the Google screen" and no banner
   appears on the home screen.
-* The new entry flow end to end: several sizes, the yellow copied rate, custom charge, editing a line.
+* The new entry flow end to end: several sizes, the copied rate in yellow, custom charge, editing a line.
 * PNG and PDF of a real invoice: divider weight, Latin unit labels ("120 × 85 cm"), bidi order of
   "2,52 م² × 500 DH" and "صفحة 2 / 3", balance colour.
 * Photo import with a real photo (picker, a portrait photo's rotation).
@@ -100,10 +100,10 @@ Still open (owner tasks):
 6. ~~No arrows on buttons and cards~~ (step 1.6): built; the device suite passes. Hand check still to do.
 7. ~~No automatic speech; remove the two automatic-totals switches~~ (step 1.7): built; the new
    `NoAutomaticSpeechTest` passes on the phone.
-8. Back to فاتورة everywhere (plan step 1.8).
-9. Compact item list: smaller bottom bar, add button in the list, compact rows (plan step 1.9).
-10. Dialogs: app buttons, right-to-left, meaningful icons, speakers (plan step 1.10).
-11. Yellow only for attention; tonal blue add button (plan step 1.11).
+8. ~~Compact item list~~ (step 1.9): built, compiles; its new UI test has not run on a device. Hand check still to do.
+9. ~~Dialogs: app buttons, right-to-left, meaningful icons, speakers~~ (step 1.10): built, compiles; its new UI
+   test has not run on a device. Hand check still to do.
+10. ~~Yellow only for attention; tonal blue add button~~ (step 1.11): built, compiles. Hand check still to do.
 
 ### Sprint 2: fewer taps
 

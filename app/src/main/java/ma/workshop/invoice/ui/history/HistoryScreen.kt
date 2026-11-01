@@ -233,7 +233,7 @@ fun InvoiceSummaryCard(invoice: InvoiceSummary, zone: ZoneId, onClick: () -> Uni
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 if (invoice.revision > 1) {
-                    ArabicText(Strings.EDITED, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.appPalette.onWarningContainer)
+                    ArabicText(Strings.EDITED, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
                 }
             }
             Spacer(Modifier.width(8.dp))

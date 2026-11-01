@@ -34,24 +34,25 @@ The final state of every product decision. Later decisions replace earlier ones;
 * Primary **blue** `#1F5FAF` (white text on it at least 4.5 : 1) for buttons and accents; the launcher icon
   is blue too.
 * **Green `#2E7D32` means paid, and only paid.** An unpaid balance is bold ink.
-* **[to build] Yellow means "look at this", nothing else:** the copied-rate cue on item entry and an unpaid
-  balance highlight. It is no longer a button colour (it clashes with blue). The add-product button becomes
-  **tonal blue**: light blue fill `#E6EEF9`, blue text and a blue plus, 1 dp blue edge (plan step 1.11).
-  Never white text on yellow. On paper the balance amount stays dark yellow `#A67C00`.
+* **Yellow means "look at this", nothing else:** on screen only the copied-rate cue on item entry. It is no
+  longer a button colour or a banner colour (it clashes with blue): the add-product button is **tonal blue**
+  (light blue fill `#E6EEF9`, blue text, a white plus in a blue circle, 1 dp blue edge), and warning banners
+  and the "edited" labels are tonal blue with the warning icon. Never white text on yellow. On paper the
+  balance amount stays dark yellow `#A67C00`.
 * Error `#D32F2F`, gray `#6B7280`, surface `#F3F4F6`.
 * Colour is never the only signal: every state also has an icon and a word.
 * The printed invoice keeps its existing palette; the blue is for the app only.
 
 ## Item list (the screen with the items of an invoice)
 
-* **[to build]** The fixed bottom bar holds only the total (one compact line) and "متابعة": at most a quarter of
+* The fixed bottom bar holds only the total (one compact line) and "متابعة": at most a quarter of
   the screen. "إضافة منتوج" moves into the list, as its first row above the newest item (and the main button
   when the list is empty). Item rows are compact: edit and delete are 48 dp buttons. A product name wraps
   only between words, never inside a word (plan step 1.9).
 
 ## Dialogs
 
-* **[to build]** Dialogs use the app's own full-width buttons, stacked, the main action on top, laid out
+* Dialogs use the app's own full-width buttons, stacked, the main action on top, laid out
   right-to-left like every screen (not Material's button row). Each button has a meaningful icon ("فاتورة
   جديدة" gets a plus, not an X) and, with speaker icons on, its own speaker; the title's speaker reads the
   title and the message (plan step 1.10).

@@ -149,7 +149,7 @@ class LayoutAndBackUiTest {
     }
 
     @Test
-    fun theYellowAddButtonIsLargeWithItsOwnSpeakerTileOnTheLeft() {
+    fun theAddButtonIsLargeWithItsOwnSpeakerTileOnTheLeft() {
         goToItemList()
         rule.onNodeWithTag("add-product").assertHeightIsAtLeast(64.dp)
         val button = rule.onNodeWithTag("add-product").getBoundsInRoot()

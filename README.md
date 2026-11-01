@@ -27,8 +27,9 @@ Home has exactly three buttons: **فاتورة جديدة** (new invoice), **ا�
 New invoice:
 
 1. **Customer** (optional): name and phone. Continue immediately if you like.
-2. **Items**: the list of items so far, each with a small picture, measurements and total; a big
-   **+ إضافة منتوج** button; **متابعة** to go on. Items can be edited or removed (removal asks first).
+2. **Items**: the list of items so far, each with a small picture, measurements and total; a light blue
+   **+ إضافة منتوج** button as the first row of the list (newest item right under it); a bottom bar with only
+   the total and **متابعة** to go on. Items can be edited or removed (removal asks first).
 3. **Choose a product** from the picture grid (two columns). Tapping the picture selects it. With the speaker
    icons switched on in Settings, each card has its own speaker that only speaks the name and never selects.
 4. **Details and confirmation**: enter the size, rate and quantity with the phone's numeric keyboard.

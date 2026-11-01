@@ -217,7 +217,7 @@ fun ItemEntryScreen(
                         keyboardOptions = optionsFor(rateFocus, KeyboardType.Decimal), keyboardActions = actionsFor(rateFocus),
                         tag = tag("rate"), focusRequester = rateFocus, picture = { CoinPicture() },
                         // The carried-over price shows in amber text on the normal white box (not a yellow box).
-                        contentColor = if (form.rateNeedsConfirmation) MaterialTheme.appPalette.balanceBorder else MaterialTheme.colorScheme.onSurface)
+                        contentColor = if (form.rateNeedsConfirmation) MaterialTheme.appPalette.attention else MaterialTheme.colorScheme.onSurface)
                     if (form.rateNeedsConfirmation) {
                         ArabicText(Strings.SAME_PRICE, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.testTag("same-price-$index"))
                     }
@@ -261,7 +261,7 @@ fun ItemEntryScreen(
                     val takesSizes = forms.firstOrNull()?.visibleMeasurements.let { it != null && (it.width || it.height) }
                     if (pending.editingItemId == null && pending.product.formula.usesQuantity && takesSizes) {
                         BigButton(Strings.ADD_VARIATION, Icons.Filled.Add, { validateAnd(onAddVariation) },
-                            Modifier.testTag("add-variation"), kind = ButtonKind.Accent)
+                            Modifier.testTag("add-variation"), kind = ButtonKind.Tonal)
                     }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         ArabicText("${Strings.TOTAL}: ${total?.let(ArabicFormat::amount) ?: "—"}",

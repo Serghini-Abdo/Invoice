@@ -45,8 +45,8 @@ import androidx.compose.ui.unit.dp
 import ma.workshop.invoice.ui.Strings
 import ma.workshop.invoice.ui.theme.appPalette
 
-/** Accent is the yellow of "+ إضافة منتوج": dark text and a darker edge, never white on it. */
-enum class ButtonKind { Primary, Secondary, Success, Danger, Accent }
+/** Tonal is the light blue "+ إضافة منتوج" button: blue text and edge on a pale blue fill. */
+enum class ButtonKind { Primary, Secondary, Success, Danger, Tonal }
 
 internal class ButtonColors(val container: Color, val content: Color, val border: BorderStroke?)
 
@@ -59,10 +59,10 @@ internal fun buttonColors(kind: ButtonKind, enabled: Boolean, pressed: Boolean):
         ButtonKind.Primary, ButtonKind.Success -> ButtonColors(MaterialTheme.colorScheme.primary, palette.onColor, null)
         ButtonKind.Danger -> ButtonColors(palette.error, palette.onColor, null)
         ButtonKind.Secondary -> ButtonColors(MaterialTheme.colorScheme.surface, palette.ink, BorderStroke(2.dp, palette.gray))
-        ButtonKind.Accent -> ButtonColors(
-            if (pressed) palette.balancePressed else palette.balance,
-            palette.onBalance,
-            BorderStroke(2.dp, palette.balanceBorder),
+        ButtonKind.Tonal -> ButtonColors(
+            if (pressed) palette.tonalPressed else MaterialTheme.colorScheme.primaryContainer,
+            MaterialTheme.colorScheme.primary,
+            BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
         )
     }
 }
@@ -71,7 +71,7 @@ internal fun buttonColors(kind: ButtonKind, enabled: Boolean, pressed: Boolean):
  * The app's one button: a label (colour is never the only cue) and, when it carries a meaning, an icon
  * after the label in Arabic reading order (on its left). Navigation buttons such as "متابعة" have no icon:
  * the only arrow in the app is the back arrow in the top bar. At least 64dp tall. Pressed, the button
- * darkens (yellow) and shrinks a little, so the press is visible.
+ * darkens and shrinks a little, so the press is visible.
  */
 @Composable
 fun BigButton(
@@ -101,10 +101,10 @@ fun BigButton(
         FitText(text, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center, modifier = Modifier.weight(1f, fill = false))
         if (icon != null) {
             Spacer(Modifier.width(10.dp))
-            if (kind == ButtonKind.Accent) {
-                // The plus in a dark circle, yellow on dark: the plus never sits as a thin glyph on yellow.
+            if (kind == ButtonKind.Tonal) {
+                // A white plus in a blue circle, so it reads as an add button at a glance.
                 Box(Modifier.size(38.dp).background(colors.content, CircleShape), contentAlignment = Alignment.Center) {
-                    Icon(icon, contentDescription = null, tint = colors.container, modifier = Modifier.size(28.dp))
+                    Icon(icon, contentDescription = null, tint = MaterialTheme.appPalette.onColor, modifier = Modifier.size(28.dp))
                 }
             } else {
                 Icon(icon, contentDescription = null, modifier = Modifier.size(28.dp))
@@ -233,7 +233,7 @@ fun StatusBanner(text: String, kind: BannerKind, modifier: Modifier = Modifier) 
         BannerKind.Info -> Triple(palette.infoContainer, palette.info, Icons.Filled.Info)
         BannerKind.Success -> Triple(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, Icons.Filled.Check)
         BannerKind.Paid -> Triple(palette.paidContainer, palette.onPaidContainer, Icons.Filled.Check)
-        BannerKind.Warning -> Triple(palette.warningContainer, palette.onWarningContainer, Icons.Filled.Warning)
+        BannerKind.Warning -> Triple(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, Icons.Filled.Warning)
         BannerKind.Error -> Triple(palette.errorContainer, palette.onErrorContainer, Icons.Filled.Warning)
     }
     Surface(modifier = modifier.fillMaxWidth(), color = container, shape = RoundedCornerShape(12.dp)) {

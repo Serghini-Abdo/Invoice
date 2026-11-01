@@ -32,11 +32,10 @@ data class AppPalette(
     val paid: Color = Color(Palette.PAID),
     val paidContainer: Color = Color(Palette.PAID_CONTAINER),
     val onPaidContainer: Color = Color(Palette.ON_PAID_CONTAINER),
-    /** The yellow of the "+ إضافة منتوج" button and, later, the balance band. Always with dark text. */
-    val balance: Color = Color(Palette.SECONDARY),
-    val balancePressed: Color = Color(Palette.SECONDARY_PRESSED),
-    val balanceBorder: Color = Color(Palette.SECONDARY_BORDER),
-    val onBalance: Color = Color(Palette.INK),
+    /** Yellow means "look at this" and nothing else: today only the copied-rate cue (dark yellow text). */
+    val attention: Color = Color(Palette.SECONDARY_BORDER),
+    /** The pressed fill of a tonal blue button. */
+    val tonalPressed: Color = Color(Palette.PRIMARY_CONTAINER_PRESSED),
     val error: Color = Color(Palette.ERROR),
     val errorContainer: Color = Color(Palette.ERROR_CONTAINER),
     val onErrorContainer: Color = Color(Palette.ON_ERROR_CONTAINER),
@@ -45,15 +44,11 @@ data class AppPalette(
     val grayStrong: Color = Color(Palette.GRAY_STRONG),
     val surface: Color = Color(Palette.SURFACE),
     val ink: Color = Color(Palette.INK),
-    /** Text and icons on a blue, red or gray fill. Never on yellow. */
+    /** Text and icons on a blue, red or gray fill. */
     val onColor: Color = Color(Palette.ON_COLOR),
     /** Information banners: neutral, so they never read as "paid". */
     val info: Color = Color(Palette.GRAY_STRONG),
     val infoContainer: Color = Color(Palette.OUTLINE_SOFT),
-    /** Warnings: dark yellow-brown text on pale yellow. */
-    val warning: Color = Color(Palette.SECONDARY_BORDER),
-    val onWarningContainer: Color = Color(0xFF6B4F00),
-    val warningContainer: Color = Color(Palette.SECONDARY_CONTAINER),
 )
 
 private val LocalAppPalette = staticCompositionLocalOf { AppPalette() }
@@ -72,10 +67,10 @@ private val lightColors = lightColorScheme(
     onPrimary = Color(Palette.ON_COLOR),
     primaryContainer = Color(Palette.PRIMARY_CONTAINER),
     onPrimaryContainer = Color(Palette.ON_PRIMARY_CONTAINER),
-    secondary = Color(Palette.SECONDARY),
-    onSecondary = Color(Palette.INK),
-    secondaryContainer = Color(Palette.OUTLINE_SOFT),
-    onSecondaryContainer = Color(Palette.INK),
+    secondary = Color(Palette.PRIMARY),
+    onSecondary = Color(Palette.ON_COLOR),
+    secondaryContainer = Color(Palette.PRIMARY_CONTAINER),
+    onSecondaryContainer = Color(Palette.ON_PRIMARY_CONTAINER),
     tertiary = Color(Palette.PRIMARY),
     onTertiary = Color(Palette.ON_COLOR),
     tertiaryContainer = Color(Palette.PRIMARY_CONTAINER),

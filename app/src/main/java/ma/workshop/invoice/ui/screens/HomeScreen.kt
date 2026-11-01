@@ -106,11 +106,11 @@ fun HomeScreen(
         HomeCard(
             Strings.PREVIOUS_INVOICES,
             Icons.AutoMirrored.Filled.ReceiptLong,
-            palette.balance,
-            palette.onBalance,
+            MaterialTheme.colorScheme.primaryContainer,
+            MaterialTheme.colorScheme.onPrimaryContainer,
             onHistory,
             Modifier.weight(1f),
-            border = BorderStroke(2.dp, palette.balanceBorder),
+            border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
         )
         HomeCard(
             Strings.SETTINGS,

@@ -362,7 +362,7 @@ fun SpokenButton(
     }
 }
 
-/** The yellow "+ إضافة منتوج" button: dark text, a plus in a dark circle, a darker edge, and its speaker tile. */
+/** The "+ إضافة منتوج" button: pale blue, blue text and edge, a white plus in a blue circle, and its speaker tile. */
 @Composable
 fun AddProductButton(onClick: () -> Unit, onSpeak: () -> Unit, speechAvailable: Boolean, modifier: Modifier = Modifier) {
     SpokenButton(
@@ -371,7 +371,7 @@ fun AddProductButton(onClick: () -> Unit, onSpeak: () -> Unit, speechAvailable: 
         onClick = onClick,
         onSpeak = onSpeak,
         modifier = modifier,
-        kind = ButtonKind.Accent,
+        kind = ButtonKind.Tonal,
         speechAvailable = speechAvailable,
         buttonModifier = Modifier.testTag("add-product"),
     )

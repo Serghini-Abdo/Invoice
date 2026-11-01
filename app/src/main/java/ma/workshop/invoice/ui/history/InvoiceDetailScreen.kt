@@ -164,7 +164,7 @@ private fun InvoiceHeaderCard(invoice: Invoice, zone: ZoneId) {
             ArabicText(
                 "${ArabicTerms.UPDATED} ${ArabicFormat.date(invoice.updatedAt, zone)}  (${Strings.REVISION} ${invoice.revision - 1})",
                 style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.appPalette.onWarningContainer,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
         }
     }
