@@ -5,8 +5,7 @@ The final state of every product decision. Later decisions replace earlier ones;
 * Day 2 design rounds: approved by the owner on 2026-10-25, entry and pricing update on 2026-10-27.
 * Day 3 product review: approved on 2026-11-01.
 * **[to build]** marks a decision that is not in the app yet. Everything without the mark is built.
-* Mock-ups: [design-review.html](design-review.html) (Day 2). Entry-flow proposal:
-  [prototypes/product-entry-flow.html](prototypes/product-entry-flow.html) (awaiting feedback, see Open questions).
+* Mock-ups: [design-review.html](design-review.html) (Day 2).
 
 ## Scope
 
@@ -52,11 +51,11 @@ The final state of every product decision. Later decisions replace earlier ones;
 * **[to build] Placement: one system instead of per-element rules.**
   1. **One look:** the same round speaker icon, size and colour everywhere. No tiles styled like their button.
   2. **Speaker column:** full-width elements (buttons, list rows, field labels, summary cards) have their
-     speaker in one column along the left edge of the screen, outside the element, so a speaker tap can
+     speaker in one column along the **right** edge of the screen (where each Arabic line starts), outside the element, so a speaker tap can
      never press a button. A field's speaker sits beside its label, not its box. One speaker per element,
      reading the whole element as one sentence (a summary card is one sentence).
   3. **Two exceptions:** the title's speaker stays beside the title in the top bar; grid cards (Home,
-     choose product) carry their speaker as their own round target in the card's top-left corner.
+     choose product) carry their speaker as their own round target in the card's top-right corner.
   4. **Built in, not placed by hand:** screens use `SpeakableText` / `SpeakableButton`, which add the
      speaker when the switch is on. The layout sweep test fails when visible Arabic text has no speaker
      and is not on a short exempt list.
@@ -107,6 +106,8 @@ The final state of every product decision. Later decisions replace earlier ones;
 * "إضافة مبلغ خاص": a custom charge (for example labour) with only a description and an amount, no
   catalogue product.
 * Quantity defaults to 1. The same product added twice gives two independent items; nothing is merged.
+* The entry-flow prototype of 2026-10-29 (one expanded size at a time, grouped products) was **dropped**:
+  the current entry flow stays.
 
 ## Review and saving
 
@@ -158,5 +159,4 @@ The final state of every product decision. Later decisions replace earlier ones;
 
 ## Open questions
 
-* The speaker column's side once the layout is right-to-left: left edge proposed; confirm in a prototype.
-* The entry-flow prototype of 2026-10-29 (one expanded size at a time, grouped products): awaiting feedback.
+None at the moment.

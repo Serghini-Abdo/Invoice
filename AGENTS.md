@@ -13,7 +13,7 @@ there are no real receipts on any phone yet.
 * `docs/day2/PROGRESS.md`: current state, what is verified, known issues, and the roadmap. Start there to
   find the next sprint.
 * `README.md` (the app as built), `docs/calculation-rules.md`, `docs/data-and-migrations.md`, `docs/testing.md`.
-* Mock-ups: `docs/day2/design-review.html` (Day 2); `docs/day2/prototypes/` (proposals awaiting feedback).
+* Mock-ups: `docs/day2/design-review.html` (Day 2).
 
 ## Coming changes that affect most code (2026-11-01 review)
 
