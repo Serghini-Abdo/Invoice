@@ -183,7 +183,7 @@ private fun PaymentCard(invoice: Invoice) {
             emphasized = true,
             valueColor = if (payment.isFullyPaid) MaterialTheme.appPalette.paid else MaterialTheme.colorScheme.onSurface,
         )
-        if (payment.isFullyPaid) StatusBanner(Strings.FULLY_PAID_LONG, BannerKind.Success)
+        if (payment.isFullyPaid) StatusBanner(Strings.FULLY_PAID_LONG, BannerKind.Paid)
     }
 }
 

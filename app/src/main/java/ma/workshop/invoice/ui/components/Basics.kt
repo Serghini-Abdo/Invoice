@@ -212,7 +212,8 @@ fun VoiceMissingDialog(onInstall: () -> Unit, onDismiss: () -> Unit) {
     )
 }
 
-enum class BannerKind { Info, Success, Warning, Error }
+/** [Success] is blue (an action worked); [Paid] is the only green banner and means "fully paid". */
+enum class BannerKind { Info, Success, Paid, Warning, Error }
 
 /** A message that always carries an icon and words, never colour alone. The icon is on the right, first. */
 @Composable
@@ -220,7 +221,8 @@ fun StatusBanner(text: String, kind: BannerKind, modifier: Modifier = Modifier) 
     val palette = MaterialTheme.appPalette
     val (container, content, icon) = when (kind) {
         BannerKind.Info -> Triple(palette.infoContainer, palette.info, Icons.Filled.Info)
-        BannerKind.Success -> Triple(palette.paidContainer, MaterialTheme.colorScheme.onPrimaryContainer, Icons.Filled.Check)
+        BannerKind.Success -> Triple(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, Icons.Filled.Check)
+        BannerKind.Paid -> Triple(palette.paidContainer, palette.onPaidContainer, Icons.Filled.Check)
         BannerKind.Warning -> Triple(palette.warningContainer, palette.onWarningContainer, Icons.Filled.Warning)
         BannerKind.Error -> Triple(palette.errorContainer, palette.onErrorContainer, Icons.Filled.Warning)
     }

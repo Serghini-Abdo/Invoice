@@ -84,11 +84,11 @@ data class LayoutSpec(
 object InvoiceColors {
     const val INK = Palette.INK
     const val MUTED = Palette.GRAY_STRONG
-    const val ACCENT = Palette.PRIMARY
+    const val ACCENT = Palette.PAID
     const val DIVIDER = Palette.OUTLINE_SOFT
     const val PANEL = Palette.SURFACE
-    const val PAID = Palette.PRIMARY
-    const val PAID_BG = Palette.PRIMARY_CONTAINER
+    const val PAID = Palette.PAID
+    const val PAID_BG = Palette.PAID_CONTAINER
     const val BALANCE_TEXT = Palette.SECONDARY_BORDER
     const val WHITE = Palette.CARD
 }

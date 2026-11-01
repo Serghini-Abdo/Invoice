@@ -28,9 +28,10 @@ import ma.workshop.invoice.domain.palette.Palette
  */
 @Immutable
 data class AppPalette(
-    /** Green means "paid" and nothing else among amounts. */
-    val paid: Color = Color(Palette.PRIMARY),
-    val paidContainer: Color = Color(Palette.PRIMARY_CONTAINER),
+    /** Green means "paid" and nothing else. */
+    val paid: Color = Color(Palette.PAID),
+    val paidContainer: Color = Color(Palette.PAID_CONTAINER),
+    val onPaidContainer: Color = Color(Palette.ON_PAID_CONTAINER),
     /** The yellow of the "+ إضافة منتوج" button and, later, the balance band. Always with dark text. */
     val balance: Color = Color(Palette.SECONDARY),
     val balancePressed: Color = Color(Palette.SECONDARY_PRESSED),
@@ -44,7 +45,7 @@ data class AppPalette(
     val grayStrong: Color = Color(Palette.GRAY_STRONG),
     val surface: Color = Color(Palette.SURFACE),
     val ink: Color = Color(Palette.INK),
-    /** Text and icons on a green, red or gray fill. Never on yellow. */
+    /** Text and icons on a blue, red or gray fill. Never on yellow. */
     val onColor: Color = Color(Palette.ON_COLOR),
     /** Information banners: neutral, so they never read as "paid". */
     val info: Color = Color(Palette.GRAY_STRONG),
