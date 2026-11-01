@@ -1,4 +1,4 @@
-# وصولات الورشة: Workshop Invoice
+# فواتير الورشة: Workshop Invoice
 
 An offline-first Android invoicing app for a small Moroccan metalworking workshop (doors, windows,
 garage gates, frames, accessories). Arabic first, right-to-left, illustration first, built for an owner
@@ -10,7 +10,7 @@ who reads little: large buttons, large numbers, one decision per screen, optiona
 * No taxes, no inventory, no accounting: invoices only.
 
 > **Where it is going.** Product decisions, including the planned changes from the 2026-11-01 review
-> (receipts instead of invoices, blue palette), are in
+> (invoices instead of invoices, blue palette), are in
 > [docs/day2/DECISIONS.md](docs/day2/DECISIONS.md); current state and roadmap in
 > [docs/day2/PROGRESS.md](docs/day2/PROGRESS.md). This README describes the app as built.
 
@@ -21,8 +21,8 @@ who reads little: large buttons, large numbers, one decision per screen, optiona
 
 ## Using the app
 
-Home has exactly three buttons: **وصل جديد** (new receipt), **الوصولات السابقة** (previous receipts),
-**الإعدادات** (settings). The document is a receipt (وصل); the code still calls it an invoice.
+Home has exactly three buttons: **فاتورة جديدة** (new invoice), **الفواتير السابقة** (previous invoices),
+**الإعدادات** (settings).
 
 New invoice:
 
@@ -50,7 +50,7 @@ rate and quantity. Nothing is merged.
 
 Settings is a short list of six category cards, each showing its current value in one line and opening its own
 screen: the product catalog (with photo import in product edit), workshop information (name, phone and an
-optional thank-you line), the receipt format (PNG / PDF / both and choose when sharing), units (cm or m, Arabic
+optional thank-you line), the invoice format (PNG / PDF / both and choose when sharing), units (cm or m, Arabic
 or Latin labels), audio, and backup/restore. Audio is a parent switch: while "تشغيل الصوت" is off its other
 options (speaker icons, spoken language, speech rate, voice test, dictation status) are hidden,
 with their saved values kept. There is no save button; every change is saved at once.

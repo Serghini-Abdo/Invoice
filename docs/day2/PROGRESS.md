@@ -18,13 +18,13 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
 
 ## What is built
 
-* **Receipt flow:** optional customer, item list, picture catalogue, multi-size entry on one page with
+* **Invoice flow:** optional customer, item list, picture catalogue, multi-size entry on one page with
   rate carry-over, custom charges, review with deposit, balance and paid badge, save, then share.
   Drafts auto-save; leaving with unsaved work asks first.
 * **Pricing:** per piece, area, perimeter, width, height, fixed. Integer money, exact cm / m conversion.
-* **History:** search by name, phone or number, date filter, receipt detail, edit with a revision log, delete.
-* **Printed receipt:** PNG and PDF from one layout engine (table option A, pagination, footer, totals on the
-  last page, PDF fallback for long receipts).
+* **History:** search by name, phone or number, date filter, invoice detail, edit with a revision log, delete.
+* **Printed invoice:** PNG and PDF from one layout engine (table option A, pagination, footer, totals on the
+  last page, PDF fallback for long invoices).
 * **Settings:** product catalogue (with photo import), workshop name / phone / thank-you line, output
   format, units and unit labels, audio (on / off, rate, spoken language, speaker icons switch, voice test),
   backup.
@@ -38,16 +38,15 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
 * **Layout:** forced right-to-left on every phone (back arrow on the right, labels on the right, amounts on
   the left). Buttons and cards have no arrows; the only arrow is the back arrow in the top bar.
 * **Palette and name:** blue for actions and the launcher icon; green only for paid (badge, paid balance,
-  "خالص" banner) and on the printed receipt, which keeps its colours. The document is called وصل everywhere
-  the owner sees or hears it; shared files are named `wasl-0007-...`.
+  "خالص" banner) and on the printed invoice, which keeps its colours. The document is called وصل on screen, on paper
+  and in speech (shared files `wasl-0007-...`): **being switched back to فاتورة** (plan step 1.8).
 * **Settings:** six category cards with their own screens (see above).
 
 ## Still to check by hand on the phone
 
 * **Sprint 1, steps 1.0 to 1.7 (phone set to French):** Settings list and its child screens, every screen of
-  the receipt flow, history, catalogue and backup read from the right, buttons and cards without arrows, the
-  blue palette (green only on paid states), the blue launcher icon, the new wording (وصل جديد, الوصولات
-  السابقة, "الوصل خالص" spoken in Darija), and silence until a speaker is tapped (list in the hand-off report).
+  the invoice flow, history, catalogue and backup read from the right, buttons and cards without arrows, the
+  blue palette (green only on paid states), the blue launcher icon, the wording (after step 1.8: فاتورة جديدة, الفواتير السابقة, "الفاتورة خالصة" in Darija), and silence until a speaker is tapped (list in the hand-off report).
 
 * Voice quality in Darija and standard Arabic, speech rates, the voice download flow, a speaker stopping the
   previous one.
@@ -56,7 +55,7 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
   incomplete" with `api 10`; pressing Back on Google's screen shows "you closed the Google screen" and no banner
   appears on the home screen.
 * The new entry flow end to end: several sizes, the yellow copied rate, custom charge, editing a line.
-* PNG and PDF of a real receipt: divider weight, Latin unit labels ("120 × 85 cm"), bidi order of
+* PNG and PDF of a real invoice: divider weight, Latin unit labels ("120 × 85 cm"), bidi order of
   "2,52 م² × 500 DH" and "صفحة 2 / 3", balance colour.
 * Photo import with a real photo (picker, a portrait photo's rotation).
 * Product list and product edit, voice dialogs, and screens with several items or a long customer name,
@@ -70,7 +69,7 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
 ## Known issues
 
 * Backups do not include photo files: a restore on another phone shows the generic picture.
-* A receipt's unit is derived from its first measured item, not stored; a per-piece-only receipt follows the
+* A invoice's unit is derived from its first measured item, not stored; a per-piece-only invoice follows the
   current Settings unit.
 * Standard-Arabic speech does not put numbers before nouns in construct state ("مائتان درهم").
 
@@ -95,21 +94,24 @@ Still open (owner tasks):
 2. ~~Right-to-left app layout~~ (plan step 1.1): built; same device run as above, the layout tests pass. Hand check still to do.
    * `LayoutAndBackUiTest.leavingWithUnsavedWorkAsksFirst` used to fail on the phone (and on a5bffd2, so not caused by Sprint 1). The app was right: on the entry screens a Back press while the keyboard is open only closes the keyboard, and a real phone keeps its keyboard up after a width is typed. The test's system Back now closes the keyboard first when it is open. Passes on the phone.
 3. ~~Blue palette tokens and a blue launcher icon; green only for paid~~ (steps 1.2, 1.3): built; compiles and
-   lint passes; the receipt colours are pinned by a domain test; the device suite passes. Hand check still to do.
-4. ~~Rename invoice to receipt (وصل)~~ (step 1.4): built; domain tests pass; the Arabic wording needs the
-   owner's review.
+   lint passes; the invoice colours are pinned by a domain test; the device suite passes. Hand check still to do.
+4. ~~Rename to وصل~~ (step 1.4): built, then **reversed by the owner**: back to فاتورة in step 1.8.
 5. ~~Fix the known issues: the product "not found" message, the unused string~~ (step 1.5): built.
 6. ~~No arrows on buttons and cards~~ (step 1.6): built; the device suite passes. Hand check still to do.
 7. ~~No automatic speech; remove the two automatic-totals switches~~ (step 1.7): built; the new
    `NoAutomaticSpeechTest` passes on the phone.
+8. Back to فاتورة everywhere (plan step 1.8).
+9. Compact item list: smaller bottom bar, add button in the list, compact rows (plan step 1.9).
+10. Dialogs: app buttons, right-to-left, meaningful icons, speakers (plan step 1.10).
+11. Yellow only for attention; tonal blue add button (plan step 1.11).
 
 ### Sprint 2: fewer taps
 
 1. Remove the save confirmation dialog.
 2. Recent customers as one-tap choices; saved-customer suggestions matched by phone (derive from saved
-   receipts if that is enough, before adding a table).
+   invoices if that is enough, before adding a table).
 3. Optional "send to the customer's WhatsApp" next to the share sheet.
-4. Version mark "نسخة N" on re-shared receipts from version 2 on.
+4. Version mark "نسخة N" on re-shared invoices from version 2 on.
 
 ### Sprint 3: speakers and large fonts
 
@@ -129,7 +131,7 @@ in backups.
 * `./gradlew -p domain test`, `:app:assembleDebug`, `:app:assembleDebugAndroidTest`, `:app:lintDebug`, and
   the instrumented suite (`-PdeviceTests`) on **one** explicitly targeted device; this file updated; one commit.
 * Instrumented tests **wipe the app database**: target one device (`adb -s` / `ANDROID_SERIAL`), ask the owner
-  before using the phone, never run them on a phone with real receipts.
+  before using the phone, never run them on a phone with real invoices.
 * This PC cannot run the emulator and Gradle together (7.7 GB RAM): build first, `./gradlew --stop`, then
   install the APKs and run `adb shell am instrument`.
 * Every Room version bump ships a migration, a `MigrationTest` case and the committed schema JSON. The next

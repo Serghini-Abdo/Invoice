@@ -11,10 +11,9 @@ The final state of every product decision. Later decisions replace earlier ones;
 
 * For one small workshop (doors, windows, garage gates, frames, accessories). Offline, no account.
   No taxes, no inventory, no accounting.
-* The document is a **receipt (وصل)**, not a legal invoice. Renamed everywhere the owner sees or hears it: app
-  name "وصولات الورشة", Home buttons, screen titles, Saved screen, printed title and spoken text. Code names
-  (`Invoice*`), the backup folder and backup JSON keys keep the old name on purpose.
-  No data migration: the app is still in development and holds no real receipts.
+* **[to build]** The document is a **فاتورة** (owner decision, 2026-11-01, reversing the earlier وصل). App
+  name "فواتير الورشة". Every screen, printed title and spoken text uses فاتورة / فواتير again (plan step 1.8).
+  No legal mentions (ICE etc.) are added.
 * Prices are typed on every line **by design**: each job has its own size and material, so the price
   differs most of the time. No default price per product and no suggested-price chips.
 
@@ -22,7 +21,7 @@ The final state of every product decision. Later decisions replace earlier ones;
 
 * The app follows Arabic **right-to-left** layout, like the other apps the owner uses.
   This replaces the forced left-to-right layout of Day 2: back arrow on the right.
-  Labels stay on the right and amounts on the left. The printed receipt is right-to-left (unchanged).
+  Labels stay on the right and amounts on the left. The printed invoice is right-to-left (unchanged).
 * Buttons have no arrows; the only arrow is the back arrow in the top bar. This covers the Settings category
   cards and every other navigation card. Buttons keep icons that carry meaning (share, edit, delete, save
   check, add plus).
@@ -35,11 +34,27 @@ The final state of every product decision. Later decisions replace earlier ones;
 * Primary **blue** `#1F5FAF` (white text on it at least 4.5 : 1) for buttons and accents; the launcher icon
   is blue too.
 * **Green `#2E7D32` means paid, and only paid.** An unpaid balance is bold ink.
-* Yellow `#F2B705` for the add button and balance highlights. Never white text on yellow; yellow buttons
-  get a `#A67C00` edge. On paper the balance amount is dark yellow `#A67C00` (bright yellow is unreadable).
+* **[to build] Yellow means "look at this", nothing else:** the copied-rate cue on item entry and an unpaid
+  balance highlight. It is no longer a button colour (it clashes with blue). The add-product button becomes
+  **tonal blue**: light blue fill `#E6EEF9`, blue text and a blue plus, 1 dp blue edge (plan step 1.11).
+  Never white text on yellow. On paper the balance amount stays dark yellow `#A67C00`.
 * Error `#D32F2F`, gray `#6B7280`, surface `#F3F4F6`.
 * Colour is never the only signal: every state also has an icon and a word.
-* The printed receipt keeps its existing palette; the blue is for the app only.
+* The printed invoice keeps its existing palette; the blue is for the app only.
+
+## Item list (the screen with the items of an invoice)
+
+* **[to build]** The fixed bottom bar holds only the total (one compact line) and "متابعة": at most a quarter of
+  the screen. "إضافة منتوج" moves into the list, as its first row above the newest item (and the main button
+  when the list is empty). Item rows are compact: edit and delete are 48 dp buttons. A product name wraps
+  only between words, never inside a word (plan step 1.9).
+
+## Dialogs
+
+* **[to build]** Dialogs use the app's own full-width buttons, stacked, the main action on top, laid out
+  right-to-left like every screen (not Material's button row). Each button has a meaningful icon ("فاتورة
+  جديدة" gets a plus, not an X) and, with speaker icons on, its own speaker; the title's speaker reads the
+  title and the message (plan step 1.10).
 
 ## Speakers (TextToSpeech, offline, no recordings)
 
@@ -53,7 +68,7 @@ The final state of every product decision. Later decisions replace earlier ones;
 * No speakers in Settings and Backup, except the product screens (list, edit, calculation methods).
 * Speech rate: 3 presets (slow / normal / fast). Spoken language: Darija by default, standard Arabic in
   Settings > الصوت > "لغة الكلام". Numbers are spoken as words generated offline. Screens and printed
-  receipts are not affected by the spoken language.
+  invoices are not affected by the spoken language.
 * No Arabic voice installed: a clear prompt explains how to download one; everything stays usable silently.
 * **[to build] Placement: one system instead of per-element rules.**
   1. **One look:** the same round speaker icon, size and colour everywhere. No tiles styled like their button.
@@ -80,15 +95,15 @@ The final state of every product decision. Later decisions replace earlier ones;
 ## Units
 
 * One global setting: cm or m. Second setting: unit label script, Arabic (سم / م) or Latin (cm / m),
-  labels only, digits unchanged; it applies to screens, printed receipts and re-exports.
-* A receipt uses the unit of its first measured item (else the Settings unit); old mixed items stay as typed.
+  labels only, digits unchanged; it applies to screens, printed invoices and re-exports.
+* A invoice uses the unit of its first measured item (else the Settings unit); old mixed items stay as typed.
 * Latin unit labels inside right-to-left text are wrapped as LTR isolates.
 
 ## Fields and pictures
 
 * Small illustration beside each field: ↔ width, ↕ height, DH coin for prices (never "$"), stacked boxes
   for quantity, person and phone for the customer.
-* Photo import (system photo picker) **only in product edit**, downscaled to 512 px. Each receipt item keeps
+* Photo import (system photo picker) **only in product edit**, downscaled to 512 px. Each invoice item keeps
   its own copy of the picture.
 * **[to build]** Backups include the photo files (today a restore shows the generic picture).
 
@@ -121,18 +136,18 @@ The final state of every product decision. Later decisions replace earlier ones;
 * Review shows all items, the total, an editable deposit (default 0, never above the total), the balance,
   and a "خالص" badge when fully paid.
 * **[to build]** No "حفظ الفاتورة؟" dialog: the review screen is the confirmation, and an edit can undo a save.
-* Saving is separate from exporting and sharing: if export or sharing fails, the receipt is already saved.
+* Saving is separate from exporting and sharing: if export or sharing fails, the invoice is already saved.
 
-## Printed receipt (PNG and PDF)
+## Printed invoice (PNG and PDF)
 
 * Columns, left to right: Price (line total) | Measurement / Formula | Quantity | Name. The unit price sits
   inside the formula cell ("2,52 م² × 500 DH"); "DH" appears once, in the column title.
-* Thin dividers between rows (none after the last). No pictures on the shared receipt; screens keep them.
+* Thin dividers between rows (none after the last). No pictures on the shared invoice; screens keep them.
 * Deposit and balance appear only when a deposit was entered; otherwise only the total.
 * One tall PNG; above 8,000 px (about 55 items) the PDF is offered instead.
 * PDF: page numbers in the footer ("صفحة 2 / 3"); the full header on page 1 only; later pages repeat one slim
   line (workshop, number, date) above the column titles; totals on the last page only.
-* **[to build] Version mark:** from the second version on, a re-shared receipt shows "نسخة N" (version N)
+* **[to build] Version mark:** from the second version on, a re-shared invoice shows "نسخة N" (version N)
   beside its number. The first version shows nothing. No "edited" wording.
 
 ## Sharing
@@ -144,7 +159,7 @@ The final state of every product decision. Later decisions replace earlier ones;
 ## Settings
 
 * Settings is a short list of **categories**, each opening its own screen: المنتوجات,
-  معلومات الورشة, شكل الوصل, الوحدات, الصوت, النسخ الاحتياطي. Each card shows its current value in one line
+  معلومات الورشة, شكل الفاتورة, الوحدات, الصوت, النسخ الاحتياطي. Each card shows its current value in one line
   (for example "متوقف" or "مفعل · الدارجة · عادي"), so the owner can see the state without opening it.
 * **Parent and child options:** an option that only matters when another is on is its child. When the parent
   is off, its children are **hidden** (not greyed out) and one line says why ("الصوت متوقف"). Their saved
@@ -163,17 +178,17 @@ The final state of every product decision. Later decisions replace earlier ones;
 
 * Integer money (centimes) and exact length conversion, one final rounding per item
   ([calculation-rules.md](../calculation-rules.md)).
-* Receipt items are immutable snapshots; edits keep the number and store a revision with the full previous
+* Invoice items are immutable snapshots; edits keep the number and store a revision with the full previous
   version. Numbers never repeat.
 * The calculation method stays pluggable: no new `when (formula)` branches.
 * Old backups stay restorable.
 
 ## Agreed for later (not scheduled)
 
-* Cancel instead of delete: a cancelled receipt keeps its number, is stamped ملغاة and hidden by default.
-* Payments as a dated list ("تسجيل دفعة" on the receipt), with the balance computed from it.
+* Cancel instead of delete: a cancelled invoice keeps its number, is stamped ملغاة and hidden by default.
+* Payments as a dated list ("تسجيل دفعة" on the invoice), with the balance computed from it.
 * Unpaid balances: a total on Home and an "unpaid" filter in history.
-* Quotes (عرض ثمن) that turn into a receipt with one tap.
+* Quotes (عرض ثمن) that turn into a invoice with one tap.
 * A discount or rounding down of the total.
 
 ## Open questions

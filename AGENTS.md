@@ -4,7 +4,7 @@
 
 Offline-first Android app for a small Moroccan metal workshop. Kotlin, Jetpack Compose, Room. The owner
 reads little: large type, pictures, one decision per screen, optional speech. The app is still in development:
-there are no real receipts on any phone yet.
+there are no real invoices on any phone yet.
 
 ## Read first
 
@@ -19,8 +19,8 @@ there are no real receipts on any phone yet.
 
 ## Decided in the 2026-11-01 review
 
-* The document is a **receipt (وصل)**, not an invoice, in screen text, printed title and speech. Internal code
-  names (`Invoice*`) stay. The palette is **blue**; green means paid only (and the printed receipt keeps its
+* The document is a **فاتورة** (invoice) in screen text, printed title and speech. Session 2 renamed it to وصل;
+  plan step 1.8 switches it back. Never use وصل. The palette is **blue**; green means paid only (and the printed invoice keeps its
   own colours). Buttons and cards have no arrows. Nothing is spoken automatically.
 * Coming: speakers move to one system (`SpeakableText` / `SpeakableButton` and a speaker column); do not add
   new hand-placed speakers in the meantime.
@@ -43,7 +43,7 @@ there are no real receipts on any phone yet.
   passed. Run it when a change touches Room, migrations, export, or UI behaviour the JVM tests cannot see.
   If you cannot run it, say so instead of claiming the change is verified on a device.
 * **Instrumented tests wipe the app database.** Target one device explicitly (`adb -s` / `ANDROID_SERIAL`),
-  ask the owner before using his phone, and never run them on a phone with real receipts.
+  ask the owner before using his phone, and never run them on a phone with real invoices.
 * The owner's PC cannot run the emulator and Gradle together (7.7 GB RAM): build first, `./gradlew --stop`,
   then install the APKs and run `adb shell am instrument`.
 * Room exports its schema to `app/schemas/`; every version bump ships a migration, a `MigrationTest` case and
@@ -52,7 +52,7 @@ there are no real receipts on any phone yet.
 ## Rules that are easy to break
 
 * Money is integer centimes, lengths integer thousandths; no floating point in calculations.
-* Receipt items are immutable snapshots; catalogue edits never change saved receipts.
+* Invoice items are immutable snapshots; catalogue edits never change saved invoices.
 * Never use `fallbackToDestructiveMigration`. Older backups must stay restorable.
 * The calculation method stays pluggable: no new `when (formula)` branches.
 * Products have no saved price, on purpose: every job has its own size and material.

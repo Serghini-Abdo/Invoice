@@ -122,7 +122,7 @@ Written 2026-11-01 from the owner's product review. The decisions behind every s
 * **Goal:** replace the one long Settings page with a list of category cards, each opening its own screen,
   and hide child options when their parent switch is off. See DECISIONS.md "Settings".
 * **Today:** `ui/settings/SettingsScreen.kt` is one scrolling page: a nav card to the catalogue, then sections
-  (`SectionCard`) for workshop info, receipt format, units and audio (switches, language, rate,
+  (`SectionCard`) for workshop info, invoice format, units and audio (switches, language, rate,
   voice status and test, dictation status line `MicStatusLine`), then a nav card to backup. Routes are in
   `ui/AppNav.kt` (`Routes.SETTINGS`, `CATALOG`, `BACKUP`; composable at ~229).
 * **Files:** `ui/settings/SettingsScreen.kt` (split it), new files `ui/settings/WorkshopSettingsScreen.kt`,
@@ -135,7 +135,7 @@ Written 2026-11-01 from the owner's product review. The decisions behind every s
      |---|---|---|
      | المنتوجات | `CATALOG` (exists) | "N منتوج" (active products) |
      | معلومات الورشة | `settings/workshop` | the workshop name, or "غير مكتوب" |
-     | شكل الوصل | `settings/format` | "صورة (PNG)" / "ملف PDF" / "الاثنان" |
+     | شكل الفاتورة | `settings/format` | "صورة (PNG)" / "ملف PDF" / "الاثنان" |
      | الوحدات | `settings/units` | for example "م · سم / م" |
      | الصوت | `settings/audio` | "متوقف", or "مفعل · <language> · <rate>" |
      | النسخ الاحتياطي | `BACKUP` (exists) | the existing `backupHint` |
@@ -185,7 +185,7 @@ Written 2026-11-01 from the owner's product review. The decisions behind every s
   5. `ArabicText` stays (RTL text direction, aligned to Start). Phone numbers, amounts and "DH / م²" must keep
      their digit order: keep the existing LTR isolates/marks.
   6. Item entry: the product picture stays centred in the top bar.
-  7. The printed receipt renderer is **not** touched (already RTL).
+  7. The printed invoice renderer is **not** touched (already RTL).
   8. Update the layout tests: every assertion that says "left" for back/labels becomes "right" and vice versa.
      Keep the measures (48 dp targets, 4 dp gaps).
 * **Do not:** change sizes, colours, texts or flow; mirror pictures (illustrations of doors stay as drawn).
@@ -194,14 +194,14 @@ Written 2026-11-01 from the owner's product review. The decisions behind every s
 * **Done when:** every screen reads from the right with the phone set to French; layout tests pass;
   screenshots from `ScreenshotTourTest` look mirrored compared with today (owner checks).
 
-### Step 1.2 Blue palette for the app, printed receipt unchanged
+### Step 1.2 Blue palette for the app, printed invoice unchanged
 
-* **Goal:** app buttons and accents become blue. Green only means paid. The **printed receipt keeps exactly
+* **Goal:** app buttons and accents become blue. Green only means paid. The **printed invoice keeps exactly
   its current colours**.
 * **Files:** `domain/.../palette/Palette.kt`, `domain/.../layout/InvoiceLayout.kt` (`InvoiceColors`, line ~84),
   `app/.../ui/theme/Theme.kt`, `docs/day2/design-review.html` is reference only (do not edit).
 * **Do:**
-  1. **First protect the receipt.** `InvoiceColors.ACCENT`, `PAID` and `PAID_BG` point at `Palette.PRIMARY` /
+  1. **First protect the invoice.** `InvoiceColors.ACCENT`, `PAID` and `PAID_BG` point at `Palette.PRIMARY` /
      `PRIMARY_CONTAINER`. Add `Palette.PAID = 0xFF2E7D32`, `PAID_CONTAINER = 0xFFE8F5E9`,
      `ON_PAID_CONTAINER = 0xFF1B5E20` (today's green values) and make `InvoiceColors` use them. Add a domain
      test that pins every `InvoiceColors` value to today's ARGB, so a palette change can never reach paper.
@@ -214,9 +214,9 @@ Written 2026-11-01 from the owner's product review. The decisions behind every s
   4. "Success" buttons (`ButtonKind.Success`, for example share) become blue primary; green stays only for the
      paid badge, the paid balance and the "خالص" banner.
   5. Update the Palette doc comment (rules) to say: blue = action, green = paid only.
-* **Do not:** touch yellow, error, gray, surface; change the printed receipt.
+* **Do not:** touch yellow, error, gray, surface; change the printed invoice.
 * **Tests:** the two new domain tests; `ExportInstrumentedTest` must still pass unchanged.
-* **Done when:** no green appears on any screen except paid states (owner checks), and the receipt PNG is
+* **Done when:** no green appears on any screen except paid states (owner checks), and the invoice PNG is
   identical in colour to before.
 
 ### Step 1.3 Blue launcher icon
@@ -228,6 +228,9 @@ Written 2026-11-01 from the owner's product review. The decisions behind every s
 * **Done when:** the icon on the home screen is blue and readable (owner checks).
 
 ### Step 1.4 Rename invoice to receipt (وصل)
+
+> **Superseded.** Built in session 2, then reversed by the owner on 2026-11-01: step 1.8 switches everything
+> back to فاتورة. Kept here only because step 1.8 refers to its table.
 
 * **Goal:** the user never sees or hears "فاتورة / فواتير". No data migration (no real receipts exist).
 * **Arabic grammar trap:** فاتورة is feminine, **وصل is masculine**. Adjectives, pronouns and verbs must change
@@ -318,7 +321,7 @@ Written 2026-11-01 from the owner's product review. The decisions behind every s
 
 * **Goal:** nothing is spoken unless the owner taps a speaker or "تجربة الصوت" (owner decision, 2026-11-01).
 * **Today:** `ui/flow/InvoiceFlowViewModel.kt` line ~159 speaks the item total (`sayIfReady`) and line ~261
-  speaks the receipt summary when `speakInvoiceTotals` is on. Settings > الصوت has the two switches
+  speaks the invoice summary when `speakInvoiceTotals` is on. Settings > الصوت has the two switches
   `AUDIO_ITEM_TOTALS` and `AUDIO_INVOICE_TOTALS`.
 * **Do:**
   1. Delete both automatic calls. Then search `app/src/main` for any other speech that is not started by a
@@ -338,13 +341,95 @@ Written 2026-11-01 from the owner's product review. The decisions behind every s
   recorder the speech tests already use). Existing tests: a speaker tap still speaks.
 * **Done when:** with audio on, the app is silent until a speaker is tapped; all tests pass.
 
+
+### Step 1.8 Back to فاتورة everywhere (reverses step 1.4)
+
+* **Goal:** the owner sees and hears **فاتورة / فواتير** again, exactly as before step 1.4. Never وصل.
+* **Do:**
+  1. `git revert --no-commit cb1aa86` (the step 1.4 commit). Conflicts are likely in `ui/Strings.kt` because
+     steps 1.5 and 1.7 changed it later: keep their changes (`PRODUCT_NOT_FOUND` added, `AUDIO_TEST_SENTENCE`,
+     `AUDIO_ITEM_TOTALS` and `AUDIO_INVOICE_TOTALS` removed) and take the فاتورة wording for everything else.
+  2. The step 1.4 table's **"Now"** column is the target wording. `RESUME` and `EDITED`, which step 1.4
+     changed outside the table, go back to their feminine forms (check `git show cb1aa86 -- '*Strings.kt'`).
+  3. Shared file names go back to `invoice-0007-...`. App name: فواتير الورشة.
+  4. Tests that step 1.4 switched to `Strings.*` constants may stay on constants; only their expected
+     literal Arabic (in domain tests) goes back.
+  5. Search `app/src/main`, `domain/src/main` and the tests for `وصل` and `وصولات`: **zero hits**.
+  6. Step 1.0's Settings card: "شكل الفاتورة".
+* **Do not:** touch anything else from steps 1.0 to 1.7.
+* **Done when:** the search is clean, domain tests and build pass, and "الفاتورة خالصة" is spoken in Darija.
+
+### Step 1.9 Compact item list
+
+* **Goal:** today the fixed bottom of the item list (total, the yellow add button, "متابعة") takes almost half
+  the screen (owner's photo, 2026-11-01). Bring it to **at most a quarter** and give the space to the items.
+* **Files:** `ui/screens/CustomerAndItemsScreens.kt` (bottom `Surface` at ~310, `ItemCard`, the empty state),
+  `ui/components/InvoiceTable.kt`, `ui/components/Foundations.kt` (`AddProductButton`), the item-list tests.
+* **Do:**
+  1. The bottom bar keeps only: the total as **one compact line** (label right, amount left, `titleMedium`
+     bold, no extra padding) and "متابعة" at 56 dp. Bar padding 12 dp, gap 8 dp. The `NEED_ONE_ITEM` banner
+     stays, shown only when needed.
+  2. Move `AddProductButton` **into the list** as its first row, directly under the customer card and above the
+     table title, so a new item appears right under it (the newest item is on top). With an empty list it stays
+     the big main button under the empty message.
+  3. Item rows: reduce card padding to 8 dp; the edit and delete buttons become 48 dp high (icon + short word)
+     in one row under the line. Keep both: the owner must see what each does.
+  4. **Name wrapping bug:** "مفصلات" is drawn as "مفصلا / ت" (a word broken inside). In `InvoiceTable.kt` the
+     name cell must wrap only between words (use the same no-mid-word rule as `FitText`: shrink to 70 % first,
+     then wrap at spaces). Give the name column the width the picture does not need.
+* **Tests:** a UI test: on the item list with 3 items, the bottom bar's height is at most 25 % of the screen
+  height; the add button is in the list (above the first item); a product named "مفصلات" is not split inside the
+  word (extend `SpeakerLayoutSweepTest`'s broken-word check to the item list with that name).
+* **Done when:** the tests pass and the owner sees at least 3 items without scrolling on his phone.
+
+### Step 1.10 Dialogs: right-to-left app buttons with speakers
+
+* **Goal:** dialogs read from the right like every screen (owner's photo: the "فاتورة غير مكتملة" buttons sit on
+  the left, and "فاتورة جديدة" has an X), and their buttons have speakers when speaker icons are on.
+* **Files:** `ui/components/Basics.kt` (`ConfirmDialog` ~164, `VoiceMissingDialog` ~198, `DialogButton`),
+  `ui/components/MicButton.kt` (dialog ~115), `ui/flow/InvoiceFlowRoute.kt` (resume dialog, leave dialog ~204),
+  every caller of `ConfirmDialog`.
+* **Do:**
+  1. Make one `AppDialog(title, message, spokenText, buttons)` that keeps Material's dialog window but puts the
+     buttons **inside the content** as full-width app buttons, stacked, the main action on top, with
+     `confirmButton = {}` (the leave dialog already works this way: reuse its pattern).
+  2. Each button: `SpokenButton` (today's speaker style; chapter 3 converts it later) with a meaningful icon.
+     `ConfirmDialog` takes `confirmIcon` and `dismissIcon` parameters. Icons: continue the draft = Edit; new
+     invoice = Add (plus); cancel / later = Close; delete = Delete; confirm = Check; install voice = Download.
+  3. The title's speaker reads the title **and** the message as one sentence.
+  4. Move `ConfirmDialog`, `VoiceMissingDialog`, the mic dialog, the resume dialog and the leave dialog onto
+     `AppDialog`. Danger actions stay red.
+* **Tests:** a UI test on the resume dialog: both buttons are full width, the main one is above, with speakers on
+  each button has a speaker and tapping it does not act; update tests that click Material dialog buttons.
+* **Done when:** every dialog shows stacked, right-to-left, full-width buttons with sensible icons.
+
+### Step 1.11 Yellow only for attention; tonal blue add button
+
+* **Goal:** yellow clashes with the blue palette (owner, 2026-11-01). Yellow now means only "look at this".
+* **Files:** `domain/.../palette/Palette.kt`, `ui/theme/Theme.kt` (`appPalette.balance*`, `warning*`,
+  `colorScheme.secondary`), `ui/components/Foundations.kt` (`AddProductButton`), any screen using the yellow
+  tokens (search `appPalette.balance`, `colorScheme.secondary`, `SECONDARY`).
+* **Do:**
+  1. `AddProductButton`: light blue fill `PRIMARY_CONTAINER` (`#E6EEF9`), blue text (`PRIMARY`), a blue circle
+     with a white plus, 1 dp `PRIMARY` edge, a darker pressed fill (about `#D3E1F5`). Same size rules as today.
+  2. Keep yellow only for: the copied-rate cue on item entry, and the unpaid-balance highlight. Every other
+     yellow on screens becomes blue tonal or neutral; list each one you change in the hand-off.
+  3. Rename the `AppPalette` fields so their names say their meaning (for example `attention`,
+     `attentionContainer` instead of `balance*` when used for the rate cue); keep the printed invoice's
+     `InvoiceColors` untouched (pinned by its test).
+  4. `colorScheme.secondary` must not be yellow (Material uses it for chips and selections): make it a blue
+     tone; check the category chips and choice options still read as selected.
+* **Tests:** the palette tests still pass; `InvoiceColors` unchanged; update tests that look for the yellow add
+  button colour.
+* **Done when:** no yellow button remains; yellow appears only on the rate cue and the unpaid balance.
+
 ---
 
 ## Part D. Chapter 2: fewer taps (branch `day3/sprint-2`)
 
 ### Step 2.1 Remove the save confirmation dialog
 
-* **Goal:** pressing "حفظ الوصل" on review saves directly (when the deposit is valid).
+* **Goal:** pressing "حفظ الفاتورة" on review saves directly (when the deposit is valid).
 * **Files:** `domain/.../flow/InvoiceFlow.kt` (`confirmingSave`, `savePressed`, `saveConfirmed`, `back`,
   events `SaveDismissed`, `SaveConfirmed`), `domain/.../flow/DraftCodec.kt` (check whether it stores
   `confirmingSave`), `ui/screens/ReviewAndSavedScreens.kt` (dialog at ~207), `ui/flow/*`, `Strings.kt`
@@ -381,18 +466,18 @@ Written 2026-11-01 from the owner's product review. The decisions behind every s
      name). Suggestions appear as tappable rows under the fields. Tapping sends the existing
      `FlowEvent.CustomerEdited(name, phone)`; the flow itself does not change.
   4. The customer step must still allow "continue" with nothing typed. Hide the chips when there are none.
-  5. Edit mode (editing a saved receipt) shows the same suggestions.
+  5. Edit mode (editing a saved invoice) shows the same suggestions.
 * **Do not:** add a customers table, change `InvoiceFlow` state, or store anything new.
-* **Tests:** domain tests for the helper; a DAO test in `DatabaseTest` (two receipts for the same phone give one
+* **Tests:** domain tests for the helper; a DAO test in `DatabaseTest` (two invoices for the same phone give one
   customer with the newest name); a UI test: tap a chip, both fields are filled.
-* **Done when:** with 3 saved receipts, the chips appear and fill the fields in one tap.
+* **Done when:** with 3 saved invoices, the chips appear and fill the fields in one tap.
 
 ### Step 2.3 Send straight to the customer's WhatsApp (an option)
 
-* **Goal:** next to the existing share button, show "إرسال للزبون في واتساب" when the receipt has a customer
+* **Goal:** next to the existing share button, show "إرسال للزبون في واتساب" when the invoice has a customer
   phone **and** WhatsApp (or WhatsApp Business) is installed. The share sheet stays as it is.
 * **Files:** `platform/export/InvoiceExporter.kt` (share intent at ~124), `AndroidManifest.xml` (`<queries>`
-  already exists at line 15: add the WhatsApp packages), Saved screen and receipt detail screen,
+  already exists at line 15: add the WhatsApp packages), Saved screen and invoice detail screen,
   `Strings.kt`, a new domain helper for phone numbers.
 * **Do:**
   1. Domain `MoroccanPhone.toWhatsAppId(raw: String): String?`: keep digits; `0XXXXXXXXX` (10 digits, starting
@@ -408,9 +493,9 @@ Written 2026-11-01 from the owner's product review. The decisions behind every s
   image attached.
 * **Done when:** the button appears only when it can work and opens the customer's chat with the file.
 
-### Step 2.4 Version mark on re-shared receipts
+### Step 2.4 Version mark on re-shared invoices
 
-* **Goal:** a receipt edited after saving prints "نسخة N" beside its number, N = its revision (2, 3, ...).
+* **Goal:** a invoice edited after saving prints "نسخة N" beside its number, N = its revision (2, 3, ...).
   The first version prints nothing extra. No "edited" wording on paper.
 * **Files:** `domain/.../format/InvoiceDocument.kt` (document model, `number` at ~38, builder ~63),
   `domain/.../format/ArabicFormat.kt` (`ArabicTerms`: add `VERSION = "نسخة"`),
@@ -418,11 +503,11 @@ Written 2026-11-01 from the owner's product review. The decisions behind every s
   `domain/.../invoice/Models.kt` (`revision`, `isEdited`).
 * **Do:**
   1. Add `version: Int?` to the document: `invoice.revision` when `revision >= 2`, else null.
-  2. Header: "وصل رقم 0012 · نسخة 2" (use the existing separator style). Same on the PDF slim line.
+  2. Header: "فاتورة رقم 0012 · نسخة 2" (use the existing separator style). Same on the PDF slim line.
   3. Screens are unchanged (the detail screen already shows edits).
 * **Tests:** `FormatAndDocumentTest`: revision 1 → null, 3 → 3; `InvoiceLayoutTest`: the header text contains
-  "نسخة 2" only for an edited receipt; the header still fits on one line at the narrowest width (wrap check).
-* **Done when:** edit a receipt, re-share, and the image says "نسخة 2".
+  "نسخة 2" only for an edited invoice; the header still fits on one line at the narrowest width (wrap check).
+* **Done when:** edit a invoice, re-share, and the image says "نسخة 2".
 
 ---
 
@@ -523,9 +608,9 @@ Agreed in principle, not designed yet. Each needs a short design pass with the o
 
 * **Cancel instead of delete:** status column on `invoices` (Room v7), "ملغى" stamp on paper and screen,
   hidden by default in history with a filter to show.
-* **Dated payments:** `payments` table (Room v7 or v8), "تسجيل دفعة" on the receipt detail, balance computed
+* **Dated payments:** `payments` table (Room v7 or v8), "تسجيل دفعة" on the invoice detail, balance computed
   from payments, the deposit becomes the first payment (migration).
 * **Unpaid balances:** total on Home, "غير خالص" filter in history (depends on dated payments).
-* **Quotes (عرض ثمن):** a document type that turns into a receipt with one tap.
+* **Quotes (عرض ثمن):** a document type that turns into a invoice with one tap.
 * **Discount / round down** of the total.
 * **Photos in backups.**
