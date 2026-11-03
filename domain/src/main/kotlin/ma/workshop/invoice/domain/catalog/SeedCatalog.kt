@@ -33,7 +33,8 @@ object SeedCatalog {
         Seed("شباك بالكو بالطول", "sk_balcony_length", PricingFormula.WIDTH, LengthUnit.METER),
         Seed("ضواية السطح", "sk_skylight", PricingFormula.PER_ITEM, LengthUnit.METER),
         Seed("نشارات", "sk_clothesrack", PricingFormula.PER_ITEM, LengthUnit.METER),
-        Seed("روكار", "sk_regard", // regard d'eau PricingFormula.PER_ITEM, LengthUnit.METER),
+        // روكار is a regard d'eau.
+        Seed("روكار", "sk_regard", PricingFormula.PER_ITEM, LengthUnit.METER),
         Seed("كاش ريدو", "sk_cacherideau", PricingFormula.PER_ITEM, LengthUnit.METER),
         Seed("باب الكراج", "sk_garage", PricingFormula.AREA, LengthUnit.METER),
     )
