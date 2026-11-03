@@ -181,6 +181,8 @@ The final state of every product decision. Later decisions replace earlier ones;
 
 ## Accessibility
 
+* **The owner cannot read.** Pictures, icons, colour plus icon, and speakers are how he uses the app; a text
+  label alone is never enough.
 * Large type, pictures, one decision per screen. Touch targets at least 48 dp.
 * **[to build]** Every screen must work at the phone's large font sizes (font scale 1.3 and 1.5): no clipped
   or overlapping text, checked on the owner's phone.

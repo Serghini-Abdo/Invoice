@@ -2,7 +2,7 @@
 
 An offline-first Android invoicing app for a small Moroccan metalworking workshop (doors, windows,
 garage gates, frames, accessories). Arabic first, right-to-left, illustration first, built for an owner
-who reads little: large buttons, large numbers, one decision per screen, optional spoken Arabic.
+who cannot read: pictures and icons carry every choice, with large buttons, large numbers, one decision per screen and optional spoken Arabic.
 
 * Kotlin, Jetpack Compose + Material 3, Room (SQLite), Android TextToSpeech, Android Sharesheet.
 * **Everything for normal invoicing works with no internet and no account.** Backups (automatic or manual, on

@@ -3,7 +3,8 @@
 `AGENTS.md` carries the same rules for Codex and other agents; keep the two files in step when you change one.
 
 Offline-first Android app for a small Moroccan metal workshop. Kotlin, Jetpack Compose, Room. The owner
-reads little: large type, pictures, one decision per screen, optional speech. The app is still in development:
+cannot read. Pictures, icons, colour plus icon and speakers are how he uses the app; a text label
+alone is never enough. Large type, one decision per screen, optional speech. The app is still in development:
 there are no real invoices on any phone yet.
 
 ## Read first
