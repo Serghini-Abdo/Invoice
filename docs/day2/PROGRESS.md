@@ -4,15 +4,17 @@ What is built, what is verified, what is open, and what comes next. Decisions li
 [DECISIONS.md](DECISIONS.md). The detailed logs of sprints 3 to 5 and the 2026-10-27 entry update are in
 git history: `git show 7926659:docs/day2/PROGRESS.md`.
 
-## Current state (2026-11-01)
+## Current state (2026-11-03)
 
-* Branch `day3/sprint-1`. **Not pushed.** Chapter 1 of the Day 3 plan (steps 1.0 to 1.11) is built; the
-  chapter 0 owner tasks below are still open.
-* Room schema **version 6** (no change in chapter 1). Every version has a migration, a `MigrationTest` case
+* Branch `main` holds Sprint 1 (plan steps 1.0 to 1.11) and the 9-product sketch catalogue (fast-forward merges).
+  The chapter 0 owner tasks below are still open.
+* Room schema **version 6** (no change in chapters 1 or 2). Every version has a migration, a `MigrationTest` case
   and its committed JSON.
-* Tests at the last run (2026-11-01): **214 domain tests pass**; `:app:assembleDebug`,
-  `:app:compileDebugAndroidTestKotlin` and `:app:lintDebug` pass after step 1.11. The instrumented suite ran after step 1.11 on the owner's Samsung SM-S931B (Android 16, test data only): **86 tests, 0 failed** (the one failure of the first run was a bug in the new resume-dialog test, fixed and re-run: `LayoutAndBackUiTest` 12 of 12 pass). That includes `NoAutomaticSpeechTest`, which ran with a
-  real Arabic voice (it skips on a phone without one).
+* Checks on `main` (2026-11-03): **215 domain tests pass**; `:app:testDebugUnitTest`, `:app:lintDebug`,
+  `:app:assembleDebug` and `:app:assembleDebugAndroidTest` pass. The instrumented suite last ran on the owner's
+  Samsung SM-S931B (Android 16, test data only): 87 tests, `InvoiceFlowUiTest` is timing-flaky in full runs (see
+  the catalogue note) and passes alone.
+* **Hand checks still to do:** Sprint 1 steps 1.0 to 1.11 and the 9 catalogue pictures (lists below).
 
 ## What is built
 
