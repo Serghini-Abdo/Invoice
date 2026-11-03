@@ -40,8 +40,13 @@ git history: `git show 7926659:docs/day2/PROGRESS.md`.
   and in speech (shared files `invoice-0007-...`).
 * **Settings:** six category cards with their own screens (see above).
 
-* **Catalogue:** the owner's 9 products with pictures drawn after his sketches (branch
-  `day3/catalog-sketches`, 2026-11-01). **Not compiled yet**; new domain and device tests added, not run.
+* **Catalogue:** the owner's 9 products with pictures drawn after his sketches (2026-11-01). Compiles; the domain
+  tests (215), `:app:testDebugUnitTest`, lint and both APK builds pass. They are added once per installation by
+  `ProductRepository.addWorkshopProducts` (skipping any name or picture already there), so an upgrade neither
+  duplicates nor loses products; saved invoice items are snapshots and are untouched. No Room change (still
+  version 6). Device suite on the SM-S931B: 87 tests; `InvoiceFlowUiTest` failed in two of three full runs at
+  different steps and passes alone, so it looks timing-flaky, not caused by the catalogue. Hand check of the 9
+  pictures still to do.
 
 ## Still to check by hand on the phone
 
